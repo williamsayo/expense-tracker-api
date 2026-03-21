@@ -1,0 +1,116 @@
+import logging
+from typing import Callable, Coroutine, Any
+from fastapi.responses import Response
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from boilerplate.errors.application import ApplicationError
+from boilerplate.errors.domain import DomainError
+from boilerplate.errors.repository import (
+    RepositoryError,
+    RepositoryNotFoundError,
+    DataIntegrityError,
+    ConcurrencyError,
+    ConflictError,
+)
+from boilerplate.errors.http import (
+    AuthenticationError,
+    AuthorizationError,
+    BadGatewayError,
+    BadRequestError,
+    NotFoundError,
+    ServiceUnavailableError,
+)
+from boilerplate.errors.core import CoreError
+from boilerplate.types.http_status import HttpStatus
+
+
+def register_errors(app: FastAPI) -> None:
+
+    def create_exception_handler(
+        status_code: int,
+        default_message: str = "An unexpected error occurred",
+    ) -> Callable[[Request, CoreError | Exception], Coroutine[Any, Any, Response]]:
+
+        async def exception_handler(
+            _: Request, exception: CoreError | Exception
+        ) -> Response:
+            logging.error(exception)
+            message = getattr(exception, "message", default_message)
+            error_code = getattr(exception, "id", None)
+            http_status_code = getattr(exception, "status_code", status_code)
+            headers = getattr(exception, "headers", None)
+
+            return JSONResponse(
+                status_code=http_status_code,
+                content={
+                    "error_code": error_code,
+                    "message": message,
+                },
+                headers=headers,
+            )
+
+        return exception_handler
+
+    app.add_exception_handler(
+        exc_class_or_status_code=CoreError,
+        handler=create_exception_handler(status_code=HttpStatus.INTERNAL_SERVER_ERROR),
+    )
+
+    app.add_exception_handler(
+        exc_class_or_status_code=NotFoundError,
+        handler=create_exception_handler(status_code=HttpStatus.NOT_FOUND),
+    )
+
+    app.add_exception_handler(
+        exc_class_or_status_code=AuthenticationError,
+        handler=create_exception_handler(status_code=HttpStatus.FORBIDDEN),
+    )
+
+    app.add_exception_handler(
+        exc_class_or_status_code=AuthorizationError,
+        handler=create_exception_handler(status_code=HttpStatus.UNAUTHORIZED),
+    )
+
+    app.add_exception_handler(
+        exc_class_or_status_code=BadGatewayError,
+        handler=create_exception_handler(status_code=HttpStatus.BAD_GATEWAY),
+    )
+
+    app.add_exception_handler(
+        exc_class_or_status_code=BadRequestError,
+        handler=create_exception_handler(status_code=HttpStatus.BAD_REQUEST),
+    )
+
+    app.add_exception_handler(
+        exc_class_or_status_code=ServiceUnavailableError,
+        handler=create_exception_handler(status_code=HttpStatus.SERVICE_UNAVAILABLE),
+    )
+
+    app.add_exception_handler(
+        exc_class_or_status_code=RepositoryError,
+        handler=create_exception_handler(status_code=HttpStatus.INTERNAL_SERVER_ERROR),
+    )
+    app.add_exception_handler(
+        exc_class_or_status_code=RepositoryNotFoundError,
+        handler=create_exception_handler(status_code=HttpStatus.NOT_FOUND),
+    )
+    app.add_exception_handler(
+        exc_class_or_status_code=DataIntegrityError,
+        handler=create_exception_handler(status_code=HttpStatus.CONFLICT),
+    )
+    app.add_exception_handler(
+        exc_class_or_status_code=ConcurrencyError,
+        handler=create_exception_handler(status_code=HttpStatus.CONFLICT),
+    )
+    app.add_exception_handler(
+        exc_class_or_status_code=ConflictError,
+        handler=create_exception_handler(status_code=HttpStatus.CONFLICT),
+    )
+    app.add_exception_handler(
+        exc_class_or_status_code=ApplicationError,
+        handler=create_exception_handler(status_code=HttpStatus.INTERNAL_SERVER_ERROR),
+    )
+    app.add_exception_handler(
+        exc_class_or_status_code=DomainError,
+        handler=create_exception_handler(status_code=HttpStatus.UNPROCESSABLE_ENTITY),
+    )

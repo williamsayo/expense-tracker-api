@@ -1,0 +1,65 @@
+[project]
+name = "expense-tracker-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "domain-driven-design-boilerplate-core @ git+https://github.com/williamsayo/ddd-boilerplate-core",
+    "result-boilerplate",
+    "fastapi[standard]>=0.135.1",
+    "pwdlib[argon2]>=0.3.0",
+    "pydantic>=2.12.5",
+    "sqlalchemy[asyncio]>=2.0.48",
+    "argon2-cffi>=25.1.0",
+    "pyjwt>=2.12.1",
+]
+
+result-boilerplate = { git = "https://github.com/williamsayo/python-result.git", rev = "v0.3.0" }
+
+[tool.ruff]
+lint.extend-select = [
+'PYI042',
+'PYI052',
+'Q000',
+'Q001',
+'Q002',
+'A001',
+'FIX002',
+'ISC001',
+'LOG001',
+'LOG002',
+'T201',
+'PTH',
+'ANN001',
+'ANN002',
+'ANN201',
+'ANN205',
+'ANN206',
+'S110',
+'S608',
+'RET502',
+'RET503',
+'TID252',
+'TD007',
+'TD006',
+'ARG',
+'N801',
+'N805',
+'N804',
+'E101',	# Indentation contains mixed spaces and tabs
+'W293' # Blank line contains whitespace
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style="space"
+docstring-code-format = true
+docstring-code-line-length = 20
+
+[tool.ty.rules]
+unused-ignore-comment = "warn"
+redundant-cast = "error"
+possibly-missing-attribute = "error"
+possibly-missing-import = "error"

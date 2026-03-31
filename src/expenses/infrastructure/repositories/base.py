@@ -9,6 +9,7 @@ from boilerplate.errors.repository import (
     ConcurrencyError,
     ConflictError,
 )
+from boilerplate.errors.http import AuthenticationError
 from expenses.domain.entities.expense_entity import ExpenseEntity
 from shared.domain.types.user_id import UserId
 
@@ -25,9 +26,9 @@ class ExpenseRepositoryProtocol(Protocol):
         self, aggregate: ExpenseEntity
     ) -> Either[None, RepositoryUnexpectedError | ConflictError | ConcurrencyError]: ...
 
-    async def add_all(
-        self, aggregates: Sequence[ExpenseEntity]
-    ) -> Either[None, RepositoryUnexpectedError | ConflictError | ConcurrencyError]: ...
+    # async def add_all(
+    #     self, aggregates: Sequence[ExpenseEntity]
+    # ) -> Either[None, RepositoryUnexpectedError | ConflictError | ConcurrencyError]: ...
 
     async def exists(self, aggregateId: UniqueEntityId) -> bool: ...
 
@@ -44,8 +45,8 @@ class ExpenseRepositoryProtocol(Protocol):
 
     async def remove(
         self, aggregate: ExpenseEntity
-    ) -> Either[None, RepositoryUnexpectedError]: ...
+    ) -> Either[None, RepositoryUnexpectedError|AuthenticationError]: ...
 
     async def remove_all(
         self, category: str, user_id: UserId
-    ) -> Either[int, RepositoryUnexpectedError]: ...
+    ) -> Either[int, RepositoryUnexpectedError|AuthenticationError]: ...

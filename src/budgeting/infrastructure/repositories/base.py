@@ -13,7 +13,7 @@ from budgeting.domain.entities.budget_entity import BudgetEntity
 from identity.infrastructure.services.encryption.base import EncryptionService
 
 
-class BudgetingRepositoryProtocol(Protocol):
+class BudgetRepositoryProtocol(Protocol):
     """Defines the contract for budgeting repository operations."""
 
     async def get_by_id(self, aggregate_id: UniqueEntityId) -> Either[

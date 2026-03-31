@@ -9,6 +9,7 @@ from boilerplate.errors.repository import (
     ConcurrencyError,
     ConflictError,
 )
+from boilerplate.errors.http import AuthorizationError
 from identity.domain.entities.user_entity import UserEntity
 from identity.infrastructure.services.encryption.base import EncryptionService
 
@@ -37,5 +38,8 @@ class UserRepositoryProtocol(Protocol):
         self, options: GetOptions, encryption: EncryptionService, password: str
     ) -> Either[
         UserEntity,
-        RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
+        RepositoryNotFoundError
+        | DataIntegrityError
+        | RepositoryUnexpectedError
+        | AuthorizationError,
     ]: ...

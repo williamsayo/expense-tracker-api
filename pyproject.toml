@@ -63,3 +63,8 @@ unused-ignore-comment = "warn"
 redundant-cast = "error"
 possibly-missing-attribute = "error"
 possibly-missing-import = "error"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

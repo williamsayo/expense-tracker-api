@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from uuid import UUID
 from typing import Self
 from datetime import datetime, UTC
 from decimal import Decimal
@@ -17,13 +18,14 @@ class ExpenseModel(BaseModel):
 
 class ExpenseReadModel(ExpenseModel, BaseReadModel):
     """Read model for expense data."""
-
+    id: str | UUID
     date: datetime = Field(..., description="Date the expense was made")
     amount: str
 
     @classmethod
     def from_entity(cls, entity: ExpenseEntity) -> Self:
         return cls(
+            id=entity.id.value,
             category=entity.category.name,
             amount=entity.money.to_currency(),
             note=entity.note,

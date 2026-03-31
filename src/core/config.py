@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     parallelism: int = 4
     hash_len: int = 32
     salt_len: int = 16
+    use_local_repository: bool = False
 
     model_config = SettingsConfigDict(
         env_file=(".env.local", ".env", ".env.prod"), extra="ignore"

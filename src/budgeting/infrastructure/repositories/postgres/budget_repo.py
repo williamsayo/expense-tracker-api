@@ -121,7 +121,7 @@ class BudgetRepository(WriteRepository, ReadRepository):
 
     async def remove(
         self, aggregate: BudgetEntity
-    ) -> Either[int, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
+    ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
     async def remove_all(
         self, options: GetAllOptions

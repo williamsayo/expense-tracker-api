@@ -29,6 +29,17 @@ class LocalUserRepository(WriteRepository, ReadRepository):
     ) -> Either[
         UserEntity, RepositoryUnexpectedError | ConflictError | ConcurrencyError
     ]:
+        for keys, value in self.db.items():
+            if keys != aggregate.id.value and (
+                value.username == aggregate.username or value.email == aggregate.email
+            ):
+                return result_fail(
+                    ConflictError(
+                        Exception("Username or email already exists"),
+                        "Username or email already exists",
+                    )
+                )
+                
         self.db[aggregate.id.value] = aggregate
         return result_ok(aggregate)
 

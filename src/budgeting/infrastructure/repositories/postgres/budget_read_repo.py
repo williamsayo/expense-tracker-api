@@ -1,0 +1,245 @@
+from sqlalchemy import select, exists, and_, func
+from sqlalchemy.orm import selectinload
+from typing import Sequence, cast
+from uuid import UUID
+from boilerplate import (
+    ConcurrencyError,
+    ConflictError,
+    DataIntegrityError,
+    RepositoryNotFoundError,
+    RepositoryUnexpectedError,
+    ReadRepository,
+    GetAllOptions,
+    GetOptions,
+)
+from sqlalchemy.ext.asyncio import AsyncSession
+from result import Either, result_ok, result_fail
+from budgeting.domain.read_models.budget_summary import BudgetSummaryReadModel
+from budgeting.domain.read_models.budget_overview import BudgetOverviewReadModel
+from budgeting.infrastructure.repositories.schema import (
+    BudgetSummary,
+    BudgetAllocationSummary,
+)
+from budgeting.infrastructure.mappers.budget_summary_mapper import BudgetSummaryMapper
+
+
+class BudgetReadRepository(ReadRepository[BudgetSummaryReadModel]):
+    """Repository implementation for budget data."""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def add(
+        self, aggregate: BudgetSummaryReadModel
+    ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]:
+        """Adds a new budget entity to the database."""
+        persistence = BudgetSummaryMapper.to_persistence(aggregate)
+        exists = await self.exists(aggregate.budget_id)
+
+        if exists:
+            await self.db.merge(persistence)
+        else:
+            self.db.add(persistence)
+
+        await self.db.commit()
+
+        return result_ok()
+
+    async def exists(self, aggregate_id: UUID | str) -> bool:
+        statement = select(exists().where(BudgetSummary.id == aggregate_id))
+        result = await self.db.scalar(statement)
+        return cast(bool, result)
+
+    async def get_by_id(self, aggregate_id: UUID | str) -> Either[
+        BudgetSummaryReadModel,
+        RepositoryNotFoundError | RepositoryUnexpectedError | DataIntegrityError,
+    ]:
+        """Retrieves a budget entity by its unique identifier."""
+
+        statement = (
+            select(BudgetSummary)
+            .where(BudgetSummary.id == aggregate_id)
+            .options(selectinload(BudgetSummary.allocations))
+        )
+        result = (await self.db.scalars(statement)).one_or_none()
+
+        if result is None:
+            return result_fail(
+                RepositoryNotFoundError(
+                    Exception("Budget not found"), "Budget not found"
+                )
+            )
+
+        entity_result = BudgetSummaryMapper.to_read_model(result)
+
+        return result_ok(entity_result)
+
+    async def list(
+        self, options: GetAllOptions[str]
+    ) -> Either[
+        Sequence[BudgetSummaryReadModel], RepositoryUnexpectedError | DataIntegrityError
+    ]:
+        statement = select(BudgetSummary).options(
+            selectinload(BudgetSummary.allocations)
+        )
+
+        if filter := options.get("filter"):
+            statement = statement.filter_by(**filter)
+
+        if limit := options.get("limit"):
+            statement = statement.limit(limit)
+
+        if sort := options.get("sort"):
+            statement = statement.order_by(
+                *[
+                    (
+                        getattr(BudgetSummary, col).desc()
+                        if direction == "desc"
+                        else getattr(BudgetSummary, col).asc()
+                    )
+                    for col, direction in sort.items()
+                ]
+            )
+
+        result = await self.db.scalars(statement)
+        persistence_output = result.all()
+
+        result = tuple(
+            BudgetSummaryMapper.to_read_model(persistence)
+            for persistence in persistence_output
+        )
+
+        return result_ok(result)
+
+    async def first(self, options: GetOptions) -> Either[
+        BudgetSummaryReadModel,
+        RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
+    ]:
+        statement = select(BudgetSummary).options(
+            selectinload(BudgetSummary.allocations)
+        )
+
+        if filter := options.get("filter"):
+            if "expense_date" in filter:
+                date = filter.pop("expense_date")
+                statement = statement.where(
+                    and_(
+                        BudgetSummary.start_date <= date,
+                        BudgetSummary.end_date >= date,
+                    )
+                )
+
+            statement = statement.filter_by(**filter)
+
+        persistence_output = await self.db.scalar(statement)
+
+        if persistence_output is None:
+            return result_fail(
+                RepositoryNotFoundError(
+                    Exception("Budget not found"), "Budget not found"
+                )
+            )
+
+        entity_result = BudgetSummaryMapper.to_read_model(persistence_output)
+
+        return result_ok(entity_result)
+
+    async def remove(
+        self, aggregate: BudgetSummaryReadModel
+    ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
+
+    async def remove_all(
+        self, options: GetAllOptions
+    ) -> Either[int, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
+
+    async def get_budget_overview(self, options: GetAllOptions[str]) -> Either[
+        BudgetOverviewReadModel,
+        RepositoryUnexpectedError,
+    ]:
+        statement = select(BudgetSummary).options(
+            selectinload(BudgetSummary.allocations)
+        )
+
+        user_id = options.get("filter", {}).get("user_id")
+
+        if user_id is None:
+            return result_fail(
+                RepositoryUnexpectedError(
+                    Exception("User ID filter is required for overview"),
+                    "User ID filter is required for overview",
+                )
+            )
+
+        if filter := options.get("filter"):
+            statement = statement.filter_by(**filter)
+
+        recent_budgets = statement.order_by(BudgetSummary.start_date.desc()).limit(
+            options.get("limit", 5)
+        )
+
+        active_budget = statement.where(
+            and_(
+                BudgetSummary.user_id == user_id,
+                BudgetSummary.start_date <= func.current_date(),
+                BudgetSummary.end_date >= func.current_date(),
+            )
+        ).order_by(BudgetSummary.start_date.desc())
+
+        total_budgeted = (
+            select(
+                func.sum(BudgetAllocationSummary.budget_amount).label("total_budgeted")
+            )
+            .join(
+                BudgetSummary,
+                BudgetSummary.id == BudgetAllocationSummary.budget_id,
+            )
+            .where(BudgetSummary.user_id == user_id)
+        )
+
+        upcoming_budget = statement.where(
+            and_(
+                BudgetSummary.user_id == user_id,
+                BudgetSummary.start_date > func.current_date(),
+            )
+        ).order_by(BudgetSummary.start_date.asc())
+
+        result = await self.db.scalars(recent_budgets)
+        persistence_output = result.all()
+
+        upcoming_budget_result = await self.db.scalars(upcoming_budget)
+        upcoming_budget_output = upcoming_budget_result.first()
+
+        active_budget_result = await self.db.scalars(active_budget)
+        active_budget_output = active_budget_result.first()
+
+        total_budgeted_result = await self.db.scalars(total_budgeted)
+        total_budgeted_output = total_budgeted_result.first()
+
+        read_model = [
+            BudgetSummaryMapper.to_read_model(persistence)
+            for persistence in persistence_output
+        ]
+
+        if upcoming_budget_output is not None:
+            upcoming_budget_output = BudgetSummaryMapper.to_read_model(
+                upcoming_budget_output
+            )
+
+        if active_budget_output is not None:
+            active_budget_output = BudgetSummaryMapper.to_read_model(
+                active_budget_output
+            )
+
+        overview_read_model = BudgetOverviewReadModel(
+            {
+                "user_id": user_id,
+                "recent_budgets": read_model,
+                "total_allocated": (
+                    total_budgeted_output if total_budgeted_output else 0
+                ),
+                "upcoming_budget": upcoming_budget_output,
+                "active_budget": active_budget_output,
+            }
+        )
+
+        return result_ok(overview_read_model)

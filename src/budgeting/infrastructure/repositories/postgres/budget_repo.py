@@ -1,24 +1,28 @@
-from sqlalchemy import select, exists, or_
+from sqlalchemy import select, exists, and_
 from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Sequence, cast
-from boilerplate import GetAllOptions, GetOptions
-from boilerplate.errors.repository import (
+from boilerplate import (
     ConcurrencyError,
     ConflictError,
     DataIntegrityError,
     RepositoryNotFoundError,
     RepositoryUnexpectedError,
+    WriteRepository,
+    ReadRepository,
+    UniqueEntityId,GetAllOptions, GetOptions
 )
-from sqlalchemy.ext.asyncio import AsyncSession
-from boilerplate.ports.repository import WriteRepository, ReadRepository
-from boilerplate.domain.unique_entity_id import UniqueEntityId
+
 from result import Either, result_combine, result_ok, result_fail, is_fail
 from budgeting.domain.entities.budget_entity import BudgetEntity
 from budgeting.infrastructure.repositories.schema import Budget
 from budgeting.infrastructure.mappers.budget_mapper import BudgetMapper
 
 
-class BudgetRepository(WriteRepository, ReadRepository):
+class BudgetRepository(
+    WriteRepository[BudgetEntity, UniqueEntityId],
+    ReadRepository[BudgetEntity],
+):
     """Repository implementation for budget data."""
 
     def __init__(self, db: AsyncSession):
@@ -101,6 +105,18 @@ class BudgetRepository(WriteRepository, ReadRepository):
         statement = select(Budget).options(selectinload(Budget.allocations))
 
         if filter := options.get("filter"):
+            # Handle date range overlap
+            if "start_date" in filter and "end_date" in filter:
+                new_start = filter.pop("start_date")
+                new_end = filter.pop("end_date")
+
+                statement = statement.where(
+                    and_(
+                        Budget.start_date <= new_end,  # existing starts before new ends
+                        Budget.end_date >= new_start,  # existing ends after new starts
+                    )
+                )
+
             statement = statement.filter_by(**filter)
 
         persistence_output = await self.db.scalar(statement)

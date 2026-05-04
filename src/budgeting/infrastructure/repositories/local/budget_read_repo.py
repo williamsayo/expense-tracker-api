@@ -6,34 +6,26 @@ from boilerplate import (
     DataIntegrityError,
     RepositoryNotFoundError,
     RepositoryUnexpectedError,
-    WriteRepository,
-    ReadRepository,
-    UniqueEntityId,
     GetAllOptions,
     GetOptions,
+    ReadRepository,
+    UniqueEntityId,
 )
 from result import Either, result_ok, result_fail
-from budgeting.domain.entities.budget_entity import BudgetEntity
+from budgeting.domain.read_models.budget_summary import BudgetSummaryReadModel
 
 
-class LocalBudgetRepository(
-    WriteRepository[BudgetEntity, UniqueEntityId],
-    ReadRepository[BudgetEntity],
-):
+class LocalBudgetReadRepository(ReadRepository[BudgetSummaryReadModel]):
     """Repository implementation for budget data."""
 
-    db: dict[str | UUID, BudgetEntity] = {}
+    db: dict[str | UUID, BudgetSummaryReadModel] = {}
 
     async def add(
-        self, aggregate: BudgetEntity
+        self, aggregate: BudgetSummaryReadModel
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]:
         """Adds a new budget entity to the database."""
         for key, budget in self.db.items():
-            if (
-                key != aggregate.id
-                and budget.budget_period.start_date
-                == aggregate.budget_period.start_date
-            ):
+            if key != aggregate.budget_id and budget.start_date == aggregate.start_date:
                 return result_fail(
                     ConflictError(
                         Exception("Budget for this period already exists"),
@@ -41,7 +33,7 @@ class LocalBudgetRepository(
                     )
                 )
 
-        self.db[aggregate.id.value] = aggregate
+        self.db[aggregate.budget_id] = aggregate
         return result_ok()
 
     async def exists(self, aggregate_id: UniqueEntityId) -> bool:
@@ -49,7 +41,7 @@ class LocalBudgetRepository(
         return result
 
     async def get_by_id(self, aggregate_id: UniqueEntityId) -> Either[
-        BudgetEntity,
+        BudgetSummaryReadModel,
         RepositoryNotFoundError | RepositoryUnexpectedError | DataIntegrityError,
     ]:
         """Retrieves a budget entity by its unique identifier."""
@@ -65,11 +57,12 @@ class LocalBudgetRepository(
 
         return result_ok(result)
 
-    async def list(
-        self, options: GetAllOptions
-    ) -> Either[Sequence[BudgetEntity], RepositoryUnexpectedError | DataIntegrityError]:
+    async def list(self, options: GetAllOptions) -> Either[
+        Sequence[BudgetSummaryReadModel],
+        RepositoryUnexpectedError | DataIntegrityError,
+    ]:
 
-        result: list[BudgetEntity] = []
+        result: list[BudgetSummaryReadModel] = []
 
         if filter := options.get("filter"):
             user_id = filter.get("user_id")
@@ -89,11 +82,11 @@ class LocalBudgetRepository(
         return result_ok(result)
 
     async def first(self, options: GetOptions) -> Either[
-        BudgetEntity,
+        BudgetSummaryReadModel,
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]:
-        result: BudgetEntity | None = None
-        
+        result: BudgetSummaryReadModel | None = None
+
         if filter := options.get("filter"):
             user_id = filter.get("user_id")
 
@@ -119,7 +112,7 @@ class LocalBudgetRepository(
         return result_ok(result)
 
     async def remove(
-        self, aggregate: BudgetEntity
+        self, aggregate: BudgetSummaryReadModel
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
     async def remove_all(

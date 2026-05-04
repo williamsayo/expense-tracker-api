@@ -10,6 +10,7 @@ from boilerplate.errors.repository import (
     DataIntegrityError,
     RepositoryNotFoundError,
 )
+from boilerplate.errors.http import AuthorizationError
 from result import result_fail, is_fail, Either, result_ok, result_combine
 from shared.application.services.base import BaseService
 from identity.utils.setup_dependencies import UserDeps
@@ -21,6 +22,7 @@ from identity.infrastructure.services.encryption.argon2_encrption import (
 )
 from identity.infrastructure.mappers.user_mapper import create_unique_entity_id
 from shared.domain.types.user_id import UserId
+
 
 class UserService(BaseService[UserDeps]):
     """Service layer."""
@@ -61,7 +63,8 @@ class UserService(BaseService[UserDeps]):
         DataIntegrityError
         | RepositoryNotFoundError
         | RepositoryUnexpectedError
-        | UnexpectedError,
+        | UnexpectedError
+        | AuthorizationError,
     ]:
         encryption = self.deps.argon2_encryption_service
         entity_result = await self.deps.repo.first(
@@ -165,3 +168,13 @@ class UserService(BaseService[UserDeps]):
         access_token, refresh_token = result.value
 
         return result_ok({"access_token": access_token, "refresh_token": refresh_token})
+
+    async def refresh_access_token_usecase(
+        self, refresh_token: str
+    ) -> Either[dict[str, str], UnexpectedError | AuthorizationError]:
+        access_token = self.deps.token_service.verify_refresh_token(refresh_token)
+
+        if is_fail(access_token):
+            return access_token
+
+        return result_ok({"access_token": access_token.value})

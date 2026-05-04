@@ -1,6 +1,19 @@
 from typing import TypedDict
 from dataclasses import dataclass
 from enum import StrEnum
+from pydantic import BaseModel
+
+
+class RefreshTokenData(BaseModel):
+    """Pydantic model for refresh token data."""
+    refresh_token: str
+
+@dataclass
+class AccessTokenData:
+    """Pydantic model for access token data."""
+
+    access_token: str
+    token_type: str = "bearer"
 
 
 class Token(StrEnum):

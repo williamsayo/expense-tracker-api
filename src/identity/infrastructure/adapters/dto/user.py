@@ -9,13 +9,12 @@ class UserBaseModel(BaseModel):
 
     email: EmailStr = Field(..., examples=["username@example.com"])
     username: str = Field(..., examples=["username"], description="public facing name")
-    first_name: str = Field(
-        ..., min_length=2, max_length=50, description="First name of the user"
+    first_name: str | None = Field(
+        None, min_length=2, max_length=50, description="First name of the user"
     )
-    last_name: str = Field(
-        ..., min_length=2, max_length=50, description="Last name of the user"
+    last_name: str | None = Field(
+        None, min_length=2, max_length=50, description="Last name of the user"
     )
-
 
 class UserReadModel(BaseReadModel, UserBaseModel):
     """Pydantic model for reading user data, excluding sensitive information like password."""

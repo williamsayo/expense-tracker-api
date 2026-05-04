@@ -6,7 +6,10 @@ class BaseReadModel(BaseModel):
     """Read model for base data."""
 
     model_config = ConfigDict(
-        from_attributes=True, alias_generator=to_camel, validate_by_name=True
+        from_attributes=True,
+        alias_generator=to_camel,
+        populate_by_name=True,
+        serialize_by_alias=True,
     )
 
 

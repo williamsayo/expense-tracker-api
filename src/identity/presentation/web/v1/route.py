@@ -1,10 +1,13 @@
-import logging
 from fastapi.routing import APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Depends
+from fastapi import Depends,status
 from typing import Annotated
 from result import is_fail
-from identity.infrastructure.adapters.dto.token import TokenData
+from identity.infrastructure.adapters.dto.token import (
+    RefreshTokenData,
+    TokenData,
+    AccessTokenData,
+)
 from identity.application.services.user import UserService
 from identity.infrastructure.adapters.dto.user import (
     UserWriteModel,
@@ -20,7 +23,7 @@ router = APIRouter(
 )
 
 
-@router.post("/token", response_model=TokenData)
+@router.post("/token", response_model=TokenData, status_code=status.HTTP_200_OK)
 async def authenticate_user_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     user_service: Annotated[UserService, Depends()],
@@ -35,7 +38,24 @@ async def authenticate_user_for_access_token(
     return token_result.value
 
 
-@router.post("/register")
+@router.post(
+    "/refresh-token",
+    response_model=AccessTokenData,
+    status_code=status.HTTP_200_OK
+)
+async def refresh_access_token(
+    token: RefreshTokenData,
+    user_service: Annotated[UserService, Depends()],
+):
+    """Endpoint to refresh a user's access token."""
+    token_result = await user_service.refresh_access_token_usecase(token.refresh_token)
+
+    if is_fail(token_result):
+        raise token_result.value
+
+    return token_result.value
+
+@router.post("/register",status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_data: UserWriteModel, user_service: Annotated[UserService, Depends()]
 ):
@@ -48,7 +68,7 @@ async def register_user(
     return {"message": "User registered successfully"}
 
 
-@router.post("/login", response_model=TokenData)
+@router.post("/login", response_model=TokenData, status_code=status.HTTP_200_OK)
 async def login_user(
     credentials: UserLoginModel,
     user_service: Annotated[UserService, Depends()],
@@ -63,7 +83,7 @@ async def login_user(
     return token_result.value
 
 
-@router.get("/profile", response_model=UserReadModel)
+@router.get("/profile", response_model=UserReadModel, status_code=status.HTTP_200_OK)
 async def retrieve_user_details(
     auth: AuthDeps,
     user_service: Annotated[UserService, Depends()],
@@ -75,7 +95,7 @@ async def retrieve_user_details(
     return user_result.value
 
 
-@router.patch("/update_profile", response_model=UserReadModel)
+@router.patch("/update_profile", response_model=UserReadModel, status_code=status.HTTP_200_OK)
 async def update_user_details(
     user_data: UserUpdateModel,
     auth: AuthDeps,

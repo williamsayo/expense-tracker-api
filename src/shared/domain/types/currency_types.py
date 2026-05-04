@@ -8,6 +8,7 @@ class Currency(StrEnum):
     EUR = "EUR"
     NGN = "NGN"
     GHS = "GHS"
+    GBP = "GBP"
 
 
 currency_display: dict[Currency, str] = {
@@ -15,4 +16,5 @@ currency_display: dict[Currency, str] = {
     Currency.GHS: "GH₵",
     Currency.NGN: "₦",
     Currency.USD: "$",
+    Currency.GBP: "£",
 }

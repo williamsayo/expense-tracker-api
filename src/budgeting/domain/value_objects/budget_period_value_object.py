@@ -1,10 +1,8 @@
 from typing import Self, TypedDict
 from datetime import date
-from pydantic import BaseModel
-from boilerplate.domain.value_object import ValueObject
-from boilerplate.domain.rules.apply_rule import apply_rules
-from boilerplate.errors.domain import DomainRuleError
+from boilerplate import ValueObject, apply_rules, DomainRuleError
 from result import is_fail, result_ok, result_fail, Either
+from budgeting.domain.rules.budget_period_rules import BudgetPeriodSchema
 
 
 class BudgetPeriodValueObjectProps(TypedDict):
@@ -34,13 +32,13 @@ class BudgetPeriodValueObject(ValueObject[BudgetPeriodValueObjectProps]):
     def create(
         cls, props: BudgetPeriodValueObjectProps
     ) -> Either[Self, DomainRuleError]:
-        if props["end_date"] <= props["start_date"]:
-            return result_fail(
-                DomainRuleError(
-                    None, "end_date cannot be less than or equal to start_date"
-                )
-            )
-        # result = apply_rules(props, BaseModel)
-        # if is_fail(result):
-        #     return result_fail(DomainRuleError(result.value))
+        # if props["end_date"] <= props["start_date"]:
+        #     return result_fail(
+        #         DomainRuleError(
+        #             None, "end_date cannot be less than or equal to start_date"
+        #         )
+        #     )
+        result = apply_rules(props, BudgetPeriodSchema)
+        if is_fail(result):
+            return result_fail(DomainRuleError(result.value))
         return result_ok(cls(props))

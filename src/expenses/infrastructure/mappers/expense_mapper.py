@@ -1,14 +1,16 @@
 from uuid import UUID
-from boilerplate.ports.mappers import BaseMapper
-from boilerplate.domain.unique_entity_id import UniqueEntityId
-from boilerplate.errors.domain import IllegalArgumentError
-from boilerplate.errors.application import EntityCreationError
-from boilerplate.errors.core import CoreError
+from boilerplate import (
+    BaseMapper,
+    CoreError,
+    UniqueEntityId,
+    IllegalArgumentError,
+    CoreError,
+)
 from result import result_ok, result_fail, Either, is_fail, result_combine
-from expenses.domain.entities.expense_entity import ExpenseEntity
-from expenses.infrastructure.repositories.schema import Expense
 from shared.domain.value_objects.category_value_object import CategoryValueObject
 from shared.domain.value_objects.money_value_object import MoneyValueObject
+from expenses.domain.entities.expense_entity import ExpenseEntity
+from expenses.infrastructure.repositories.schema import Expense
 
 def create_unique_entity_id(id: str | UUID) -> Either[UniqueEntityId, CoreError]:
     try:
@@ -24,6 +26,7 @@ class ExpenseMapper(BaseMapper):
     def to_persistence(entity: ExpenseEntity) -> Expense:
         return Expense(
             id=entity.id.value,
+            name=entity.name,
             user_id=entity.user_id,
             amount=entity.money.amount,
             currency=entity.money.currency,
@@ -51,6 +54,7 @@ class ExpenseMapper(BaseMapper):
 
         return ExpenseEntity.existing_entity(
             {
+                "name": persistence.name,
                 "user_id": persistence.user_id,
                 "date": persistence.date,
                 "note": persistence.note,

@@ -2,7 +2,7 @@ from fastapi import Depends
 from typing import Self
 from dataclasses import dataclass, fields
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True)
 class BaseDependency:
     """Base class for dependency containers."""
 

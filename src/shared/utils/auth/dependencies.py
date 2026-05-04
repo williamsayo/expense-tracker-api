@@ -10,8 +10,7 @@ from shared.domain.types.user_id import UserId
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token", auto_error=False)
 
-
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True)
 class AuthDependency(BaseDependency):
     """Dependency container for auth use cases."""
 
@@ -28,5 +27,6 @@ class AuthDependency(BaseDependency):
                 headers={"www-authenticate": "Bearer"},
             )
         object.__setattr__(self, "user_id", UUID(payload_result.value.get("sub", None)))
+
 
 AuthDeps = Annotated[AuthDependency, Depends()]

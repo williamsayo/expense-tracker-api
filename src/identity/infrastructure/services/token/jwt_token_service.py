@@ -13,7 +13,6 @@ from core.config import settings
 from identity.infrastructure.adapters.dto.token import (
     Token,
     TokenPayload,
-    RefreshTokenPayload,
 )
 from shared.utils.auth.token_verifier import TokenVerifier
 
@@ -48,7 +47,7 @@ class JWTTokenService:
             return result_fail(error)
 
     def create_access_token(
-        self, user_id: str, expiry: timedelta = timedelta(seconds=3600)
+        self, user_id: str, expiry: timedelta = timedelta(seconds=240)
     ) -> Either[str, UnexpectedError]:
         result = self.generate_token(
             user_id=user_id,
@@ -73,7 +72,7 @@ class JWTTokenService:
 
     def verify_refresh_token(
         self, token: str
-    ) -> Either[RefreshTokenPayload, AuthorizationError]:
+    ) -> Either[str, AuthorizationError | UnexpectedError]:
         payload_result = self.token_verifier.decode_token(token)
 
         if is_fail(payload_result):
@@ -88,9 +87,12 @@ class JWTTokenService:
                 )
             )
 
-        return result_ok(
-            RefreshTokenPayload(sub=payload.get("sub"), jti=payload.get("jti"))
-        )
+        access_token = self.create_access_token(payload.get("sub"))
+
+        if is_fail(access_token):
+            return access_token
+
+        return result_ok(access_token.value)
 
     def create_refresh_token(
         self,

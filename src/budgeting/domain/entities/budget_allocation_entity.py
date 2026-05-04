@@ -1,15 +1,14 @@
 from typing import Never, TypedDict, Self
-from boilerplate.domain.entity import Entity
-from boilerplate.domain.unique_entity_id import UniqueEntityId
+from boilerplate import Entity, UniqueEntityId
 from result import Either, result_ok
-from shared.domain.value_objects.money_value_object import MoneyValueObject
+from budgeting.domain.value_objects.amount_value_object import AmountValueObject
 from shared.domain.value_objects.category_value_object import CategoryValueObject
 
 
 class BudgetAllocationEntityProps(TypedDict):
     """Typed dictionary for budget allocation entity fields."""
 
-    money: MoneyValueObject
+    amount: AmountValueObject
     category: CategoryValueObject
 
 
@@ -25,8 +24,8 @@ class BudgetAllocationEntity(Entity[BudgetAllocationEntityProps]):
         super().__init__(props, id, version)
 
     @property
-    def money(self) -> MoneyValueObject:
-        return self.props["money"]
+    def amount(self) -> AmountValueObject:
+        return self.props["amount"]
 
     @property
     def category(self) -> CategoryValueObject:

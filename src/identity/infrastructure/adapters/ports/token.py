@@ -1,8 +1,7 @@
 from typing import Protocol, Never
 from datetime import timedelta
 from result import Either
-from boilerplate.errors.application import UnexpectedError
-from boilerplate.errors.http import AuthorizationError
+from boilerplate import UnexpectedError, AuthorizationError
 from identity.infrastructure.adapters.dto.token import Token, RefreshTokenPayload
 
 
@@ -14,17 +13,17 @@ class TokenServiceProtocol(Protocol):
     ) -> Either[str, TypeError]: ...
 
     def create_access_token(
-        self, user_id: str, expiry: timedelta = timedelta(seconds=3600)
+        self, user_id: str, expiry: timedelta = ...
     ) -> Either[str, UnexpectedError]: ...
 
     def verify_refresh_token(
         self, token: str
-    ) -> Either[RefreshTokenPayload, AuthorizationError]: ...
+    ) -> Either[str, AuthorizationError | UnexpectedError]: ...
 
     def generate_refresh_key(self, jti: str) -> Either[str, Never]: ...
 
     def create_refresh_token(
-        self, user_id: str, expiry: timedelta = timedelta(days=7)
+        self, user_id: str, expiry: timedelta = ...
     ) -> Either[str, UnexpectedError]: ...
 
     def serialize(self, data: dict) -> str: ...

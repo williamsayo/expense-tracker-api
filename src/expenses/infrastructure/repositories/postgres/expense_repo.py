@@ -1,18 +1,21 @@
 from typing import Sequence, cast
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, exists, delete
+from sqlalchemy import func, select, exists, delete
 from sqlalchemy.engine import CursorResult
-from boilerplate import GetAllOptions, GetOptions
-from boilerplate.errors.repository import (
+from boilerplate import (
     DataIntegrityError,
     RepositoryUnexpectedError,
     ConflictError,
     ConcurrencyError,
     RepositoryNotFoundError,
+    GetAllOptions,
+    GetOptions,
+    AuthenticationError,
+    AuthenticationError,
+    WriteRepository,
+    ReadRepository,
+    UniqueEntityId,
 )
-from boilerplate.errors.http import AuthenticationError
-from boilerplate.ports.repository import WriteRepository, ReadRepository
-from boilerplate.domain.unique_entity_id import UniqueEntityId
 from result import result_fail, result_ok, is_fail, Either, result_combine
 from shared.domain.types.user_id import UserId
 from expenses.domain.entities.expense_entity import ExpenseEntity
@@ -27,13 +30,28 @@ class ExpenseRepository(WriteRepository, ReadRepository):
         self.db = db
 
     async def list(
-        self, options: GetAllOptions
+        self, options: GetAllOptions[str]
     ) -> Either[
         Sequence[ExpenseEntity], RepositoryUnexpectedError | DataIntegrityError
     ]:
         statement = select(Expense)
         if filter := options.get("filter"):
             statement = statement.filter_by(**filter)
+
+        if sort := options.get("sort"):
+            statement = statement.order_by(
+                *[
+                    (
+                        getattr(Expense, col).desc()
+                        if direction == "desc"
+                        else getattr(Expense, col).asc()
+                    )
+                    for col, direction in sort.items()
+                ]
+            )
+
+        if limit := options.get("limit"):
+            statement = statement.limit(limit)
 
         result = await self.db.scalars(statement)
         persistence_output = result.all()

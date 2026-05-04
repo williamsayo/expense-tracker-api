@@ -1,6 +1,6 @@
 from uuid import UUID
 from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import Text, ForeignKey, String, UniqueConstraint, Index
+from sqlalchemy import Text, ForeignKey, String, Index
 from datetime import datetime, UTC
 from sqlalchemy import Uuid, Enum
 from shared.infrastructure.db.base import Base
@@ -15,6 +15,7 @@ class Expense(Base, TimeStampMixin, VersionMixin):
     __tablename__ = "expenses"
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=True)
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id"), nullable=False, index=True
     )

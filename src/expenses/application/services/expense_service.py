@@ -1,20 +1,21 @@
-from typing import Sequence
+from fastapi import BackgroundTasks
+from typing import Sequence, List
 from result import result_ok, result_fail, is_fail, Either, result_combine
-from boilerplate.errors.core import CoreError
-from boilerplate.errors.repository import (
+from boilerplate import (
     DataIntegrityError,
     RepositoryNotFoundError,
     RepositoryUnexpectedError,
+    AuthenticationError,
+    ApplicationErrorID,
+    DomainRuleError,
+    CoreError,
 )
-from boilerplate.errors.http import AuthenticationError
-from boilerplate.errors.error_ids import ApplicationErrorID
-from boilerplate.errors.domain import DomainRuleError
 from shared.application.services.base import BaseService
 from shared.domain.value_objects.category_value_object import CategoryValueObject
 from shared.domain.value_objects.money_value_object import MoneyValueObject
 from shared.domain.types.category_types import CategoryType
 from shared.domain.types.user_id import UserId
-from expenses.utils.setup_dependencies import expense_deps
+from expenses.utils.setup_dependencies import ExpenseDeps
 from expenses.domain.entities.expense_entity import ExpenseEntity
 from expenses.infrastructure.mappers.expense_mapper import create_unique_entity_id
 from expenses.infrastructure.adapters.dto.expense import (
@@ -23,17 +24,20 @@ from expenses.infrastructure.adapters.dto.expense import (
 )
 
 
-class ExpenseService(BaseService[expense_deps]):
+class ExpenseService(BaseService[ExpenseDeps]):
     """Service layer."""
 
     def __init__(
         self,
-        deps: expense_deps,
+        deps: ExpenseDeps,
     ):
         super().__init__(deps)
 
     async def create_expense_usecase(
-        self, user_id: UserId, expense_data: ExpenseWriteModel
+        self,
+        user_id: UserId,
+        expense_data: ExpenseWriteModel,
+        background_tasks: BackgroundTasks,
     ) -> Either[
         ExpenseEntity,
         CoreError
@@ -56,6 +60,7 @@ class ExpenseService(BaseService[expense_deps]):
 
         entity_result = ExpenseEntity.create(
             {
+                "name": expense_data.name,
                 "user_id": user_id,
                 "category": category,
                 "money": money,
@@ -68,6 +73,11 @@ class ExpenseService(BaseService[expense_deps]):
 
         if is_fail(result):
             return result
+
+        # Dispatch uncommitted events after successful persistence
+        events = entity_result.value.uncommited_events
+        background_tasks.add_task(self.deps.dispatcher.publish_all, events)
+        entity_result.value.uncommit()
 
         return entity_result
 
@@ -107,6 +117,7 @@ class ExpenseService(BaseService[expense_deps]):
             currency=expense_data.currency,
             note=expense_data.note,
             date=expense_data.date,
+            name=expense_data.name,
         )
 
         if is_fail(update_result):
@@ -119,67 +130,10 @@ class ExpenseService(BaseService[expense_deps]):
 
         return result_ok(entity)
 
-    async def retrieve_all_expense_usecase(self, user_id: UserId) -> Either[
-        Sequence[ExpenseEntity],
-        RepositoryNotFoundError | RepositoryUnexpectedError | DataIntegrityError,
-    ]:
-        result = await self.deps.repo.list(
-            {"filter": {"user_id": user_id}, "limit": 20}
-        )
-
-        if is_fail(result):
-            return result
-
-        return result_ok(result.value)
-
-    async def retrieve_expense_usecase(self, aggregate_id: str, user_id: UserId) -> Either[
-        ExpenseEntity,
-        CoreError
-        | RepositoryNotFoundError
-        | RepositoryUnexpectedError
-        | DataIntegrityError,
-    ]:
-        entity_id = create_unique_entity_id(aggregate_id)
-
-        if is_fail(entity_id):
-            return entity_id
-
-        result = await self.deps.repo.get_by_id(entity_id.value)
-
-        if is_fail(result):
-            return result
-        
-        entity = result.value
-        
-        if entity.user_id != user_id:
-            return result_fail(
-                AuthenticationError(
-                    ApplicationErrorID.AUTHENTICATION,
-                    "You do not have permission to view this expense",
-                )
-            )
-
-        return result_ok(result.value)
-
-    async def retrieve_expense_by_category_usecase(
-        self, category: CategoryType, user_id: UserId
-    ) -> Either[
-        Sequence[ExpenseEntity],
-        RepositoryNotFoundError | RepositoryUnexpectedError | DataIntegrityError,
-    ]:
-        result = await self.deps.repo.list(
-            {"filter": {"category": category.value, "user_id": user_id}, "limit": 20}
-        )
-
-        if is_fail(result):
-            return result
-
-        return result_ok(result.value)
-
     async def delete_expense_usecase(
         self, aggregateId: str, user_id: UserId
     ) -> Either[None, RepositoryUnexpectedError | CoreError]:
-        
+
         id_result = create_unique_entity_id(aggregateId)
 
         if is_fail(id_result):
@@ -211,7 +165,7 @@ class ExpenseService(BaseService[expense_deps]):
         self, category: CategoryType, user_id: UserId
     ) -> Either[
         None,
-        RepositoryUnexpectedError,
+        RepositoryUnexpectedError | AuthenticationError | CoreError,
     ]:
         result = await self.deps.repo.remove_all(category.value, user_id)
 

@@ -1,37 +1,57 @@
 from fastapi.routing import APIRouter
-from fastapi import status, Depends
+from fastapi import status, Depends, BackgroundTasks
 from typing import List, Annotated
 from result import is_fail
-from shared.domain.types.category_types import CategoryType
 from shared.utils.auth.dependencies import AuthDeps
-from budgeting.application.services.budget_service import BudgetService
+from shared.application.dtos.url_params import UrlParams
 from budgeting.infrastructure.adapters.dto.budget import (
     BudgetReadModel,
     BudgetUpdateModel,
     BudgetWriteModel,
+    BudgetOverviewReadModel,
 )
 from budgeting.infrastructure.adapters.dto.budget_allocation import (
     BudgetAllocationWriteModel,
 )
+from budgeting.application.use_cases.retrieve_budget_usecase import GetBudgetUsecase
+from budgeting.application.use_cases.retrieve_budget_list_usecase import (
+    GetBudgetsUsecase,
+)
+from budgeting.application.use_cases.create_budget_usecase import CreateBudgetUseCase
+from budgeting.application.use_cases.add_budget_allocation_usecase import (
+    AddBudgetAllocationUsecase,
+)
+from budgeting.application.use_cases.remove_budget_allocation_usecase import (
+    RemoveBudgetAllocationUsecase,
+)
+from budgeting.application.use_cases.retrieve_budget_overview_usecase import (
+    GetBudgetOverviewUsecase,
+)
+from budgeting.application.use_cases.delete_budget_usecase import DeleteBudgetUsecase
+from budgeting.application.use_cases.update_budget_usecase import UpdateBudgetUsecase
 
 router = APIRouter(
-    prefix="/budget",
+    prefix="/budgets",
     tags=["Budgeting"],
 )
 
+BudgetUrlParams = Annotated[UrlParams, Depends()]
 
-@router.post("", response_model=BudgetReadModel, status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_budget(
     budget_data: BudgetWriteModel,
     auth: AuthDeps,
-    budget_service: Annotated[BudgetService, Depends()],
+    budget_service: Annotated[CreateBudgetUseCase, Depends()],
+    background_tasks: BackgroundTasks,
 ):
-    result = await budget_service.create_budget_usecase(auth.user_id, budget_data)
+    result = await budget_service.execute(auth.user_id, budget_data, background_tasks)
 
     if is_fail(result):
         raise result.value
 
-    return BudgetReadModel.from_entity(result.value)
+    return {
+        "message": "Budget created successfully",
+    }
 
 
 @router.put(
@@ -41,16 +61,17 @@ async def update_budget(
     aggregate_id: str,
     budget_data: BudgetUpdateModel,
     auth: AuthDeps,
-    budget_service: Annotated[BudgetService, Depends()],
+    budget_service: Annotated[UpdateBudgetUsecase, Depends()],
 ):
-    result = await budget_service.update_budget_usecase(
-        aggregate_id, auth.user_id, budget_data
-    )
+    result = await budget_service.execute(aggregate_id, auth.user_id, budget_data)
 
     if is_fail(result):
         raise result.value
 
-    return BudgetReadModel.from_entity(result.value)
+    return {
+        "message": "Budget updated successfully",
+        "data": BudgetReadModel.from_entity(result.value),
+    }
 
 
 @router.put(
@@ -62,29 +83,49 @@ async def add_budget_allocation(
     aggregate_id: str,
     budget_data: BudgetAllocationWriteModel,
     auth: AuthDeps,
-    budget_service: Annotated[BudgetService, Depends()],
+    use_case: Annotated[AddBudgetAllocationUsecase, Depends()],
 ):
-    result = await budget_service.add_budget_allocation_usecase(
-        aggregate_id, auth.user_id, budget_data
-    )
+    result = await use_case.execute(aggregate_id, auth.user_id, budget_data)
 
     if is_fail(result):
         raise result.value
 
-    return BudgetReadModel.from_entity(result.value)
+    return {
+        "message": "allocation created successfully",
+        "data": BudgetReadModel.from_entity(result.value),
+    }
 
 
 @router.get("", response_model=List[BudgetReadModel], status_code=status.HTTP_200_OK)
 async def retrieve_all_budgets(
+    params: BudgetUrlParams,
     auth: Annotated[AuthDeps, Depends()],
-    budget_service: Annotated[BudgetService, Depends()],
+    use_case: Annotated[GetBudgetsUsecase, Depends()],
 ):
-    result = await budget_service.list_budgets_usecase(auth.user_id)
+    result = await use_case.execute(auth.user_id)
 
     if is_fail(result):
         raise result.value
 
-    return [BudgetReadModel.from_entity(budget) for budget in result.value]
+    return result.value
+
+
+@router.get(
+    "/overview",
+    response_model=BudgetOverviewReadModel,
+    status_code=status.HTTP_200_OK,
+)
+async def retrieve_budget_overview(
+    params: BudgetUrlParams,
+    auth: Annotated[AuthDeps, Depends()],
+    use_case: Annotated[GetBudgetOverviewUsecase, Depends()],
+):
+    result = await use_case.execute(auth.user_id, params.page_size)
+
+    if is_fail(result):
+        raise result.value
+
+    return result.value
 
 
 @router.get(
@@ -95,15 +136,14 @@ async def retrieve_all_budgets(
 async def retrieve_budget(
     aggregate_id: str,
     auth: Annotated[AuthDeps, Depends()],
-    budget_service: Annotated[BudgetService, Depends()],
+    use_case: Annotated[GetBudgetUsecase, Depends()],
 ):
-    result = await budget_service.get_budget_usecase(aggregate_id, auth.user_id)
+    result = await use_case.execute(aggregate_id, auth.user_id)
 
     if is_fail(result):
         raise result.value
 
-    return BudgetReadModel.from_entity(result.value)
-
+    return result.value
 
 @router.delete(
     "/{aggregate_id}",
@@ -112,13 +152,13 @@ async def retrieve_budget(
 async def delete_all_expense_by_category(
     aggregate_id: str,
     auth: AuthDeps,
-    budget_service: Annotated[BudgetService, Depends()],
+    use_case: Annotated[DeleteBudgetUsecase, Depends()],
 ):
-    result = await budget_service.delete_budget_usecase(aggregate_id, auth.user_id)
+    result = await use_case.execute(aggregate_id, auth.user_id)
 
     if is_fail(result):
         raise result.value
-    
+
     return None
 
 
@@ -130,11 +170,11 @@ async def delete_budget_allocation(
     aggregate_id: str,
     allocation_id: str,
     auth: AuthDeps,
-    budget_service: Annotated[BudgetService, Depends()],
+    use_case: Annotated[RemoveBudgetAllocationUsecase, Depends()],
 ):
-    result = await budget_service.delete_budget_allocation_usecase(aggregate_id, allocation_id, auth.user_id)
+    result = await use_case.execute(aggregate_id, allocation_id, auth.user_id)
 
     if is_fail(result):
         raise result.value
-    
+
     return None

@@ -9,25 +9,50 @@ from budgeting.infrastructure.repositories.postgres.budget_repo import BudgetRep
 from budgeting.infrastructure.repositories.local.budget_repo import (
     LocalBudgetRepository,
 )
-from budgeting.infrastructure.repositories.base import BudgetRepositoryProtocol
+from budgeting.infrastructure.repositories.postgres.budget_read_repo import (
+    BudgetReadRepository,
+)
+from budgeting.infrastructure.repositories.local.budget_read_repo import (
+    LocalBudgetReadRepository,
+)
+from budgeting.infrastructure.adapters.ports.repository import (
+    BudgetRepositoryProtocol,
+    BudgetReadRepositoryProtocol,
+)
+from shared.infrastructure.dispatcher.event_bus import EventBus
+from shared.infrastructure.dispatcher.dependencies import get_event_bus
 
 
-def get_budget_repository(db: AsyncSession = Depends(get_session)) -> BudgetRepository:
+def get_budget_repository(
+    db: AsyncSession = Depends(get_session),
+) -> BudgetRepositoryProtocol:
     """Factory function to create a BudgetRepository instance."""
+    # if settings.use_local_repository:
+    #     return LocalBudgetRepository()
     return BudgetRepository(db)
 
-def get_budget_repository_dependency() -> BudgetRepositoryProtocol:
-    """Factory function to select the appropriate BudgetRepository based on settings."""
-    if settings.use_local_repository:
-        return LocalBudgetRepository()
-    return get_budget_repository()
+
+def get_budget_read_repository(
+    db: AsyncSession = Depends(get_session),
+) -> BudgetReadRepositoryProtocol:
+    """Factory function to create a BudgetReadRepository instance."""
+    # if settings.use_local_repository:
+    #     return LocalBudgetReadRepository()
+    return BudgetReadRepository(db)
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True)
 class BudgetDependencies(BaseDependency):
     """Dependency container for example use cases."""
 
-    repo: BudgetRepositoryProtocol = Depends(get_budget_repository_dependency)
+    repo: BudgetRepositoryProtocol = Depends(get_budget_repository)
+    dispatcher: EventBus = Depends(get_event_bus)
 
+
+@dataclass(slots=True)
+class BudgetReadDependencies(BaseDependency):
+    """Dependency container for example use cases."""
+    repo: BudgetReadRepositoryProtocol = Depends(get_budget_read_repository)
 
 BudgetDeps = Annotated[BudgetDependencies, Depends()]
+BudgetReadDeps = Annotated[BudgetReadDependencies, Depends()]

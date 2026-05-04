@@ -1,29 +1,47 @@
 from fastapi.routing import APIRouter
-from fastapi import status, Depends
+from fastapi import status, Depends, BackgroundTasks
 from typing import List, Annotated
 from result import is_fail
 from shared.domain.types.category_types import CategoryType
 from shared.utils.auth.dependencies import AuthDeps
+from shared.application.dtos.url_params import UrlParams
 from expenses.application.services.expense_service import ExpenseService
+from expenses.application.use_cases.retrieve_expense_overview_usecase import (
+    GetExpenseOverviewUsecase,
+)
+from expenses.application.use_cases.retrieve_expense_list_usecase import (
+    GetExpenseListUsecase,
+)
+from expenses.application.use_cases.retrieve_expense_usecase import (
+    GetExpenseUsecase,
+)
+from expenses.application.use_cases.retrieve_expense_by_category_usecase import (
+    GetExpenseByCategoryUsecase,
+)
 from expenses.infrastructure.adapters.dto.expense import (
     ExpenseReadModel,
     ExpenseUpdateModel,
     ExpenseWriteModel,
+    ExpenseOverviewReadModel,
 )
 
 router = APIRouter(
-    prefix="/expense",
+    prefix="/expenses",
     tags=["Expense"],
 )
 
+ExpenseUrlParams = Annotated[UrlParams, Depends()]
 
 @router.post("", response_model=ExpenseReadModel, status_code=status.HTTP_201_CREATED)
 async def create_expense(
     expense_data: ExpenseWriteModel,
     auth: AuthDeps,
     expense_service: Annotated[ExpenseService, Depends()],
+    background_tasks: BackgroundTasks,
 ):
-    result = await expense_service.create_expense_usecase(auth.user_id, expense_data)
+    result = await expense_service.create_expense_usecase(
+        auth.user_id, expense_data, background_tasks
+    )
 
     if is_fail(result):
         raise result.value
@@ -52,57 +70,75 @@ async def update_expense(
 
 @router.get("", response_model=List[ExpenseReadModel], status_code=status.HTTP_200_OK)
 async def retrieve_all_expenses(
+    params: ExpenseUrlParams,
     auth: Annotated[AuthDeps, Depends()],
-    expense_service: Annotated[ExpenseService, Depends()],
+    use_case: Annotated[GetExpenseListUsecase, Depends()],
 ):
-    result = await expense_service.retrieve_all_expense_usecase(auth.user_id)
+    result = await use_case.execute(auth.user_id)
 
     if is_fail(result):
         raise result.value
 
-    return [ExpenseReadModel.from_entity(expense) for expense in result.value]
+    return result.value
+
+
+@router.get(
+    "/overview",
+    response_model=ExpenseOverviewReadModel,
+    status_code=status.HTTP_200_OK,
+)
+async def expense_overview(
+    params: ExpenseUrlParams,
+    auth: AuthDeps,
+    overview_use_case: Annotated[GetExpenseOverviewUsecase, Depends()],
+):
+    result = await overview_use_case.execute(auth.user_id, params.page_size)
+
+    if is_fail(result):
+        raise result.value
+
+    return result.value
 
 
 @router.get(
     "/{aggregate_id}",
-    response_model=List[ExpenseReadModel],
+    response_model=ExpenseReadModel,
     status_code=status.HTTP_200_OK,
 )
 async def retrieve_expense(
     aggregate_id: str,
     auth: AuthDeps,
-    expense_service: Annotated[ExpenseService, Depends()],
+    use_case: Annotated[GetExpenseUsecase, Depends()],
 ):
-    result = await expense_service.retrieve_expense_usecase(aggregate_id, auth.user_id)
+    result = await use_case.execute(aggregate_id, auth.user_id)
 
     if is_fail(result):
         raise result.value
 
-    return ExpenseReadModel.from_entity(result.value)
+    return result.value
 
 
 @router.get(
-    "/{category_name}",
+    "/category/{category_name}",
     response_model=List[ExpenseReadModel],
     status_code=status.HTTP_200_OK,
 )
 async def retrieve_expense_by_category(
+    params: ExpenseUrlParams,
     category_name: CategoryType,
     auth: AuthDeps,
-    expense_service: Annotated[ExpenseService, Depends()],
+    use_case: Annotated[GetExpenseByCategoryUsecase, Depends()],
 ):
-    result = await expense_service.retrieve_expense_by_category_usecase(
-        category_name, auth.user_id
-    )
+    result = await use_case.execute(category_name, auth.user_id)
 
     if is_fail(result):
         raise result.value
 
-    return [ExpenseReadModel.from_entity(expense) for expense in result.value]
+    return result.value
 
 
 @router.delete(
-    "/{category_name}/expenses",
+    "/category/{category_name}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_all_expense_by_category(

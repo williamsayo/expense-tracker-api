@@ -1,13 +1,12 @@
-from typing import List, Sequence
-from boilerplate.errors.domain import IllegalArgumentError
+from typing import List
 from result import result_ok, result_fail, is_fail, result_combine, Either
 from boilerplate.errors.http import AuthenticationError
-from boilerplate.errors.repository import (
-    RepositoryNotFoundError,
+from boilerplate import (
     RepositoryUnexpectedError,
     DataIntegrityError,
+    CoreError,
+    IllegalArgumentError,
 )
-from boilerplate.errors.core import CoreError
 from budgeting.infrastructure.mappers.budget_mapper import create_unique_entity_id
 from shared.application.services.base import BaseService
 from budgeting.utils.setup_dependencies import BudgetDeps
@@ -24,7 +23,7 @@ from budgeting.domain.value_objects.budget_period_value_object import (
     BudgetPeriodValueObject,
 )
 from shared.domain.types.user_id import UserId
-from shared.domain.value_objects.money_value_object import MoneyValueObject
+from budgeting.domain.value_objects.amount_value_object import AmountValueObject
 from shared.domain.value_objects.category_value_object import CategoryValueObject
 
 
@@ -37,99 +36,86 @@ class BudgetService(BaseService[BudgetDeps]):
     ):
         super().__init__(deps)
 
-    async def create_budget_usecase(
-        self, user_id: UserId, budget_data: BudgetWriteModel
-    ) -> Either[
-        BudgetEntity, CoreError | RepositoryUnexpectedError | DataIntegrityError
-    ]:
-        """Creates a new budget."""
-        for allocation in budget_data.allocations:
-            allocations: List[BudgetAllocationEntity] = []
-            category_result = CategoryValueObject.create({"name": allocation.category})
-            money_result = MoneyValueObject.create(
-                {
-                    "amount": MoneyValueObject.to_amount(allocation.amount),
-                    "currency": allocation.currency,
-                }
-            )
+    # async def create_budget_usecase(
+    #     self, user_id: UserId, budget_data: BudgetWriteModel
+    # ) -> Either[
+    #     BudgetEntity, CoreError | RepositoryUnexpectedError | DataIntegrityError
+    # ]:
+    #     """Creates a new budget."""
 
-            combined_result = result_combine((category_result, money_result))
+    #     # check if user already has a budget within the given period
+    #     existing_budget_entity = await self.deps.repo.first(
+    #         {
+    #             "filter": {
+    #                 "user_id": user_id,
+    #                 "start_date": budget_data.start_date,
+    #                 "end_date": budget_data.end_date,
+    #             }
+    #         }
+    #     )
 
-            if is_fail(combined_result):
-                return result_fail(combined_result.value)
+    #     if not is_fail(existing_budget_entity):
+    #         return result_fail(
+    #             IllegalArgumentError(
+    #                 None, "A budget already exists for the specified period."
+    #             )
+    #         )
 
-            category, money = combined_result.value
+    #     for allocation in budget_data.allocations:
+    #         allocations: List[BudgetAllocationEntity] = []
+    #         category_result = CategoryValueObject.create({"name": allocation.category})
+    #         money_result = AmountValueObject.create(
+    #             {
+    #                 "amount": AmountValueObject.to_amount(allocation.amount),
+    #             }
+    #         )
 
-            allocation_result = BudgetAllocationEntity.create(
-                {"category": category, "money": money}
-            )
+    #         combined_result = result_combine((category_result, money_result))
 
-            if is_fail(allocation_result):
-                return result_fail(allocation_result.value)
+    #         if is_fail(combined_result):
+    #             return result_fail(combined_result.value)
 
-            allocations.append(allocation_result.value)
+    #         category, amount = combined_result.value
 
-        budget_period_result = BudgetPeriodValueObject.create(
-            {"start_date": budget_data.start_date, "end_date": budget_data.end_date}
-        )
+    #         allocation_result = BudgetAllocationEntity.create(
+    #             {"category": category, "amount": amount}
+    #         )
 
-        if is_fail(budget_period_result):
-            return result_fail(budget_period_result.value)
+    #         if is_fail(allocation_result):
+    #             return result_fail(allocation_result.value)
 
-        budget_entity = BudgetEntity.create(
-            {
-                "user_id": user_id,
-                "allocations": allocations,
-                "budget_period": budget_period_result.value,
-            },
-        )
+    #         allocations.append(allocation_result.value)
 
-        if is_fail(budget_entity):
-            return result_fail(budget_entity.value)
+    #     budget_period_result = BudgetPeriodValueObject.create(
+    #         {"start_date": budget_data.start_date, "end_date": budget_data.end_date}
+    #     )
 
-        budget = budget_entity.value
+    #     if is_fail(budget_period_result):
+    #         return result_fail(budget_period_result.value)
 
-        await self.deps.repo.add(budget)
+    #     budget_entity = BudgetEntity.create(
+    #         {
+    #             "user_id": user_id,
+    #             "title": budget_data.title,
+    #             "allocations": allocations,
+    #             "budget_period": budget_period_result.value,
+    #             "currency": budget_data.currency,
+    #         },
+    #     )
 
-        return result_ok(budget)
+    #     if is_fail(budget_entity):
+    #         return result_fail(budget_entity.value)
 
-    async def get_budget_usecase(self, aggregate_id: str, user_id: UserId) -> Either[
-        BudgetEntity,
-        CoreError
-        | RepositoryNotFoundError
-        | RepositoryUnexpectedError
-        | DataIntegrityError,
-    ]:
-        """Retrieves a budget by its ID."""
-        entity_id = create_unique_entity_id(aggregate_id)
+    #     budget = budget_entity.value
 
-        if is_fail(entity_id):
-            return result_fail(entity_id.value)
+    #     await self.deps.repo.add(budget)
 
-        result = await self.deps.repo.get_by_id(entity_id.value)
+    #     # Dispatch uncommitted events after successful persistence
+    #     events = budget.uncommited_events
+    #     self.deps.dispatcher.publish_all(events)
+    #     budget.uncommit()
 
-        if is_fail(result):
-            return result
-
-        budget = result.value
-        if budget.user_id != user_id:
-            return result_fail(
-                AuthenticationError("Unauthorized to access this budget.")
-            )
-
-        return result_ok(budget)
-
-    async def list_budgets_usecase(self, user_id: UserId) -> Either[
-        Sequence[BudgetEntity],
-        CoreError | RepositoryUnexpectedError | DataIntegrityError,
-    ]:
-        """Lists all budgets."""
-        result = await self.deps.repo.list({"filter": {"user_id": user_id}})
-
-        if is_fail(result):
-            return result
-
-        return result_ok(result.value)
+    #     return result_ok(budget)
 
     async def add_budget_allocation_usecase(
         self,
@@ -147,11 +133,8 @@ class BudgetService(BaseService[BudgetDeps]):
         entity_id = create_unique_entity_id(aggregate_id)
 
         category_result = CategoryValueObject.create({"name": allocation_data.category})
-        money_result = MoneyValueObject.create(
-            {
-                "amount": MoneyValueObject.to_amount(allocation_data.amount),
-                "currency": allocation_data.currency,
-            }
+        money_result = AmountValueObject.create(
+            {"amount": AmountValueObject.to_amount(allocation_data.amount)}
         )
 
         combined_result = result_combine((entity_id, category_result, money_result))
@@ -159,10 +142,10 @@ class BudgetService(BaseService[BudgetDeps]):
         if is_fail(combined_result):
             return result_fail(combined_result.value)
 
-        entity_id, category, money = combined_result.value
+        entity_id, category, amount = combined_result.value
 
         allocation_result = BudgetAllocationEntity.create(
-            {"category": category, "money": money}
+            {"category": category, "amount": amount}
         )
 
         if is_fail(allocation_result):
@@ -231,14 +214,14 @@ class BudgetService(BaseService[BudgetDeps]):
             budget_entity.update_allocation(
                 allocation_id.value,
                 amount=budget_data.allocation.amount,
-                currency=budget_data.allocation.currency,
                 category=budget_data.allocation.category,
             )
 
-        if budget_data.start_date is not None or budget_data.end_date is not None:
-            budget_entity.update_budget_period(
-                start_date=budget_data.start_date, end_date=budget_data.end_date
-            )
+        budget_entity.change_budget_context(
+            currency=budget_data.currency,
+            start_date=budget_data.start_date,
+            end_date=budget_data.end_date,
+        )
 
         result = await self.deps.repo.add(budget_entity)
 
@@ -279,7 +262,9 @@ class BudgetService(BaseService[BudgetDeps]):
 
         return result_ok()
 
-    async def delete_budget_allocation_usecase(self, aggregate_id: str, allocation_id: str, user_id: UserId) -> Either[
+    async def delete_budget_allocation_usecase(
+        self, aggregate_id: str, allocation_id: str, user_id: UserId
+    ) -> Either[
         None,
         CoreError
         | RepositoryUnexpectedError
@@ -294,7 +279,7 @@ class BudgetService(BaseService[BudgetDeps]):
 
         if is_fail(result):
             return result_fail(result.value)
-        
+
         budget_entity_id, allocation_entity_id = result.value
 
         budget_result = await self.deps.repo.get_by_id(budget_entity_id)
@@ -310,10 +295,10 @@ class BudgetService(BaseService[BudgetDeps]):
             )
 
         result = budget_entity.remove_allocation(allocation_entity_id)
-        
+
         if is_fail(result):
             return result_fail(result.value)
-        
+
         # allocation = result.value
 
         result = await self.deps.repo.remove(budget_entity)

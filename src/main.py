@@ -1,19 +1,25 @@
 from fastapi import FastAPI
 from core.config import settings
 from shared.loggers.logging import setup_logging, LogLevel
-from shared.infrastructure.db.base import engine
+from shared.infrastructure.db.base import engine, AsyncSessionLocal
 from shared.infrastructure.db.dependencies import init_db
+from shared.infrastructure.dispatcher.dependencies import register_handler
+from shared.domain.types.event_types import EventTypes
 from core.exception_handler import register_errors
 from core.middlewares import register_middlewares
 from contextlib import asynccontextmanager
 from identity.presentation.web.v1.route import router
 from expenses.presentation.web.v1.route import router as expense_router
 from budgeting.presentation.web.v1.route import router as budget_router
+from budgeting.application.services.event_handler import OnExpenseCreated,OnBudgetCreated
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     await init_db()
     setup_logging(LogLevel.INFO)
+    register_handler(EventTypes.EXPENSE_CREATED, OnExpenseCreated(AsyncSessionLocal))
+    register_handler(EventTypes.BUDGET_CREATED, OnBudgetCreated(AsyncSessionLocal))
     yield
     await engine.dispose()
 

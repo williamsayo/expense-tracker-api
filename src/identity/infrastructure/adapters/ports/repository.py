@@ -11,7 +11,7 @@ from boilerplate.errors.repository import (
 )
 from boilerplate.errors.http import AuthorizationError
 from identity.domain.entities.user_entity import UserEntity
-from identity.infrastructure.services.encryption.base import EncryptionService
+from identity.infrastructure.adapters.ports.encryption import EncryptionService
 
 
 class UserRepositoryProtocol(Protocol):

@@ -1,24 +1,26 @@
 from typing import Sequence, cast
-from boilerplate import GetAllOptions, GetOptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, exists, or_
 from sqlalchemy.exc import IntegrityError
 from result import result_fail, result_ok, is_fail, Either
-from boilerplate.ports.repository import WriteRepository, ReadRepository
-from boilerplate.domain.unique_entity_id import UniqueEntityId
-from boilerplate.errors.repository import (
+from boilerplate import (
     RepositoryNotFoundError,
     DataIntegrityError,
     RepositoryUnexpectedError,
     ConcurrencyError,
     ConflictError,
+    UniqueEntityId,
+    WriteRepository,
+    ReadRepository,
+    AuthorizationError,
+    ApplicationErrorID,
+    GetAllOptions,
+    GetOptions,
 )
-from boilerplate.errors.http import AuthorizationError
-from boilerplate.errors.error_ids import ApplicationErrorID
 from identity.domain.entities.user_entity import UserEntity
 from identity.infrastructure.repositories.schema import User
 from identity.infrastructure.mappers.user_mapper import UserMapper
-from identity.infrastructure.services.encryption.base import EncryptionService
+from identity.infrastructure.adapters.ports.encryption import EncryptionService
 
 
 class UserRepository(WriteRepository, ReadRepository):

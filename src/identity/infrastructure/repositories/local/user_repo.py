@@ -1,22 +1,22 @@
-from typing import Sequence, cast
+from typing import Sequence
 from uuid import UUID
-from boilerplate import GetAllOptions, GetOptions
-from result import result_fail, result_ok, is_fail, Either
-from boilerplate.ports.repository import WriteRepository, ReadRepository
-from boilerplate.domain.unique_entity_id import UniqueEntityId
-from boilerplate.errors.repository import (
+from result import result_fail, result_ok, Either
+from boilerplate import (
     RepositoryNotFoundError,
     DataIntegrityError,
     RepositoryUnexpectedError,
     ConcurrencyError,
     ConflictError,
+    UniqueEntityId,
+    WriteRepository,
+    ReadRepository,
+    GetAllOptions,
+    GetOptions,
+    AuthorizationError,
+    ApplicationErrorID,
 )
-from boilerplate.errors.http import AuthorizationError
-from boilerplate.errors.error_ids import ApplicationErrorID
 from identity.domain.entities.user_entity import UserEntity
-from identity.infrastructure.repositories.schema import User
-from identity.infrastructure.mappers.user_mapper import UserMapper
-from identity.infrastructure.services.encryption.base import EncryptionService
+from identity.infrastructure.adapters.ports.encryption import EncryptionService
 
 
 class LocalUserRepository(WriteRepository, ReadRepository):
@@ -39,7 +39,7 @@ class LocalUserRepository(WriteRepository, ReadRepository):
                         "Username or email already exists",
                     )
                 )
-                
+
         self.db[aggregate.id.value] = aggregate
         return result_ok(aggregate)
 

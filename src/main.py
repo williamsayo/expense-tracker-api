@@ -39,11 +39,12 @@ router = APIRouter()
 register_errors(app=app)
 register_middlewares(app=app)
 
-@router.get("/healthz", tags=["Health"])
+# health check endpoint
+@router.get("/healthz", tags=["Health Check"])
 async def health_check():
     return {"status": "ok"}
 
-
+app.include_router(router)
 app.include_router(identity_router, prefix="/api/v1")
 app.include_router(expense_router, prefix="/api/v1")
 app.include_router(budget_router, prefix="/api/v1")

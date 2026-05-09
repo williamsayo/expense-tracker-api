@@ -5,9 +5,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 class Base(DeclarativeBase):
     """Base declarative model for ORM entities."""
-
     ...
-
 
 engine = create_async_engine(
     settings.db_url,

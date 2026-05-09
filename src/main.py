@@ -21,8 +21,8 @@ from src.spending.budgeting.application.services.event_handler import (
 async def lifespan(_app: FastAPI):
     await init_db()
     setup_logging(LogLevel.INFO)
-    register_handler(EventTypes.EXPENSE_CREATED, OnExpenseCreated(AsyncSessionLocal))
-    register_handler(EventTypes.BUDGET_CREATED, OnBudgetCreated(AsyncSessionLocal))
+    # register_handler(EventTypes.EXPENSE_CREATED, OnExpenseCreated(AsyncSessionLocal))
+    # register_handler(EventTypes.BUDGET_CREATED, OnBudgetCreated(AsyncSessionLocal))
     yield
     await engine.dispose()
 

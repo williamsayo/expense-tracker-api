@@ -1,9 +1,13 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import SecretStr
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+for env_file in sorted(BASE_DIR.glob(".env*")):
+    load_dotenv(env_file, override=True)
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""

@@ -11,7 +11,7 @@ class Base(DeclarativeBase):
 
 engine = create_async_engine(
     settings.db_url,
-    connect_args={"check_same_thread": not settings.debug},
+    connect_args={"check_same_thread": not settings.debug} if "sqlite" in settings.db_url else {},
     # echo=True,
     future=True,
 )

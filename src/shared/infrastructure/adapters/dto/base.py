@@ -1,4 +1,5 @@
-from pydantic import ConfigDict, BaseModel
+from pydantic import ConfigDict, BaseModel, Field
+from datetime import datetime
 from pydantic.alias_generators import to_camel
 
 
@@ -12,6 +13,5 @@ class BaseReadModel(BaseModel):
         serialize_by_alias=True,
     )
 
-
-# updated_at: datetime | None = Field(exclude=True)
-# created_at: datetime | None = Field(exclude=True)
+    updated_at: datetime | None = Field(exclude=True)
+    created_at: datetime | None = Field(exclude=True)

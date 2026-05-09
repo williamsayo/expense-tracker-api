@@ -70,7 +70,10 @@ class BudgetReadRepository(AsyncReadRepository[BudgetSummaryReadModel]):
         statement = (
             select(Budget)
             .where(Budget.id == aggregate_id)
-            .options(selectinload(Budget.allocations))
+            .options(
+                selectinload(Budget.allocations),
+                selectinload(Budget.expenses),
+            )
         )
         result = (await self.db.scalars(statement)).one_or_none()
 
@@ -126,7 +129,10 @@ class BudgetReadRepository(AsyncReadRepository[BudgetSummaryReadModel]):
         BudgetSummaryReadModel,
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]:
-        statement = select(Budget).options(selectinload(Budget.allocations))
+        statement = select(Budget).options(
+            selectinload(Budget.allocations),
+            selectinload(Budget.expenses),
+        )
 
         if filter := options.get("filter"):
             if "expense_date" in filter:
@@ -165,7 +171,10 @@ class BudgetReadRepository(AsyncReadRepository[BudgetSummaryReadModel]):
         BudgetOverviewReadModel,
         RepositoryUnexpectedError,
     ]:
-        statement = select(Budget).options(selectinload(Budget.allocations))
+        statement = select(Budget).options(
+            selectinload(Budget.allocations),
+            selectinload(Budget.expenses),
+        )
 
         user_id = options.get("filter", {}).get("user_id")
 

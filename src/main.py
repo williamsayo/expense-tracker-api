@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from core.config import settings
 from shared.loggers.logging import setup_logging, LogLevel
 from shared.infrastructure.db.base import engine, AsyncSessionLocal
@@ -8,10 +8,13 @@ from shared.domain.types.event_types import EventTypes
 from core.exception_handler import register_errors
 from core.middlewares import register_middlewares
 from contextlib import asynccontextmanager
-from identity.presentation.web.v1.route import router
-from expenses.presentation.web.v1.route import router as expense_router
-from budgeting.presentation.web.v1.route import router as budget_router
-from budgeting.application.services.event_handler import OnExpenseCreated,OnBudgetCreated
+from identity.presentation.web.v1.route import router as identity_router
+from spending.expenses.presentation.web.v1.route import router as expense_router
+from spending.budgeting.presentation.web.v1.route import router as budget_router
+from spending.budgeting.application.services.event_handler import (
+    OnExpenseCreated,
+    OnBudgetCreated,
+)
 
 
 @asynccontextmanager
@@ -31,9 +34,16 @@ app = FastAPI(
     version=settings.version,
 )
 
+router = APIRouter()
+
 register_errors(app=app)
 register_middlewares(app=app)
 
-app.include_router(router, prefix="/api/v1")
+@router.get("/healthz", tags=["Health"])
+async def health_check():
+    return {"status": "ok"}
+
+
+app.include_router(identity_router, prefix="/api/v1")
 app.include_router(expense_router, prefix="/api/v1")
 app.include_router(budget_router, prefix="/api/v1")

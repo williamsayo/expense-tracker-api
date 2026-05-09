@@ -1,34 +1,42 @@
 from fastapi.routing import APIRouter
-from fastapi import status, Depends, BackgroundTasks
+from fastapi import status, Depends
 from typing import List, Annotated
 from result import is_fail
 from shared.utils.auth.dependencies import AuthDeps
 from shared.application.dtos.url_params import UrlParams
-from budgeting.infrastructure.adapters.dto.budget import (
+from spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetReadModel,
     BudgetUpdateModel,
     BudgetWriteModel,
     BudgetOverviewReadModel,
 )
-from budgeting.infrastructure.adapters.dto.budget_allocation import (
+from spending.budgeting.infrastructure.adapters.dto.budget_allocation import (
     BudgetAllocationWriteModel,
 )
-from budgeting.application.use_cases.retrieve_budget_usecase import GetBudgetUsecase
-from budgeting.application.use_cases.retrieve_budget_list_usecase import (
+from spending.budgeting.application.use_cases.retrieve_budget_usecase import (
+    GetBudgetUsecase,
+)
+from spending.budgeting.application.use_cases.retrieve_budget_list_usecase import (
     GetBudgetsUsecase,
 )
-from budgeting.application.use_cases.create_budget_usecase import CreateBudgetUseCase
-from budgeting.application.use_cases.add_budget_allocation_usecase import (
+from spending.budgeting.application.use_cases.create_budget_usecase import (
+    CreateBudgetUseCase,
+)
+from spending.budgeting.application.use_cases.add_budget_allocation_usecase import (
     AddBudgetAllocationUsecase,
 )
-from budgeting.application.use_cases.remove_budget_allocation_usecase import (
+from spending.budgeting.application.use_cases.remove_budget_allocation_usecase import (
     RemoveBudgetAllocationUsecase,
 )
-from budgeting.application.use_cases.retrieve_budget_overview_usecase import (
+from spending.budgeting.application.use_cases.retrieve_budget_overview_usecase import (
     GetBudgetOverviewUsecase,
 )
-from budgeting.application.use_cases.delete_budget_usecase import DeleteBudgetUsecase
-from budgeting.application.use_cases.update_budget_usecase import UpdateBudgetUsecase
+from spending.budgeting.application.use_cases.delete_budget_usecase import (
+    DeleteBudgetUsecase,
+)
+from spending.budgeting.application.use_cases.update_budget_usecase import (
+    UpdateBudgetUsecase,
+)
 
 router = APIRouter(
     prefix="/budgets",
@@ -37,20 +45,22 @@ router = APIRouter(
 
 BudgetUrlParams = Annotated[UrlParams, Depends()]
 
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_budget(
     budget_data: BudgetWriteModel,
     auth: AuthDeps,
     budget_service: Annotated[CreateBudgetUseCase, Depends()],
-    background_tasks: BackgroundTasks,
 ):
-    result = await budget_service.execute(auth.user_id, budget_data, background_tasks)
+    result = await budget_service.execute(
+        {"user_id": auth.user_id, "budget_data": budget_data}
+    )
 
     if is_fail(result):
         raise result.value
 
     return {
-        "message": "Budget created successfully",
+        "id": result.value.value,
     }
 
 
@@ -144,6 +154,7 @@ async def retrieve_budget(
         raise result.value
 
     return result.value
+
 
 @router.delete(
     "/{aggregate_id}",

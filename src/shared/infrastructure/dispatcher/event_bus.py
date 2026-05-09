@@ -1,6 +1,6 @@
 from collections import defaultdict
 from inspect import isawaitable
-from typing import List
+from typing import List, Type
 from boilerplate import EventHandler, IEventBus, DomainEvent
 
 

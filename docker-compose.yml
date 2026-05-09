@@ -1,0 +1,52 @@
+
+services:
+  expense-tracker:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      secrets:
+        - netrc
+    container_name: expense-tracker
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.local
+    depends_on:
+      - db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres:13
+    container_name: expense-tracker-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: expense_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+  
+secrets:
+  netrc:
+    file: .netrc.docker
+
+volumes:
+  db_data:

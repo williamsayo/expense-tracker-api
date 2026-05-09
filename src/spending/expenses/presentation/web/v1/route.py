@@ -49,7 +49,7 @@ async def create_expense(
     if is_fail(result):
         raise result.value
 
-    return {"id": result.value}
+    return {"id": result.value.value}
 
 
 @router.put(

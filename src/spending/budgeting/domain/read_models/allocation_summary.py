@@ -3,14 +3,13 @@ from uuid import UUID
 from src.shared.domain.types.category_types import CategoryType
 from src.shared.domain.types.currency_types import Currency
 
-
 class BudgetAllocationSummaryReadModelProps(TypedDict):
     """Typed dictionary for budget allocation summary entity fields."""
 
     allocation_id: UUID
-    budget_amount: int
+    budget_amount: float
     category: CategoryType
-    spent_amount: int
+    spent_amount: float
 
 class BudgetAllocationSummaryReadModel:
     """Entity for budget allocation summary."""
@@ -30,7 +29,7 @@ class BudgetAllocationSummaryReadModel:
 
     @property
     def budget_amount(self) -> float:
-        return self._budget_amount
+        return self._budget_amount / 100
 
     @property
     def category(self) -> CategoryType:
@@ -38,7 +37,7 @@ class BudgetAllocationSummaryReadModel:
 
     @property
     def spent_amount(self) -> float:
-        return self._spent_amount
+        return self._spent_amount / 100
     
     @property
     def remaining_amount(self) -> float:
@@ -52,7 +51,7 @@ class BudgetAllocationSummaryReadModel:
 
     @property
     def left_percentage(self) -> float:
-        return max(1.0 - self.used_percentage, 0.0)
+        return (max(1.0 - self.used_percentage, 0.0))
 
     def apply_spending(
         self, amount: int, currency: Currency

@@ -1,4 +1,6 @@
 from typing import List
+
+from result import is_fail, result_combine
 from src.spending.budgeting.infrastructure.repositories.schema import (
     Budget,
     BudgetAllocation,
@@ -11,6 +13,9 @@ from src.spending.budgeting.domain.read_models.allocation_summary import (
 )
 from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
 from src.spending.expenses.infrastructure.repositories.schema import Expense
+from src.spending.budgeting.domain.value_objects.amount_value_object import (
+    AmountValueObject,
+)
 
 
 def create_budget_allocation_summary(
@@ -20,6 +25,7 @@ def create_budget_allocation_summary(
     result: List[BudgetAllocationSummaryReadModel] = []
 
     for allocation in allocations:
+
         result.append(
             BudgetAllocationSummaryReadModel(
                 {

@@ -8,23 +8,23 @@ from boilerplate import (
     UniqueEntityId,
 )
 from result import is_fail, result_ok, result_fail, Either, result_combine
-from shared.domain.types.user_id import UserId
-from spending.budgeting.utils.setup_dependencies import BudgetDeps
-from spending.budgeting.infrastructure.adapters.dto.budget import BudgetWriteModel
-from spending.budgeting.domain.entities.budget_entity import BudgetEntity
-from spending.budgeting.domain.entities.budget_allocation_entity import (
+from src.shared.domain.types.user_id import UserId
+from src.spending.budgeting.utils.setup_dependencies import BudgetDeps
+from src.spending.budgeting.infrastructure.adapters.dto.budget import BudgetWriteModel
+from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.domain.entities.budget_allocation_entity import (
     BudgetAllocationEntity,
 )
-from spending.budgeting.domain.value_objects.budget_period_value_object import (
+from src.spending.budgeting.domain.value_objects.budget_period_value_object import (
     BudgetPeriodValueObject,
 )
-from spending.budgeting.domain.services.budget_period_conflict_checker import (
+from src.spending.budgeting.domain.services.budget_period_conflict_checker import (
     BudgetPeriodConflictChecker,
 )
-from spending.budgeting.domain.value_objects.amount_value_object import (
+from src.spending.budgeting.domain.value_objects.amount_value_object import (
     AmountValueObject,
 )
-from shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.category_value_object import CategoryValueObject
 
 
 class CreateBudgetInput(TypedDict):

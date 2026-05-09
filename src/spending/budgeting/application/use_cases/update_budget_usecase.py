@@ -6,11 +6,14 @@ from boilerplate import (
     CoreError,
 )
 from result import is_fail, result_ok, result_fail, Either
-from shared.domain.types.user_id import UserId
-from spending.budgeting.utils.setup_dependencies import BudgetDeps
-from spending.budgeting.infrastructure.adapters.dto.budget import BudgetUpdateModel
-from spending.budgeting.domain.entities.budget_entity import BudgetEntity
-from spending.budgeting.infrastructure.mappers.budget_mapper import create_unique_entity_id
+from src.shared.domain.types.user_id import UserId
+from src.spending.budgeting.utils.setup_dependencies import BudgetDeps
+from src.spending.budgeting.infrastructure.adapters.dto.budget import BudgetUpdateModel
+from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.infrastructure.mappers.budget_mapper import (
+    create_unique_entity_id,
+)
+
 
 class UpdateBudgetUsecase:
     def __init__(self, deps: BudgetDeps):

@@ -1,7 +1,7 @@
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
-from core.config import settings
-from identity.infrastructure.adapters.ports.encryption import EncryptionService
+from src.core.config import settings
+from src.identity.infrastructure.adapters.ports.encryption import EncryptionService
 
 class ArgonEncryptionService(EncryptionService):
     """Coordinates argon encryption application workflows."""

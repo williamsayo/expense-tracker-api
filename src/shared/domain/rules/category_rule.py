@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import CategoryType
 
 
 class CategorySchema(BaseModel):

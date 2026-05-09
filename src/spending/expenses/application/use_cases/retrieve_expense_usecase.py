@@ -10,12 +10,12 @@ from boilerplate import (
     RepositoryNotFoundError,
     AsyncQueryUseCase,
 )
-from shared.domain.types.user_id import UserId
-from spending.expenses.infrastructure.mappers.expense_mapper import (
+from src.shared.domain.types.user_id import UserId
+from src.spending.expenses.infrastructure.mappers.expense_mapper import (
     create_unique_entity_id,
 )
-from spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
-from spending.expenses.utils.setup_dependencies import ExpenseReadDeps
+from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.utils.setup_dependencies import ExpenseReadDeps
 
 
 class GetExpenseInput(TypedDict):

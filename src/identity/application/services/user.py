@@ -12,16 +12,16 @@ from boilerplate import (
     AuthorizationError,
 )
 from result import result_fail, is_fail, Either, result_ok, result_combine
-from shared.application.services.base import BaseService
-from identity.utils.setup_dependencies import UserDeps
-from identity.infrastructure.adapters.dto.user import UserWriteModel, UserUpdateModel
-from identity.domain.entities.user_entity import UserEntity
-from identity.domain.value_objects.email_value_object import EmailValueObject
-from identity.infrastructure.services.encryption.argon2_encrption import (
+from src.shared.application.services.base import BaseService
+from src.identity.utils.setup_dependencies import UserDeps
+from src.identity.infrastructure.adapters.dto.user import UserWriteModel, UserUpdateModel
+from src.identity.domain.entities.user_entity import UserEntity
+from src.identity.domain.value_objects.email_value_object import EmailValueObject
+from src.identity.infrastructure.services.encryption.argon2_encrption import (
     ArgonEncryptionService,
 )
-from identity.infrastructure.mappers.user_mapper import create_unique_entity_id
-from shared.domain.types.user_id import UserId
+from src.identity.infrastructure.mappers.user_mapper import create_unique_entity_id
+from src.shared.domain.types.user_id import UserId
 
 
 class UserService(BaseService[UserDeps]):
@@ -55,8 +55,11 @@ class UserService(BaseService[UserDeps]):
         )
 
         result = await self.deps.repo.add(entity_result.value)
+        
+        if is_fail(result):
+            return result_fail(result.value)
 
-        return result
+        return entity_result
 
     async def authenticate_user_usecase(self, username: str, password: str) -> Either[
         dict[str, str],
@@ -151,7 +154,8 @@ class UserService(BaseService[UserDeps]):
 
         if is_fail(entity_result):
             return result_fail(entity_result.value)
-        return result_ok(entity_result.value)
+        
+        return result_ok(entity)
 
     def issue_jwt_tokens(
         self, aggregate_id: str | UUID

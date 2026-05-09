@@ -3,8 +3,8 @@ import jwt
 from result import result_fail, result_ok, Either
 from boilerplate.errors.http import AuthorizationError
 from boilerplate.errors.error_ids import ApplicationErrorID
-from core.config import settings
-from shared.utils.auth.token_payload import TokenPayload
+from src.core.config import settings
+from src.shared.utils.auth.token_payload import TokenPayload
 
 
 class TokenVerifier:

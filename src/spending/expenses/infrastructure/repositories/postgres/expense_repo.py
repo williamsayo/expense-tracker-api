@@ -17,10 +17,10 @@ from boilerplate import (
     UniqueEntityId,
 )
 from result import result_fail, result_ok, is_fail, Either, result_combine
-from shared.domain.types.user_id import UserId
-from spending.expenses.domain.entities.expense_entity import ExpenseEntity
-from spending.expenses.infrastructure.mappers.expense_mapper import ExpenseMapper
-from spending.expenses.infrastructure.repositories.schema import Expense
+from src.shared.domain.types.user_id import UserId
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.spending.expenses.infrastructure.mappers.expense_mapper import ExpenseMapper
+from src.spending.expenses.infrastructure.repositories.schema import Expense
 
 
 class ExpenseRepository(AsyncWriteRepository[ExpenseEntity, UniqueEntityId]):

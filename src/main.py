@@ -1,17 +1,17 @@
 from fastapi import FastAPI, APIRouter
-from core.config import settings
-from shared.loggers.logging import setup_logging, LogLevel
-from shared.infrastructure.db.base import engine, AsyncSessionLocal
-from shared.infrastructure.db.dependencies import init_db
-from shared.infrastructure.dispatcher.dependencies import register_handler
-from shared.domain.types.event_types import EventTypes
-from core.exception_handler import register_errors
-from core.middlewares import register_middlewares
+from src.core.config import settings
+from src.shared.loggers.logging import setup_logging, LogLevel
+from src.shared.infrastructure.db.base import engine, AsyncSessionLocal
+from src.shared.infrastructure.db.dependencies import init_db
+from src.shared.infrastructure.dispatcher.dependencies import register_handler
+from src.shared.domain.types.event_types import EventTypes
+from src.core.exception_handler import register_errors
+from src.core.middlewares import register_middlewares
 from contextlib import asynccontextmanager
-from identity.presentation.web.v1.route import router as identity_router
-from spending.expenses.presentation.web.v1.route import router as expense_router
-from spending.budgeting.presentation.web.v1.route import router as budget_router
-from spending.budgeting.application.services.event_handler import (
+from src.identity.presentation.web.v1.route import router as identity_router
+from src.spending.expenses.presentation.web.v1.route import router as expense_router
+from src.spending.budgeting.presentation.web.v1.route import router as budget_router
+from src.spending.budgeting.application.services.event_handler import (
     OnExpenseCreated,
     OnBudgetCreated,
 )

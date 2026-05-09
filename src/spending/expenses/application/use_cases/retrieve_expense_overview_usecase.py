@@ -1,17 +1,15 @@
 from boilerplate import CoreError
 from result import Either, is_fail, result_ok
-from shared.domain.types.user_id import UserId
+from src.shared.domain.types.user_id import UserId
 from boilerplate import (
     RepositoryUnexpectedError,
     DataIntegrityError,
     RepositoryNotFoundError,
 )
-from spending.expenses.domain.read_models.expense_overview_read_model import (
+from src.spending.expenses.domain.read_models.expense_overview_read_model import (
     ExpenseOverviewReadModel,
 )
-from spending.expenses.utils.setup_dependencies import ExpenseReadDeps
-
-
+from src.spending.expenses.utils.setup_dependencies import ExpenseReadDeps
 
 
 class GetExpenseOverviewUsecase:

@@ -7,10 +7,10 @@ from boilerplate import (
     CoreError,
 )
 from result import result_ok, result_fail, Either, is_fail, result_combine
-from shared.domain.value_objects.category_value_object import CategoryValueObject
-from shared.domain.value_objects.money_value_object import MoneyValueObject
-from spending.expenses.domain.entities.expense_entity import ExpenseEntity
-from spending.expenses.infrastructure.repositories.schema import Expense
+from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.money_value_object import MoneyValueObject
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.spending.expenses.infrastructure.repositories.schema import Expense
 
 
 def create_unique_entity_id(id: str | UUID) -> Either[UniqueEntityId, CoreError]:

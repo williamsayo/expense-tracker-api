@@ -3,21 +3,21 @@ from typing import Never, TypedDict, Self
 from datetime import date
 from boilerplate import DomainRuleError, AggregateRoot, UniqueEntityId
 from result import Either, is_fail, result_fail, result_ok
-from shared.domain.types.user_id import UserId
-from shared.domain.types.category_types import CategoryType
-from shared.domain.types.currency_types import Currency
-from shared.domain.value_objects.category_value_object import CategoryValueObject
-from shared.domain.value_objects.money_value_object import MoneyValueObject
-from spending.budgeting.domain.value_objects.amount_value_object import (
+from src.shared.domain.types.user_id import UserId
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.currency_types import Currency
+from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.money_value_object import MoneyValueObject
+from src.spending.budgeting.domain.value_objects.amount_value_object import (
     AmountValueObject,
 )
-from spending.budgeting.domain.entities.budget_allocation_entity import (
+from src.spending.budgeting.domain.entities.budget_allocation_entity import (
     BudgetAllocationEntity,
 )
-from spending.budgeting.domain.value_objects.budget_period_value_object import (
+from src.spending.budgeting.domain.value_objects.budget_period_value_object import (
     BudgetPeriodValueObject,
 )
-from spending.budgeting.domain.events.budget_created import BudgetCreated
+from src.spending.budgeting.domain.events.budget_created import BudgetCreated
 
 
 class BudgetEntityProps(TypedDict):

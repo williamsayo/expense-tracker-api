@@ -1,6 +1,6 @@
 from typing import Sequence, TypedDict
 from result import Either, is_fail, result_ok
-from shared.domain.types.user_id import UserId
+from src.shared.domain.types.user_id import UserId
 from boilerplate import (
     CoreError,
     HttpError,
@@ -9,9 +9,9 @@ from boilerplate import (
     RepositoryNotFoundError,
     AsyncQueryUseCase,
 )
-from spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
-from spending.expenses.utils.setup_dependencies import ExpenseReadDeps
-from shared.application.dtos.url_params import UrlParams
+from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.utils.setup_dependencies import ExpenseReadDeps
+from src.shared.application.dtos.url_params import UrlParams
 
 
 class GetExpenseListInput(TypedDict):

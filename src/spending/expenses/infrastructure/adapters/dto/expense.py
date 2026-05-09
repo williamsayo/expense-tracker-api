@@ -3,10 +3,10 @@ from uuid import UUID
 from typing import List, Self
 from datetime import datetime, UTC
 from decimal import Decimal
-from shared.infrastructure.adapters.dto.base import BaseReadModel
-from shared.domain.types.category_types import CategoryType
-from shared.domain.types.currency_types import Currency
-from spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.shared.infrastructure.adapters.dto.base import BaseReadModel
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.currency_types import Currency
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 
 
 class ExpenseModel(BaseModel):

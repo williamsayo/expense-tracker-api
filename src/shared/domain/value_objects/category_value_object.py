@@ -3,8 +3,8 @@ from boilerplate.domain.value_object import ValueObject
 from boilerplate.domain.rules.apply_rule import apply_rules
 from boilerplate.errors.domain import DomainRuleError
 from result import is_fail, result_ok, result_fail, Either
-from shared.domain.rules.category_rule import CategorySchema
-from shared.domain.types.category_types import CategoryType
+from src.shared.domain.rules.category_rule import CategorySchema
+from src.shared.domain.types.category_types import CategoryType
 
 
 class CategoryValueObjectProps(TypedDict):

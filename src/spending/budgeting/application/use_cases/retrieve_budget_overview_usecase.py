@@ -1,9 +1,11 @@
 from boilerplate import CoreError
 from result import Either, is_fail, result_ok
-from shared.domain.types.user_id import UserId
+from src.shared.domain.types.user_id import UserId
 from boilerplate.errors.repository import RepositoryUnexpectedError
-from spending.budgeting.domain.read_models.budget_overview import BudgetOverviewReadModel
-from spending.budgeting.utils.setup_dependencies import BudgetReadDeps
+from src.spending.budgeting.domain.read_models.budget_overview import (
+    BudgetOverviewReadModel,
+)
+from src.spending.budgeting.utils.setup_dependencies import BudgetReadDeps
 
 
 class GetBudgetOverviewUsecase:

@@ -13,7 +13,7 @@ from boilerplate import (
     GetOptions,
 )
 from result import Either, result_ok, result_fail
-from spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
 
 
 class LocalBudgetRepository(
@@ -93,7 +93,7 @@ class LocalBudgetRepository(
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]:
         result: BudgetEntity | None = None
-        
+
         if filter := options.get("filter"):
             user_id = filter.get("user_id")
 

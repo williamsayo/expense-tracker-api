@@ -18,9 +18,9 @@ from boilerplate import (
 )
 
 from result import Either, result_combine, result_ok, result_fail, is_fail
-from spending.budgeting.domain.entities.budget_entity import BudgetEntity
-from spending.budgeting.infrastructure.repositories.schema import Budget
-from spending.budgeting.infrastructure.mappers.budget_mapper import BudgetMapper
+from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.infrastructure.repositories.schema import Budget
+from src.spending.budgeting.infrastructure.mappers.budget_mapper import BudgetMapper
 
 
 class BudgetRepository(AsyncWriteRepository[BudgetEntity, UniqueEntityId]):

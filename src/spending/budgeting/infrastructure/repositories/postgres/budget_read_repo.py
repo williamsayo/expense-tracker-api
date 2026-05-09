@@ -14,15 +14,17 @@ from boilerplate import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from result import Either, is_fail, result_ok, result_fail
-from spending.budgeting.domain.read_models.budget_summary import BudgetSummaryReadModel
-from spending.budgeting.domain.read_models.budget_overview import (
+from src.spending.budgeting.domain.read_models.budget_summary import (
+    BudgetSummaryReadModel,
+)
+from src.spending.budgeting.domain.read_models.budget_overview import (
     BudgetOverviewReadModel,
 )
-from spending.budgeting.infrastructure.repositories.schema import (
+from src.spending.budgeting.infrastructure.repositories.schema import (
     Budget,
     BudgetAllocation,
 )
-from spending.budgeting.infrastructure.mappers.budget_summary_mapper import (
+from src.spending.budgeting.infrastructure.mappers.budget_summary_mapper import (
     BudgetSummaryMapper,
 )
 

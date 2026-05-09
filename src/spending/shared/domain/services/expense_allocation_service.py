@@ -1,6 +1,6 @@
-from spending.budgeting.domain.entities.budget_entity import BudgetEntity
-from spending.budgeting.infrastructure.adapters.ports.repository import BudgetRepositoryProtocol
-from spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.infrastructure.adapters.ports.repository import BudgetRepositoryProtocol
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from boilerplate import (
     RepositoryUnexpectedError,
     DataIntegrityError,

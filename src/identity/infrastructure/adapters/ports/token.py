@@ -2,7 +2,7 @@ from typing import Protocol, Never
 from datetime import timedelta
 from result import Either
 from boilerplate import UnexpectedError, AuthorizationError
-from identity.infrastructure.adapters.dto.token import Token, RefreshTokenPayload
+from src.identity.infrastructure.adapters.dto.token import Token, RefreshTokenPayload
 
 
 class TokenServiceProtocol(Protocol):

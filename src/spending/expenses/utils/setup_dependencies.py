@@ -2,24 +2,24 @@ from dataclasses import dataclass
 from fastapi import Depends
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.config import settings
-from shared.utils.setup_dependencies import BaseDependency
-from shared.infrastructure.db.dependencies import get_session
-from spending.expenses.infrastructure.repositories.postgres.expense_repo import (
+from src.core.config import settings
+from src.shared.utils.setup_dependencies import BaseDependency
+from src.shared.infrastructure.db.dependencies import get_session
+from src.spending.expenses.infrastructure.repositories.postgres.expense_repo import (
     ExpenseRepository,
 )
-from spending.expenses.infrastructure.repositories.postgres.expense_read_repo import (
+from src.spending.expenses.infrastructure.repositories.postgres.expense_read_repo import (
     ExpenseReadRepository,
 )
-from spending.expenses.infrastructure.repositories.local.expense_repo import (
+from src.spending.expenses.infrastructure.repositories.local.expense_repo import (
     LocalExpenseRepository,
 )
-from spending.expenses.infrastructure.adapters.ports.repository import (
+from src.spending.expenses.infrastructure.adapters.ports.repository import (
     ExpenseRepositoryProtocol,
     ExpenseReadRepositoryProtocol,
 )
-from shared.infrastructure.dispatcher.event_bus import EventBus
-from shared.infrastructure.dispatcher.dependencies import get_event_bus
+from src.shared.infrastructure.dispatcher.event_bus import EventBus
+from src.shared.infrastructure.dispatcher.dependencies import get_event_bus
 
 
 def get_expense_read_repository(

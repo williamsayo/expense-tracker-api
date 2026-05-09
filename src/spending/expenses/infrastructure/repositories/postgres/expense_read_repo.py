@@ -15,11 +15,11 @@ from boilerplate import (
     ConflictError,
 )
 from result import result_fail, result_ok, Either
-from spending.expenses.domain.read_models.expense_overview_read_model import (
+from src.spending.expenses.domain.read_models.expense_overview_read_model import (
     ExpenseOverviewReadModel,
 )
-from spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
-from spending.expenses.infrastructure.repositories.schema import Expense
+from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.infrastructure.repositories.schema import Expense
 
 
 class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):

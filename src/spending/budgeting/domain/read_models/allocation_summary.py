@@ -1,7 +1,7 @@
 from typing import TypedDict
 from uuid import UUID
-from shared.domain.types.category_types import CategoryType
-from shared.domain.types.currency_types import Currency
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.currency_types import Currency
 
 
 class BudgetAllocationSummaryReadModelProps(TypedDict):

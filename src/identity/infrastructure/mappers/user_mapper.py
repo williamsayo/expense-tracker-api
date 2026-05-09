@@ -4,9 +4,9 @@ from boilerplate.domain.unique_entity_id import UniqueEntityId
 from boilerplate.errors.core import CoreError
 from boilerplate.errors.domain import IllegalArgumentError
 from result import result_ok, result_fail, is_fail, Either, result_combine
-from identity.domain.entities.user_entity import UserEntity
-from identity.domain.value_objects.email_value_object import EmailValueObject
-from identity.infrastructure.repositories.schema import User
+from src.identity.domain.entities.user_entity import UserEntity
+from src.identity.domain.value_objects.email_value_object import EmailValueObject
+from src.identity.infrastructure.repositories.schema import User
 
 
 def create_unique_entity_id(

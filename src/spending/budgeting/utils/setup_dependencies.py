@@ -2,25 +2,27 @@ from dataclasses import dataclass
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
-from core.config import settings
-from shared.utils.setup_dependencies import BaseDependency
-from shared.infrastructure.db.dependencies import get_session
-from spending.budgeting.infrastructure.repositories.postgres.budget_repo import BudgetRepository
-from spending.budgeting.infrastructure.repositories.local.budget_repo import (
+from src.core.config import settings
+from src.shared.utils.setup_dependencies import BaseDependency
+from src.shared.infrastructure.db.dependencies import get_session
+from src.spending.budgeting.infrastructure.repositories.postgres.budget_repo import (
+    BudgetRepository,
+)
+from src.spending.budgeting.infrastructure.repositories.local.budget_repo import (
     LocalBudgetRepository,
 )
-from spending.budgeting.infrastructure.repositories.postgres.budget_read_repo import (
+from src.spending.budgeting.infrastructure.repositories.postgres.budget_read_repo import (
     BudgetReadRepository,
 )
-from spending.budgeting.infrastructure.repositories.local.budget_read_repo import (
+from src.spending.budgeting.infrastructure.repositories.local.budget_read_repo import (
     LocalBudgetReadRepository,
 )
-from spending.budgeting.infrastructure.adapters.ports.repository import (
+from src.spending.budgeting.infrastructure.adapters.ports.repository import (
     BudgetRepositoryProtocol,
     BudgetReadRepositoryProtocol,
 )
-from shared.infrastructure.dispatcher.event_bus import EventBus
-from shared.infrastructure.dispatcher.dependencies import get_event_bus
+from src.shared.infrastructure.dispatcher.event_bus import EventBus
+from src.shared.infrastructure.dispatcher.dependencies import get_event_bus
 
 
 def get_budget_repository(
@@ -52,7 +54,9 @@ class BudgetDependencies(BaseDependency):
 @dataclass(slots=True)
 class BudgetReadDependencies(BaseDependency):
     """Dependency container for example use cases."""
+
     repo: BudgetReadRepositoryProtocol = Depends(get_budget_read_repository)
+
 
 BudgetDeps = Annotated[BudgetDependencies, Depends()]
 BudgetReadDeps = Annotated[BudgetReadDependencies, Depends()]

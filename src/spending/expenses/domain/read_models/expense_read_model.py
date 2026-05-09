@@ -1,9 +1,9 @@
 from typing import TypedDict
 from datetime import datetime
 from uuid import UUID
-from shared.domain.types.category_types import CategoryType
-from shared.domain.types.currency_types import Currency
-from shared.domain.types.user_id import UserId
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.currency_types import Currency
+from src.shared.domain.types.user_id import UserId
 
 
 class ExpenseReadModelProps(TypedDict):

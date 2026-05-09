@@ -1,6 +1,6 @@
 from typing import TypedDict, List
 from uuid import UUID
-from spending.budgeting.domain.read_models.budget_summary import (
+from src.spending.budgeting.domain.read_models.budget_summary import (
     BudgetSummaryReadModel,
 )
 

@@ -1,14 +1,16 @@
 from typing import List
-from spending.budgeting.infrastructure.repositories.schema import (
+from src.spending.budgeting.infrastructure.repositories.schema import (
     Budget,
     BudgetAllocation,
 )
-from spending.budgeting.domain.read_models.budget_summary import BudgetSummaryReadModel
-from spending.budgeting.domain.read_models.allocation_summary import (
+from src.spending.budgeting.domain.read_models.budget_summary import (
+    BudgetSummaryReadModel,
+)
+from src.spending.budgeting.domain.read_models.allocation_summary import (
     BudgetAllocationSummaryReadModel,
 )
-from spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
-from spending.expenses.infrastructure.repositories.schema import Expense
+from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.infrastructure.repositories.schema import Expense
 
 
 def create_budget_allocation_summary(

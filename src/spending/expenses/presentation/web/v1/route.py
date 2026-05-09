@@ -2,26 +2,26 @@ from fastapi.routing import APIRouter
 from fastapi import status, Depends, BackgroundTasks
 from typing import List, Annotated
 from result import is_fail
-from shared.domain.types.category_types import CategoryType
-from shared.utils.auth.dependencies import AuthDeps
-from shared.application.dtos.url_params import UrlParams
-from spending.expenses.application.services.expense_service import ExpenseService
-from spending.expenses.application.use_cases.create_expense_usecase import (
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.utils.auth.dependencies import AuthDeps
+from src.shared.application.dtos.url_params import UrlParams
+from src.spending.expenses.application.services.expense_service import ExpenseService
+from src.spending.expenses.application.use_cases.create_expense_usecase import (
     CreateExpenseUsecase,
 )
-from spending.expenses.application.use_cases.retrieve_expense_overview_usecase import (
+from src.spending.expenses.application.use_cases.retrieve_expense_overview_usecase import (
     GetExpenseOverviewUsecase,
 )
-from spending.expenses.application.use_cases.retrieve_expense_list_usecase import (
+from src.spending.expenses.application.use_cases.retrieve_expense_list_usecase import (
     GetExpenseListUsecase,
 )
-from spending.expenses.application.use_cases.retrieve_expense_usecase import (
+from src.spending.expenses.application.use_cases.retrieve_expense_usecase import (
     GetExpenseUsecase,
 )
-from spending.expenses.application.use_cases.retrieve_expense_by_category_usecase import (
+from src.spending.expenses.application.use_cases.retrieve_expense_by_category_usecase import (
     GetExpenseByCategoryUsecase,
 )
-from spending.expenses.infrastructure.adapters.dto.expense import (
+from src.spending.expenses.infrastructure.adapters.dto.expense import (
     ExpenseReadModel,
     ExpenseUpdateModel,
     ExpenseWriteModel,

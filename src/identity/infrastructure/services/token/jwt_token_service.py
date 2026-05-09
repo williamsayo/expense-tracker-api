@@ -9,12 +9,12 @@ from result import result_fail, result_ok, Either, is_fail, result_combine
 from boilerplate.errors.http import AuthorizationError
 from boilerplate.errors.application import UnexpectedError
 from boilerplate.errors.error_ids import ApplicationErrorID
-from core.config import settings
-from identity.infrastructure.adapters.dto.token import (
+from src.core.config import settings
+from src.identity.infrastructure.adapters.dto.token import (
     Token,
     TokenPayload,
 )
-from shared.utils.auth.token_verifier import TokenVerifier
+from src.shared.utils.auth.token_verifier import TokenVerifier
 
 
 class JWTTokenService:

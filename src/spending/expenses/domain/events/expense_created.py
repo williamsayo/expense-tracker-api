@@ -6,8 +6,8 @@ from boilerplate import (
     DomainEventMetadata,
 )
 from datetime import datetime
-from shared.domain.types.category_types import CategoryType
-from shared.domain.types.currency_types import Currency
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.currency_types import Currency
 
 class ExpenseCreatedData(TypedDict):
     """Typed dictionary for the data payload of the ExpenseCreated event."""

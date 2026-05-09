@@ -12,7 +12,9 @@ from boilerplate import (
     UniqueEntityId,
 )
 from result import Either, result_ok, result_fail
-from spending.budgeting.domain.read_models.budget_summary import BudgetSummaryReadModel
+from src.spending.budgeting.domain.read_models.budget_summary import (
+    BudgetSummaryReadModel,
+)
 
 
 class LocalBudgetReadRepository(ReadRepository[BudgetSummaryReadModel]):

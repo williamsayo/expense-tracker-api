@@ -6,15 +6,15 @@ from boilerplate import (
     AsyncCommandUseCase,
     UniqueEntityId,
 )
-from shared.domain.types.user_id import UserId
-from shared.domain.value_objects.category_value_object import CategoryValueObject
-from shared.domain.value_objects.money_value_object import MoneyValueObject
-from spending.expenses.domain.entities.expense_entity import ExpenseEntity
-from spending.expenses.infrastructure.adapters.dto.expense import ExpenseWriteModel
-from spending.shared.domain.services.expense_allocation_service import (
+from src.shared.domain.types.user_id import UserId
+from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.money_value_object import MoneyValueObject
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseWriteModel
+from src.spending.shared.domain.services.expense_allocation_service import (
     ExpenseAllocationService,
 )
-from spending.shared.utils.setup_dependencies import SpendingDeps
+from src.spending.shared.utils.setup_dependencies import SpendingDeps
 
 
 class CreateExpenseInput(TypedDict):

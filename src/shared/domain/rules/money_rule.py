@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from shared.domain.types.currency_types import Currency
+from src.shared.domain.types.currency_types import Currency
 
 
 class MoneySchema(BaseModel):

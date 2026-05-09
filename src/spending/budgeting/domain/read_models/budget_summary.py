@@ -1,12 +1,12 @@
 from typing import TypedDict, List
 from datetime import date
 from uuid import UUID
-from shared.domain.types.category_types import CategoryType
-from shared.domain.types.currency_types import Currency
-from spending.budgeting.domain.read_models.allocation_summary import (
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.currency_types import Currency
+from src.spending.budgeting.domain.read_models.allocation_summary import (
     BudgetAllocationSummaryReadModel,
 )
-from spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
 
 
 class BudgetSummaryReadModelProps(TypedDict):

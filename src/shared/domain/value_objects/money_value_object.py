@@ -2,8 +2,8 @@ from typing import Self, TypedDict
 from decimal import Decimal
 from boilerplate import ValueObject, DomainRuleError, apply_rules
 from result import is_fail, result_ok, result_fail, Either
-from shared.domain.rules.money_rule import MoneySchema
-from shared.domain.types.currency_types import Currency, currency_display
+from src.shared.domain.rules.money_rule import MoneySchema
+from src.shared.domain.types.currency_types import Currency, currency_display
 
 
 class MoneyValueObjectProps(TypedDict):

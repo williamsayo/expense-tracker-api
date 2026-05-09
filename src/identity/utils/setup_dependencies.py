@@ -2,17 +2,17 @@ from dataclasses import dataclass
 from fastapi import Depends
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.config import settings
-from shared.utils.setup_dependencies import BaseDependency
-from shared.infrastructure.db.dependencies import get_session
-from shared.utils.auth.token_verifier import TokenVerifier
-from identity.infrastructure.repositories.postgres.user_repo import UserRepository
-from identity.infrastructure.repositories.local.user_repo import LocalUserRepository
-from identity.infrastructure.services.token.jwt_token_service import JWTTokenService
-from identity.infrastructure.adapters.ports.token import TokenServiceProtocol
-from identity.infrastructure.adapters.ports.repository import UserRepositoryProtocol
-from identity.infrastructure.adapters.ports.encryption import EncryptionService
-from identity.infrastructure.services.encryption.argon2_encrption import (
+from src.core.config import settings
+from src.shared.utils.setup_dependencies import BaseDependency
+from src.shared.infrastructure.db.dependencies import get_session
+from src.shared.utils.auth.token_verifier import TokenVerifier
+from src.identity.infrastructure.repositories.postgres.user_repo import UserRepository
+from src.identity.infrastructure.repositories.local.user_repo import LocalUserRepository
+from src.identity.infrastructure.services.token.jwt_token_service import JWTTokenService
+from src.identity.infrastructure.adapters.ports.token import TokenServiceProtocol
+from src.identity.infrastructure.adapters.ports.repository import UserRepositoryProtocol
+from src.identity.infrastructure.adapters.ports.encryption import EncryptionService
+from src.identity.infrastructure.services.encryption.argon2_encrption import (
     ArgonEncryptionService,
 )
 

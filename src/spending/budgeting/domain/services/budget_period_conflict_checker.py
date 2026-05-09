@@ -1,12 +1,12 @@
 from result import Either, is_fail, result_fail, result_ok
 from boilerplate import CoreError, DomainRuleError
-from spending.budgeting.domain.value_objects.budget_period_value_object import (
+from src.spending.budgeting.domain.value_objects.budget_period_value_object import (
     BudgetPeriodValueObject,
 )
-from spending.budgeting.infrastructure.adapters.ports.repository import (
+from src.spending.budgeting.infrastructure.adapters.ports.repository import (
     BudgetRepositoryProtocol,
 )
-from shared.domain.types.user_id import UserId
+from src.shared.domain.types.user_id import UserId
 
 
 class BudgetPeriodConflictError(Exception):

@@ -2,15 +2,15 @@ from pydantic import BaseModel, Field
 from uuid import UUID
 from typing import Annotated, Self, List
 from datetime import date, timedelta
-from shared.infrastructure.adapters.dto.base import BaseReadModel
-from spending.budgeting.domain.entities.budget_entity import BudgetEntity
-from spending.budgeting.infrastructure.adapters.dto.budget_allocation import (
+from src.shared.infrastructure.adapters.dto.base import BaseReadModel
+from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.infrastructure.adapters.dto.budget_allocation import (
     BudgetAllocationReadModel,
     BudgetAllocationWriteModel,
     BudgetAllocationUpdateModel,
 )
-from shared.domain.types.currency_types import Currency
-from spending.expenses.infrastructure.adapters.dto.expense import ExpenseReadModel
+from src.shared.domain.types.currency_types import Currency
+from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseReadModel
 
 Percentage = Annotated[
     float,

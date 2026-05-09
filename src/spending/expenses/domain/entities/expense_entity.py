@@ -8,12 +8,12 @@ from boilerplate import (
     UniqueEntityId,
     DomainRuleError,
 )
-from shared.domain.value_objects.money_value_object import MoneyValueObject
-from shared.domain.value_objects.category_value_object import CategoryValueObject
-from shared.domain.types.user_id import UserId
-from shared.domain.types.category_types import CategoryType
-from shared.domain.types.currency_types import Currency
-from spending.expenses.domain.events.expense_created import ExpenseCreated
+from src.shared.domain.value_objects.money_value_object import MoneyValueObject
+from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.types.user_id import UserId
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.currency_types import Currency
+from src.spending.expenses.domain.events.expense_created import ExpenseCreated
 
 
 class ExpenseEntityProps(TypedDict):

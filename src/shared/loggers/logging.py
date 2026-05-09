@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 import logging
-from core.config import settings
+from src.core.config import settings
 import sys
 from enum import IntEnum
 

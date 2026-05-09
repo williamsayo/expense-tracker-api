@@ -3,19 +3,19 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import Depends,status
 from typing import Annotated
 from result import is_fail
-from identity.infrastructure.adapters.dto.token import (
+from src.identity.infrastructure.adapters.dto.token import (
     RefreshTokenData,
     TokenData,
     AccessTokenData,
 )
-from identity.application.services.user import UserService
-from identity.infrastructure.adapters.dto.user import (
+from src.identity.application.services.user import UserService
+from src.identity.infrastructure.adapters.dto.user import (
     UserWriteModel,
     UserLoginModel,
     UserUpdateModel,
     UserReadModel,
 )
-from shared.utils.auth.dependencies import AuthDeps
+from src.shared.utils.auth.dependencies import AuthDeps
 
 router = APIRouter(
     prefix="/auth",

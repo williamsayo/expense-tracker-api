@@ -12,12 +12,12 @@ from boilerplate import (
     GetAllOptions,
     GetOptions,
 )
-from shared.domain.types.user_id import UserId
-from spending.expenses.domain.entities.expense_entity import ExpenseEntity
-from spending.expenses.domain.read_models.expense_overview_read_model import (
+from src.shared.domain.types.user_id import UserId
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.spending.expenses.domain.read_models.expense_overview_read_model import (
     ExpenseOverviewReadModel,
 )
-from spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
 
 
 class ExpenseRepositoryProtocol(Protocol):

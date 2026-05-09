@@ -1,7 +1,8 @@
-from typing import Optional, Any
+from typing import Optional
+from datetime import datetime
 from pydantic import EmailStr, BaseModel, Field, field_validator
-from shared.infrastructure.adapters.dto.base import BaseReadModel
-from identity.domain.value_objects.email_value_object import EmailValueObject
+from src.shared.infrastructure.adapters.dto.base import BaseReadModel
+from src.identity.domain.value_objects.email_value_object import EmailValueObject
 
 
 class UserBaseModel(BaseModel):
@@ -20,8 +21,8 @@ class UserBaseModel(BaseModel):
 class UserReadModel(BaseReadModel, UserBaseModel):
     """Pydantic model for reading user data, excluding sensitive information like password."""
 
-    created_at: Optional[Any] = Field(
-        None, description="Timestamp when the user was created"
+    created_at: Optional[datetime] = Field(
+        default=None, description="Timestamp when the user was created"
     )
 
     @field_validator("email", mode="before")

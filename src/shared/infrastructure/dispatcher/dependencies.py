@@ -1,5 +1,5 @@
 from typing import Generator
-from shared.infrastructure.dispatcher.event_bus import EventBus, EventHandler
+from src.shared.infrastructure.dispatcher.event_bus import EventBus, EventHandler
 
 event_bus = EventBus()
 

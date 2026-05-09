@@ -1,8 +1,8 @@
 from uuid import UUID
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy import String, Uuid
-from shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
-from shared.infrastructure.db.base import Base
+from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
+from src.shared.infrastructure.db.base import Base
 
 
 class User(Base, TimeStampMixin, VersionMixin):

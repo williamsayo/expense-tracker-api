@@ -10,17 +10,17 @@ from boilerplate import (
     DomainRuleError,
     CoreError,
 )
-from shared.application.services.base import BaseService
-from shared.domain.value_objects.category_value_object import CategoryValueObject
-from shared.domain.value_objects.money_value_object import MoneyValueObject
-from shared.domain.types.category_types import CategoryType
-from shared.domain.types.user_id import UserId
-from spending.expenses.utils.setup_dependencies import ExpenseDeps
-from spending.expenses.domain.entities.expense_entity import ExpenseEntity
-from spending.expenses.infrastructure.mappers.expense_mapper import (
+from src.shared.application.services.base import BaseService
+from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.money_value_object import MoneyValueObject
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.user_id import UserId
+from src.spending.expenses.utils.setup_dependencies import ExpenseDeps
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.spending.expenses.infrastructure.mappers.expense_mapper import (
     create_unique_entity_id,
 )
-from spending.expenses.infrastructure.adapters.dto.expense import (
+from src.spending.expenses.infrastructure.adapters.dto.expense import (
     ExpenseWriteModel,
     ExpenseUpdateModel,
 )

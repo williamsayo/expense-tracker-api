@@ -11,9 +11,9 @@ from boilerplate import (
     GetAllOptions,
     GetOptions,
 )
-from spending.budgeting.domain.entities.budget_entity import BudgetEntity
-from spending.budgeting.domain.read_models.budget_summary import BudgetSummaryReadModel
-from spending.budgeting.domain.read_models.budget_overview import BudgetOverviewReadModel
+from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.domain.read_models.budget_summary import BudgetSummaryReadModel
+from src.spending.budgeting.domain.read_models.budget_overview import BudgetOverviewReadModel
 
 class BudgetRepositoryProtocol(Protocol):
     """Defines the contract for budgeting repository operations."""

@@ -3,7 +3,7 @@ from result import is_fail, result_ok, result_fail, Either
 from boilerplate.domain.value_object import ValueObject
 from boilerplate.domain.rules.apply_rule import apply_rules
 from boilerplate.errors.domain import DomainRuleError
-from identity.domain.rules.email_address import EmailSchema
+from src.identity.domain.rules.email_address import EmailSchema
 
 
 class EmailProps(TypedDict):

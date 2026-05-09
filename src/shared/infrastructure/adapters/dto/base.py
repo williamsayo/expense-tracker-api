@@ -13,5 +13,5 @@ class BaseReadModel(BaseModel):
         serialize_by_alias=True,
     )
 
-    updated_at: datetime | None = Field(exclude=True)
-    created_at: datetime | None = Field(exclude=True)
+    updated_at: datetime | None = Field(default=None, exclude=True)
+    created_at: datetime | None = Field(default=None, exclude=True)

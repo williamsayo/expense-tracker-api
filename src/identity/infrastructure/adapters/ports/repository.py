@@ -10,29 +10,27 @@ from boilerplate.errors.repository import (
     ConflictError,
 )
 from boilerplate.errors.http import AuthorizationError
-from identity.domain.entities.user_entity import UserEntity
-from identity.infrastructure.adapters.ports.encryption import EncryptionService
+from src.identity.domain.entities.user_entity import UserEntity
+from src.identity.infrastructure.adapters.ports.encryption import EncryptionService
 
 
 class UserRepositoryProtocol(Protocol):
     """Defines the contract for user repository operations."""
 
-    async def get_by_id(self, aggregateId: UniqueEntityId) -> Either[
+    async def get_by_id(self, aggregate_id: UniqueEntityId) -> Either[
         UserEntity,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]: ...
 
     async def add(
         self, aggregate: UserEntity
-    ) -> Either[
-        UserEntity, RepositoryUnexpectedError | ConflictError | ConcurrencyError
-    ]: ...
+    ) -> Either[None, RepositoryUnexpectedError | ConflictError | ConcurrencyError]: ...
 
     async def username_exists(
-        self, username: str, aggregateId: UniqueEntityId, *, email: str
+        self, username: str, aggregate_id: UniqueEntityId, *, email: str
     ) -> bool: ...
 
-    async def exists(self, aggregateId: UniqueEntityId) -> bool: ...
+    async def exists(self, aggregate_id: UniqueEntityId) -> bool: ...
 
     async def first(
         self, options: GetOptions, encryption: EncryptionService, password: str

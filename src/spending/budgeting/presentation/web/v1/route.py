@@ -2,39 +2,39 @@ from fastapi.routing import APIRouter
 from fastapi import status, Depends
 from typing import List, Annotated
 from result import is_fail
-from shared.utils.auth.dependencies import AuthDeps
-from shared.application.dtos.url_params import UrlParams
-from spending.budgeting.infrastructure.adapters.dto.budget import (
+from src.shared.utils.auth.dependencies import AuthDeps
+from src.shared.application.dtos.url_params import UrlParams
+from src.spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetReadModel,
     BudgetUpdateModel,
     BudgetWriteModel,
     BudgetOverviewReadModel,
 )
-from spending.budgeting.infrastructure.adapters.dto.budget_allocation import (
+from src.spending.budgeting.infrastructure.adapters.dto.budget_allocation import (
     BudgetAllocationWriteModel,
 )
-from spending.budgeting.application.use_cases.retrieve_budget_usecase import (
+from src.spending.budgeting.application.use_cases.retrieve_budget_usecase import (
     GetBudgetUsecase,
 )
-from spending.budgeting.application.use_cases.retrieve_budget_list_usecase import (
+from src.spending.budgeting.application.use_cases.retrieve_budget_list_usecase import (
     GetBudgetsUsecase,
 )
-from spending.budgeting.application.use_cases.create_budget_usecase import (
+from src.spending.budgeting.application.use_cases.create_budget_usecase import (
     CreateBudgetUseCase,
 )
-from spending.budgeting.application.use_cases.add_budget_allocation_usecase import (
+from src.spending.budgeting.application.use_cases.add_budget_allocation_usecase import (
     AddBudgetAllocationUsecase,
 )
-from spending.budgeting.application.use_cases.remove_budget_allocation_usecase import (
+from src.spending.budgeting.application.use_cases.remove_budget_allocation_usecase import (
     RemoveBudgetAllocationUsecase,
 )
-from spending.budgeting.application.use_cases.retrieve_budget_overview_usecase import (
+from src.spending.budgeting.application.use_cases.retrieve_budget_overview_usecase import (
     GetBudgetOverviewUsecase,
 )
-from spending.budgeting.application.use_cases.delete_budget_usecase import (
+from src.spending.budgeting.application.use_cases.delete_budget_usecase import (
     DeleteBudgetUsecase,
 )
-from spending.budgeting.application.use_cases.update_budget_usecase import (
+from src.spending.budgeting.application.use_cases.update_budget_usecase import (
     UpdateBudgetUsecase,
 )
 

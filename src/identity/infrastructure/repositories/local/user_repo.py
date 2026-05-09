@@ -8,27 +8,25 @@ from boilerplate import (
     ConcurrencyError,
     ConflictError,
     UniqueEntityId,
-    WriteRepository,
-    ReadRepository,
+    AsyncWriteRepository,
+    AsyncReadRepository,
     GetAllOptions,
     GetOptions,
     AuthorizationError,
     ApplicationErrorID,
 )
-from identity.domain.entities.user_entity import UserEntity
-from identity.infrastructure.adapters.ports.encryption import EncryptionService
+from src.identity.domain.entities.user_entity import UserEntity
+from src.identity.infrastructure.adapters.ports.encryption import EncryptionService
 
 
-class LocalUserRepository(WriteRepository, ReadRepository):
+class LocalUserRepository(AsyncWriteRepository[UserEntity, UniqueEntityId]):
     """Repository implementation for local user data."""
 
     db: dict[str | UUID, UserEntity] = {}
 
     async def add(
         self, aggregate: UserEntity
-    ) -> Either[
-        UserEntity, RepositoryUnexpectedError | ConflictError | ConcurrencyError
-    ]:
+    ) -> Either[None, RepositoryUnexpectedError | ConflictError | ConcurrencyError]:
         for keys, value in self.db.items():
             if keys != aggregate.id.value and (
                 value.username == aggregate.username or value.email == aggregate.email
@@ -41,13 +39,13 @@ class LocalUserRepository(WriteRepository, ReadRepository):
                 )
 
         self.db[aggregate.id.value] = aggregate
-        return result_ok(aggregate)
+        return result_ok(None)
 
-    async def get_by_id(self, aggregateId: UniqueEntityId) -> Either[
+    async def get_by_id(self, aggregate_id: UniqueEntityId) -> Either[
         UserEntity,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]:
-        result = self.db.get(aggregateId.value)
+        result = self.db.get(aggregate_id.value)
 
         if result is None:
             return result_fail(RepositoryNotFoundError(Exception("User not found")))
@@ -62,8 +60,18 @@ class LocalUserRepository(WriteRepository, ReadRepository):
         | RepositoryUnexpectedError
         | AuthorizationError,
     ]:
+        username = None
+
         if filter := options.get("filter"):
             username = filter.get("username", None)
+
+        if username is None:
+            return result_fail(
+                RepositoryNotFoundError(
+                    Exception("Username or email not provided"),
+                    "Username or email not provided",
+                )
+            )
 
         result = None
 
@@ -87,11 +95,11 @@ class LocalUserRepository(WriteRepository, ReadRepository):
         return result_ok(result)
 
     async def username_exists(
-        self, username: str, aggregateId: UniqueEntityId, *, email: str
+        self, username: str, aggregate_id: UniqueEntityId, *, email: str
     ) -> bool:
         for keys, value in self.db.items():
             return (
-                keys != aggregateId
+                keys != aggregate_id.value
                 and value.username == username
                 and value.email == email
             )
@@ -105,7 +113,7 @@ class LocalUserRepository(WriteRepository, ReadRepository):
     async def list(self, options: GetAllOptions) -> Sequence:
         raise NotImplementedError
 
-    def remove(
+    async def remove(
         self, aggregate: UserEntity
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]:
         raise NotImplementedError

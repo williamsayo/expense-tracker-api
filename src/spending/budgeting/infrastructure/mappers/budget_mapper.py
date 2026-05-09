@@ -2,18 +2,18 @@ from typing import List
 from uuid import UUID
 from boilerplate import BaseMapper, UniqueEntityId, IllegalArgumentError, CoreError
 from result import Either, result_ok, result_fail, is_fail, result_combine
-from shared.domain.value_objects.category_value_object import CategoryValueObject
-from spending.budgeting.domain.entities.budget_entity import BudgetEntity
-from spending.budgeting.domain.entities.budget_allocation_entity import (
+from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.domain.entities.budget_allocation_entity import (
     BudgetAllocationEntity,
 )
-from spending.budgeting.domain.value_objects.budget_period_value_object import (
+from src.spending.budgeting.domain.value_objects.budget_period_value_object import (
     BudgetPeriodValueObject,
 )
-from spending.budgeting.domain.value_objects.amount_value_object import (
+from src.spending.budgeting.domain.value_objects.amount_value_object import (
     AmountValueObject,
 )
-from spending.budgeting.infrastructure.repositories.schema import (
+from src.spending.budgeting.infrastructure.repositories.schema import (
     Budget,
     BudgetAllocation,
 )
@@ -49,7 +49,11 @@ def create_budget_allocations(
         entity_id, amount, category = combined_result.value
 
         allocation = BudgetAllocationEntity.existing_budget_allocation(
-            {"amount": amount, "category": category, "spent_amount": allocation.spent_amount},
+            {
+                "amount": amount,
+                "category": category,
+                "spent_amount": allocation.spent_amount,
+            },
             id=entity_id,
             version=allocation.version,
         )

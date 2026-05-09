@@ -6,7 +6,7 @@ from boilerplate import (
     DomainEventMetadata,
 )
 from datetime import date
-from shared.domain.types.currency_types import Currency
+from src.shared.domain.types.currency_types import Currency
 
 
 class BudgetCreatedData(TypedDict):

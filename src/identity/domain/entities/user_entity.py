@@ -3,7 +3,7 @@ from typing import TypedDict, Self, Never, NotRequired
 from boilerplate.domain.aggregate_root import AggregateRoot
 from boilerplate.domain.unique_entity_id import UniqueEntityId
 from result import result_ok, Either
-from identity.domain.value_objects.email_value_object import EmailValueObject
+from src.identity.domain.value_objects.email_value_object import EmailValueObject
 
 
 class UserEntityProps(TypedDict):

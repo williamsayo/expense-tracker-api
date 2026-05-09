@@ -1,13 +1,15 @@
 from typing import Protocol, Sequence
 from boilerplate import CoreError
 from result import Either, is_fail, result_ok, result_fail
-from shared.domain.types.user_id import UserId
+from src.shared.domain.types.user_id import UserId
 from boilerplate.errors.repository import (
     RepositoryUnexpectedError,
     DataIntegrityError,
 )
-from spending.budgeting.domain.read_models.budget_summary import BudgetSummaryReadModel
-from spending.budgeting.utils.setup_dependencies import BudgetReadDeps
+from src.spending.budgeting.domain.read_models.budget_summary import (
+    BudgetSummaryReadModel,
+)
+from src.spending.budgeting.utils.setup_dependencies import BudgetReadDeps
 
 
 class GetBudgetsUsecase:

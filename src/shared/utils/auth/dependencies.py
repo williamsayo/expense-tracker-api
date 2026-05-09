@@ -4,9 +4,9 @@ from typing import Annotated
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from result import is_fail
-from shared.utils.setup_dependencies import BaseDependency
-from shared.utils.auth.token_verifier import TokenVerifier
-from shared.domain.types.user_id import UserId
+from src.shared.utils.setup_dependencies import BaseDependency
+from src.shared.utils.auth.token_verifier import TokenVerifier
+from src.shared.domain.types.user_id import UserId
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token", auto_error=False)
 

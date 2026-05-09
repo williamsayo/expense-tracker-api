@@ -1,11 +1,11 @@
 from typing import Never, NotRequired, TypedDict, Self
 from boilerplate import Entity, UniqueEntityId
 from result import Either, result_ok
-from shared.domain.types.currency_types import Currency
-from spending.budgeting.domain.value_objects.amount_value_object import (
+from src.shared.domain.types.currency_types import Currency
+from src.spending.budgeting.domain.value_objects.amount_value_object import (
     AmountValueObject,
 )
-from shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.category_value_object import CategoryValueObject
 
 
 class BudgetAllocationEntityProps(TypedDict):

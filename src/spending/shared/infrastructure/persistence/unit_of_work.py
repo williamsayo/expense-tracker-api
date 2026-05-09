@@ -1,9 +1,9 @@
 # from boilerplate import UnitOfWork
 from sqlalchemy.ext.asyncio import AsyncSession
-from spending.budgeting.infrastructure.repositories.postgres.budget_repo import (
+from src.spending.budgeting.infrastructure.repositories.postgres.budget_repo import (
     BudgetRepository,
 )
-from spending.expenses.infrastructure.repositories.postgres.expense_repo import (
+from src.spending.expenses.infrastructure.repositories.postgres.expense_repo import (
     ExpenseRepository,
 )
 

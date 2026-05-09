@@ -10,20 +10,20 @@ from boilerplate import (
     ConcurrencyError,
     ConflictError,
     UniqueEntityId,
-    WriteRepository,
-    ReadRepository,
+    AsyncWriteRepository,
+    AsyncReadRepository,
     AuthorizationError,
     ApplicationErrorID,
     GetAllOptions,
     GetOptions,
 )
-from identity.domain.entities.user_entity import UserEntity
-from identity.infrastructure.repositories.schema import User
-from identity.infrastructure.mappers.user_mapper import UserMapper
-from identity.infrastructure.adapters.ports.encryption import EncryptionService
+from src.identity.domain.entities.user_entity import UserEntity
+from src.identity.infrastructure.repositories.schema import User
+from src.identity.infrastructure.mappers.user_mapper import UserMapper
+from src.identity.infrastructure.adapters.ports.encryption import EncryptionService
 
 
-class UserRepository(WriteRepository, ReadRepository):
+class UserRepository(AsyncWriteRepository[UserEntity, UniqueEntityId]):
     """Repository implementation for user data."""
 
     def __init__(self, db: AsyncSession):
@@ -31,9 +31,7 @@ class UserRepository(WriteRepository, ReadRepository):
 
     async def add(
         self, aggregate: UserEntity
-    ) -> Either[
-        UserEntity, RepositoryUnexpectedError | ConflictError | ConcurrencyError
-    ]:
+    ) -> Either[None, RepositoryUnexpectedError | ConflictError | ConcurrencyError]:
         try:
             persistence = UserMapper.to_persistence(aggregate)
             exists = await self.exists(aggregate.id)
@@ -44,7 +42,8 @@ class UserRepository(WriteRepository, ReadRepository):
                 self.db.add(persistence)
 
             await self.db.commit()
-            return result_ok(aggregate)
+            return result_ok(None)
+
         except IntegrityError as error:
             await self.db.rollback()
             return result_fail(ConflictError(error, "Username or email already exists"))
@@ -52,11 +51,11 @@ class UserRepository(WriteRepository, ReadRepository):
             await self.db.rollback()
             return result_fail(RepositoryUnexpectedError(error))
 
-    async def get_by_id(self, aggregateId: UniqueEntityId) -> Either[
+    async def get_by_id(self, aggregate_id: UniqueEntityId) -> Either[
         UserEntity,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]:
-        query = select(User).where(User.id == aggregateId.value)
+        query = select(User).where(User.id == aggregate_id.value)
         persistence_output = (await self.db.scalars(query)).one_or_none()
 
         if not persistence_output:
@@ -80,8 +79,19 @@ class UserRepository(WriteRepository, ReadRepository):
         | RepositoryUnexpectedError
         | AuthorizationError,
     ]:
+
+        username = None
+
         if filter := options.get("filter"):
             username = filter.get("username", None)
+
+        if username is None:
+            return result_fail(
+                RepositoryNotFoundError(
+                    Exception("Username or email not provided"),
+                    "Username or email not provided",
+                )
+            )
 
         result = await self.db.scalars(
             select(User).where(or_(User.username == username, User.email == username))
@@ -108,29 +118,29 @@ class UserRepository(WriteRepository, ReadRepository):
         return result_ok(result.value)
 
     async def username_exists(
-        self, username: str, aggregateId: UniqueEntityId, *, email: str
+        self, username: str, aggregate_id: UniqueEntityId, *, email: str
     ) -> bool:
         query = await self.db.scalars(
             select(
                 exists().where(
                     or_(User.username == username, User.email == email),
-                    User.id != aggregateId.value,
+                    User.id != aggregate_id.value,
                 )
             )
         )
 
         return cast(bool, query.one_or_none())
 
-    async def exists(self, aggregateId: UniqueEntityId) -> bool:
+    async def exists(self, aggregate_id: UniqueEntityId) -> bool:
         query = await self.db.scalars(
-            select(exists().where(User.id == aggregateId.value))
+            select(exists().where(User.id == aggregate_id.value))
         )
         return cast(bool, query.one_or_none())
 
     async def list(self, options: GetAllOptions) -> Sequence:
         raise NotImplementedError
 
-    def remove(
+    async def remove(
         self, aggregate: UserEntity
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]:
         raise NotImplementedError

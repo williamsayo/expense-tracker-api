@@ -1,6 +1,6 @@
 from typing import TypedDict, List
 from uuid import UUID
-from spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
 
 
 class ExpenseOverviewReadModelProps(TypedDict):

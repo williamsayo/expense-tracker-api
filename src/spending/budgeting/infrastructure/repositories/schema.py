@@ -3,12 +3,12 @@ from uuid import UUID
 from datetime import date, timedelta
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Enum, String, Uuid, ForeignKey, UniqueConstraint
-from shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
-from shared.infrastructure.db.base import Base
-from shared.domain.types.category_types import CategoryType
-from shared.domain.types.currency_types import Currency
-from shared.domain.types.user_id import UserId
-from spending.expenses.infrastructure.repositories.schema import Expense
+from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
+from src.shared.infrastructure.db.base import Base
+from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.currency_types import Currency
+from src.shared.domain.types.user_id import UserId
+from src.spending.expenses.infrastructure.repositories.schema import Expense
 
 
 class Budget(Base, TimeStampMixin, VersionMixin):

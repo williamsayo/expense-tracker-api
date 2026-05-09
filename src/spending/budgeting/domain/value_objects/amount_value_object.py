@@ -2,7 +2,7 @@ from typing import Self, TypedDict
 from decimal import Decimal
 from boilerplate import ValueObject, DomainRuleError, apply_rules
 from result import is_fail, result_ok, result_fail, Either
-from spending.budgeting.domain.rules.amount_rule import AmountSchema
+from src.spending.budgeting.domain.rules.amount_rule import AmountSchema
 
 class AmountValueObjectProps(TypedDict):
     """Typed dictionary for Amount value object fields."""

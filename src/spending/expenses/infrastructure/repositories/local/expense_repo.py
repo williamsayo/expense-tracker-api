@@ -1,14 +1,13 @@
 from typing import List
 from uuid import UUID
 from boilerplate import (
+    AsyncWriteRepository,
     DataIntegrityError,
     RepositoryUnexpectedError,
     ConflictError,
     ConcurrencyError,
     RepositoryNotFoundError,
     AuthenticationError,
-    WriteRepository,
-    ReadRepository,
     UniqueEntityId,
     GetAllOptions,
     GetOptions,
@@ -16,11 +15,11 @@ from boilerplate import (
     GetOptions,
 )
 from result import result_fail, result_ok, Either
-from shared.domain.types.user_id import UserId
-from spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.shared.domain.types.user_id import UserId
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 
 
-class LocalExpenseRepository(WriteRepository, ReadRepository):
+class LocalExpenseRepository(AsyncWriteRepository[ExpenseEntity, UniqueEntityId]):
     """Repository implementation for expense data."""
 
     db: dict[str | UUID, ExpenseEntity] = {}
@@ -28,7 +27,10 @@ class LocalExpenseRepository(WriteRepository, ReadRepository):
     async def list(
         self, options: GetAllOptions
     ) -> Either[List[ExpenseEntity], RepositoryUnexpectedError]:
+        
         result: List[ExpenseEntity] = []
+        user_id = None
+        
         if filter := options.get("filter"):
             user_id = filter.get("user_id")
 
@@ -45,12 +47,12 @@ class LocalExpenseRepository(WriteRepository, ReadRepository):
 
         return result_ok(result)
 
-    async def get_by_id(self, aggregateId: UniqueEntityId) -> Either[
+    async def get_by_id(self, aggregate_id: UniqueEntityId) -> Either[
         ExpenseEntity,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]:
 
-        result = self.db.get(aggregateId.value)
+        result = self.db.get(aggregate_id.value)
 
         if result is None:
             return result_fail(
@@ -81,14 +83,15 @@ class LocalExpenseRepository(WriteRepository, ReadRepository):
         self.db[aggregate.id.value] = aggregate
         return result_ok()
 
-    async def exists(self, aggregateId: UniqueEntityId) -> bool:
-        query = aggregateId.value in self.db
+    async def exists(self, aggregate_id: UniqueEntityId) -> bool:
+        query = aggregate_id.value in self.db
         return query
 
     async def first(self, options: GetOptions) -> Either[
         ExpenseEntity,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]:
+        user_id = None
         if filter := options.get("filter"):
             user_id = filter.get("user_id")
 
@@ -99,6 +102,7 @@ class LocalExpenseRepository(WriteRepository, ReadRepository):
                 )
             )
 
+        result = None
         for expense in self.db.values():
             if expense.user_id == user_id:
                 result = expense

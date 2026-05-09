@@ -2,7 +2,7 @@ from typing import Self, TypedDict
 from datetime import date
 from boilerplate import ValueObject, apply_rules, DomainRuleError
 from result import is_fail, result_ok, result_fail, Either
-from spending.budgeting.domain.rules.budget_period_rules import BudgetPeriodSchema
+from src.spending.budgeting.domain.rules.budget_period_rules import BudgetPeriodSchema
 
 
 class BudgetPeriodValueObjectProps(TypedDict):

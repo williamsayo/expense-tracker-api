@@ -5,9 +5,12 @@ from boilerplate import (
     CoreError,
 )
 from result import is_fail, result_ok, result_fail, Either, result_combine
-from shared.domain.types.user_id import UserId
-from spending.budgeting.infrastructure.mappers.budget_mapper import create_unique_entity_id
-from spending.budgeting.utils.setup_dependencies import BudgetDeps
+from src.shared.domain.types.user_id import UserId
+from src.spending.budgeting.infrastructure.mappers.budget_mapper import (
+    create_unique_entity_id,
+)
+from src.spending.budgeting.utils.setup_dependencies import BudgetDeps
+
 
 class RemoveBudgetAllocationUsecase:
     def __init__(self, deps: BudgetDeps):

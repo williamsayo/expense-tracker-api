@@ -1,16 +1,16 @@
 from uuid import UUID
-from boilerplate.errors.application import UnexpectedError
-from boilerplate.errors.domain import IllegalArgumentError
-from boilerplate.errors.domain import DomainRuleError
-from boilerplate.errors.core import CoreError
-from boilerplate.errors.repository import (
+from boilerplate import (
     RepositoryUnexpectedError,
     ConflictError,
     ConcurrencyError,
     DataIntegrityError,
     RepositoryNotFoundError,
+    IllegalArgumentError,
+    DomainRuleError,
+    UnexpectedError,
+    CoreError,
+    AuthorizationError,
 )
-from boilerplate.errors.http import AuthorizationError
 from result import result_fail, is_fail, Either, result_ok, result_combine
 from shared.application.services.base import BaseService
 from identity.utils.setup_dependencies import UserDeps

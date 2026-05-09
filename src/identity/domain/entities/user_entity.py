@@ -1,4 +1,5 @@
-from typing import TypedDict, Self, Never
+from datetime import datetime
+from typing import TypedDict, Self, Never, NotRequired
 from boilerplate.domain.aggregate_root import AggregateRoot
 from boilerplate.domain.unique_entity_id import UniqueEntityId
 from result import result_ok, Either
@@ -8,11 +9,12 @@ from identity.domain.value_objects.email_value_object import EmailValueObject
 class UserEntityProps(TypedDict):
     """Typed dictionary for user entity fields."""
 
-    first_name: str
-    last_name: str
+    first_name: str | None
+    last_name: str | None
     email: EmailValueObject
     hashed_password: str
     username: str
+    created_at: NotRequired[datetime]
 
 
 class UserEntity(AggregateRoot[UserEntityProps]):
@@ -27,12 +29,12 @@ class UserEntity(AggregateRoot[UserEntityProps]):
         super().__init__(props, id, version)
 
     @property
-    def first_name(self) -> str:
+    def first_name(self) -> str | None:
         self._check_is_discarded_entity()
         return self.props["first_name"]
 
     @property
-    def last_name(self) -> str:
+    def last_name(self) -> str | None:
         self._check_is_discarded_entity()
         return self.props["last_name"]
 
@@ -50,6 +52,11 @@ class UserEntity(AggregateRoot[UserEntityProps]):
     def hashed_password(self) -> str:
         self._check_is_discarded_entity()
         return self.props["hashed_password"]
+
+    @property
+    def created_at(self) -> datetime:
+        self._check_is_discarded_entity()
+        return self.props.get("created_at", datetime.now())
 
     def set_new_hash(self, new_hash: str) -> None:
         self._check_is_discarded_entity()

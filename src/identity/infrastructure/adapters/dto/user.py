@@ -16,8 +16,13 @@ class UserBaseModel(BaseModel):
         None, min_length=2, max_length=50, description="Last name of the user"
     )
 
+
 class UserReadModel(BaseReadModel, UserBaseModel):
     """Pydantic model for reading user data, excluding sensitive information like password."""
+
+    created_at: Optional[Any] = Field(
+        None, description="Timestamp when the user was created"
+    )
 
     @field_validator("email", mode="before")
     @classmethod

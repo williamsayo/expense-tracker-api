@@ -43,7 +43,7 @@ async def create_expense(
     use_case: Annotated[CreateExpenseUsecase, Depends()],
 ):
     result = await use_case.execute(
-        {"user_id": auth.user_id, "expense_data": expense_data}
+        {"auth_id": auth.user_id, "expense_data": expense_data}
     )
 
     if is_fail(result):
@@ -77,7 +77,7 @@ async def retrieve_all_expenses(
     auth: Annotated[AuthDeps, Depends()],
     use_case: Annotated[GetExpenseListUsecase, Depends()],
 ):
-    result = await use_case.execute({"user_id": auth.user_id, "queryParams": params})
+    result = await use_case.execute({"auth_id": auth.user_id, "queryParams": params})
 
     if is_fail(result):
         raise result.value
@@ -114,7 +114,7 @@ async def retrieve_expense(
     use_case: Annotated[GetExpenseUsecase, Depends()],
 ):
     result = await use_case.execute(
-        {"aggregate_id": aggregate_id, "user_id": auth.user_id}
+        {"aggregate_id": aggregate_id, "auth_id": auth.user_id}
     )
 
     if is_fail(result):
@@ -135,7 +135,7 @@ async def retrieve_expense_by_category(
     use_case: Annotated[GetExpenseByCategoryUsecase, Depends()],
 ):
     result = await use_case.execute(
-        {"category": category_name, "user_id": auth.user_id}
+        {"category": category_name, "auth_id": auth.user_id}
     )
 
     if is_fail(result):

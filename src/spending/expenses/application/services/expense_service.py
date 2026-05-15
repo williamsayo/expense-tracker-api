@@ -37,7 +37,7 @@ class ExpenseService(BaseService[ExpenseDeps]):
 
     async def create_expense_usecase(
         self,
-        user_id: UserId,
+        auth_id: UserId,
         expense_data: ExpenseWriteModel,
         background_tasks: BackgroundTasks,
     ) -> Either[
@@ -63,7 +63,7 @@ class ExpenseService(BaseService[ExpenseDeps]):
         entity_result = ExpenseEntity.create(
             {
                 "name": expense_data.name,
-                "user_id": user_id,
+                "auth_id": auth_id,
                 "category": category,
                 "money": money,
                 "date": expense_data.date,
@@ -71,20 +71,20 @@ class ExpenseService(BaseService[ExpenseDeps]):
             }
         )
 
-        result = await self.deps.repo.add(entity_result.value)
+        result = await self.deps.expense_repo.add(entity_result.value)
 
         if is_fail(result):
             return result
 
         # Dispatch uncommitted events after successful persistence
         events = entity_result.value.uncommited_events
-        background_tasks.add_task(self.deps.dispatcher.publish_all, events)
+        background_tasks.add_task(self.deps.eventPublisher.publish_all, events)
         entity_result.value.uncommit()
 
         return entity_result
 
     async def update_expense_usecase(
-        self, aggregate_id: str, user_id: UserId, expense_data: ExpenseUpdateModel
+        self, aggregate_id: str, auth_id: UserId, expense_data: ExpenseUpdateModel
     ) -> Either[
         ExpenseEntity,
         CoreError
@@ -98,14 +98,14 @@ class ExpenseService(BaseService[ExpenseDeps]):
         if is_fail(entity_id):
             return entity_id
 
-        result = await self.deps.repo.get_by_id(entity_id.value)
+        result = await self.deps.expense_repo.get_by_id(entity_id.value)
 
         if is_fail(result):
             return result
 
         entity = result.value
 
-        if entity.user_id != user_id:
+        if entity.auth_id != auth_id:
             return result_fail(
                 AuthenticationError(
                     ApplicationErrorID.AUTHENTICATION,
@@ -125,7 +125,7 @@ class ExpenseService(BaseService[ExpenseDeps]):
         if is_fail(update_result):
             return update_result
 
-        result = await self.deps.repo.add(entity)
+        result = await self.deps.expense_repo.add(entity)
 
         if is_fail(result):
             return result
@@ -133,7 +133,7 @@ class ExpenseService(BaseService[ExpenseDeps]):
         return result_ok(entity)
 
     async def delete_expense_usecase(
-        self, aggregateId: str, user_id: UserId
+        self, aggregateId: str, auth_id: UserId
     ) -> Either[None, RepositoryUnexpectedError | CoreError]:
 
         id_result = create_unique_entity_id(aggregateId)
@@ -141,14 +141,14 @@ class ExpenseService(BaseService[ExpenseDeps]):
         if is_fail(id_result):
             return result_fail(id_result.value)
 
-        entity_result = await self.deps.repo.get_by_id(id_result.value)
+        entity_result = await self.deps.expense_repo.get_by_id(id_result.value)
 
         if is_fail(entity_result):
             return result_fail(entity_result.value)
 
         entity = entity_result.value
 
-        if entity.user_id != user_id:
+        if entity.auth_id != auth_id:
             return result_fail(
                 AuthenticationError(
                     ApplicationErrorID.AUTHENTICATION,
@@ -156,7 +156,7 @@ class ExpenseService(BaseService[ExpenseDeps]):
                 )
             )
 
-        result = await self.deps.repo.remove(entity)
+        result = await self.deps.expense_repo.remove(entity)
 
         if is_fail(result):
             return result_fail(result.value)
@@ -164,12 +164,12 @@ class ExpenseService(BaseService[ExpenseDeps]):
         return result_ok()
 
     async def delete_expense_by_category_usecase(
-        self, category: CategoryType, user_id: UserId
+        self, category: CategoryType, auth_id: UserId
     ) -> Either[
         None,
         RepositoryUnexpectedError | AuthenticationError | CoreError,
     ]:
-        result = await self.deps.repo.remove_all(category.value, user_id)
+        result = await self.deps.expense_repo.remove(category.value, auth_id)
 
         if is_fail(result):
             return result_fail(result.value)

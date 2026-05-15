@@ -14,7 +14,7 @@ from src.spending.expenses.utils.setup_dependencies import ExpenseReadDeps
 
 class GetExpenseByCategoryInput(TypedDict):
     category: CategoryType
-    user_id: UserId
+    auth_id: UserId
 
 
 class GetExpenseByCategoryUsecase(
@@ -28,11 +28,11 @@ class GetExpenseByCategoryUsecase(
         RepositoryNotFoundError | RepositoryUnexpectedError | DataIntegrityError,
     ]:
         category = input["category"]
-        user_id = input["user_id"]
+        auth_id = input["auth_id"]
 
-        print(category, user_id)
+        print(category, auth_id)
         result = await self.deps.repo.list(
-            {"filter": {"category": category.value, "user_id": user_id}, "limit": 20}
+            {"filter": {"category": category.value, "auth_id": auth_id}, "limit": 20}
         )
 
         if is_fail(result):

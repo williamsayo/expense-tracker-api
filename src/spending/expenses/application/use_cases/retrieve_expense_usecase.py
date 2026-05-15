@@ -20,7 +20,7 @@ from src.spending.expenses.utils.setup_dependencies import ExpenseReadDeps
 
 class GetExpenseInput(TypedDict):
     aggregate_id: str
-    user_id: UserId
+    auth_id: UserId
 
 
 class GetExpenseUsecase(AsyncQueryUseCase[GetExpenseInput, ExpenseReadModel]):
@@ -48,7 +48,7 @@ class GetExpenseUsecase(AsyncQueryUseCase[GetExpenseInput, ExpenseReadModel]):
 
         entity = result.value
 
-        if entity.user_id != input["user_id"]:
+        if entity.auth_id != input["auth_id"]:
             return result_fail(
                 AuthenticationError(
                     ApplicationErrorID.AUTHENTICATION,

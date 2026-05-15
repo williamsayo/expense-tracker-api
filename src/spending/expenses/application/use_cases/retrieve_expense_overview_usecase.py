@@ -16,7 +16,7 @@ class GetExpenseOverviewUsecase:
     def __init__(self, deps: ExpenseReadDeps):
         self.deps = deps
 
-    async def execute(self, user_id: UserId, limit: int) -> Either[
+    async def execute(self, auth_id: UserId, limit: int) -> Either[
         ExpenseOverviewReadModel,
         CoreError
         | RepositoryNotFoundError
@@ -25,7 +25,7 @@ class GetExpenseOverviewUsecase:
     ]:
         """Retrieves a budget by its ID."""
         result = await self.deps.repo.get_expense_overview(
-            {"filter": {"user_id": user_id}, "limit": limit}
+            {"filter": {"auth_id": auth_id}, "limit": limit}
         )
 
         if is_fail(result):

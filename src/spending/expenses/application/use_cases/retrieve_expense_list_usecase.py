@@ -15,7 +15,7 @@ from src.shared.application.dtos.url_params import UrlParams
 
 
 class GetExpenseListInput(TypedDict):
-    user_id: UserId
+    auth_id: UserId
     queryParams: UrlParams
 
 
@@ -31,7 +31,7 @@ class GetExpenseListUsecase(
     ]:
         result = await self.deps.repo.list(
             {
-                "filter": {"user_id": input["user_id"]},
+                "filter": {"auth_id": input["auth_id"]},
                 "limit": input["queryParams"].page_size,
             }
         )

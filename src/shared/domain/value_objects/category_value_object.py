@@ -9,8 +9,8 @@ from src.shared.domain.types.category_types import CategoryType
 
 class CategoryValueObjectProps(TypedDict):
     """Typed dictionary for category value object fields."""
-    name: CategoryType
 
+    name: str
 
 class CategoryValueObject(ValueObject[CategoryValueObjectProps]):
     """
@@ -22,7 +22,7 @@ class CategoryValueObject(ValueObject[CategoryValueObjectProps]):
 
     @property
     def name(self) -> CategoryType:
-        return self.props["name"]
+        return CategoryType(self.props["name"])
 
     @classmethod
     def create(cls, props: CategoryValueObjectProps) -> Either[Self, DomainRuleError]:

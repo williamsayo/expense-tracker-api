@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, TypedDict, Any
+from pydantic import BaseModel
 from uuid import UUID
 from datetime import date, timedelta
 from sqlalchemy.orm import mapped_column, Mapped, relationship
@@ -9,6 +10,29 @@ from src.shared.domain.types.category_types import CategoryType
 from src.shared.domain.types.currency_types import Currency
 from src.shared.domain.types.user_id import UserId
 from src.spending.expenses.infrastructure.repositories.schema import Expense
+
+
+class BudgetAllocationSchema(TypedDict):
+    """TypedDict for budget allocation schema."""
+
+    id: str
+    category: str
+    amount: int
+    spent_amount: int
+    version: int
+
+
+class BudgetSchema(TypedDict):
+    """TypedDict for budget schema."""
+
+    id: str
+    name: str | None
+    auth_id: str
+    start_date: str
+    end_date: str
+    currency: str
+    allocations: List[BudgetAllocationSchema]
+    version: int
 
 
 class Budget(Base, TimeStampMixin, VersionMixin):

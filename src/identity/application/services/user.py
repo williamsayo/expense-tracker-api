@@ -14,7 +14,10 @@ from boilerplate import (
 from result import result_fail, is_fail, Either, result_ok, result_combine
 from src.shared.application.services.base import BaseService
 from src.identity.utils.setup_dependencies import UserDeps
-from src.identity.infrastructure.adapters.dto.user import UserWriteModel, UserUpdateModel
+from src.identity.infrastructure.adapters.dto.user import (
+    UserWriteModel,
+    UserUpdateModel,
+)
 from src.identity.domain.entities.user_entity import UserEntity
 from src.identity.domain.value_objects.email_value_object import EmailValueObject
 from src.identity.infrastructure.services.encryption.argon2_encrption import (
@@ -55,7 +58,7 @@ class UserService(BaseService[UserDeps]):
         )
 
         result = await self.deps.repo.add(entity_result.value)
-        
+
         if is_fail(result):
             return result_fail(result.value)
 
@@ -141,7 +144,7 @@ class UserService(BaseService[UserDeps]):
         username_or_email_exists = (
             user.username
             and await self.deps.repo.username_exists(
-                user.username, entity.id, email=entity.email.value
+                user.username, email=entity.email.value
             )
         )
 
@@ -154,7 +157,7 @@ class UserService(BaseService[UserDeps]):
 
         if is_fail(entity_result):
             return result_fail(entity_result.value)
-        
+
         return result_ok(entity)
 
     def issue_jwt_tokens(

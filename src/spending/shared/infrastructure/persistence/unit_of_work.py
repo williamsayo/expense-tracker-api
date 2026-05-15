@@ -1,15 +1,16 @@
-# from boilerplate import UnitOfWork
+from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.spending.budgeting.infrastructure.repositories.postgres.budget_repo import (
+from src.spending.budgeting.infrastructure.repositories.dynamodb.budget_repo import (
     BudgetRepository,
 )
-from src.spending.expenses.infrastructure.repositories.postgres.expense_repo import (
+from src.spending.expenses.infrastructure.repositories.dynamodb.expense_repo import (
     ExpenseRepository,
 )
 
 
 class SpendingUnitOfWork:
-    def __init__(self, session_factory: AsyncSession):
+    def __init__(self, session_factory: Any):
         self.session = session_factory
         self.budget_repository = BudgetRepository(session_factory)
         self.expense_repository = ExpenseRepository(session_factory)

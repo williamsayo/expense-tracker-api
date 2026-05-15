@@ -11,6 +11,7 @@ from src.spending.budgeting.domain.read_models.budget_summary import (
 from src.spending.budgeting.domain.read_models.allocation_summary import (
     BudgetAllocationSummaryReadModel,
 )
+from src.spending.budgeting.domain.events.budget_created import BudgetCreatedData
 
 
 class OnExpenseCreated(EventHandler):
@@ -23,13 +24,13 @@ class OnExpenseCreated(EventHandler):
             repo = get_budget_read_repository(session)
 
             data = event.payload["data"]
-            user_id = data["user_id"]
+            auth_id = data["auth_id"]
             expense_date = data["date"]
 
             budget_result = await repo.first(
                 {
                     "filter": {
-                        "user_id": user_id,
+                        "auth_id": auth_id,
                         "expense_date": expense_date,
                     }
                 }
@@ -58,18 +59,18 @@ class OnBudgetCreated(EventHandler):
     def __init__(self, session: async_sessionmaker[AsyncSession]):
         self.session = session
 
-    async def handle(self, event: DomainEvent) -> None:
+    async def handle(self, event: DomainEvent[BudgetCreatedData]) -> None:
         async with self.session() as session:
             repo = get_budget_read_repository(session)
 
             data = event.payload["data"]
-            user_id = data["user_id"]
+            auth_id = data["auth_id"]
             budget_id = data["budget_id"]
-            currency = Currency(data["currency"])
+            currency = data["currency"]
 
             budget_read_model = BudgetSummaryReadModel(
                 {
-                    "user_id": user_id,
+                    "auth_id": auth_id,
                     "name": data["name"],
                     "currency": currency,
                     "allocations": [
@@ -86,6 +87,7 @@ class OnBudgetCreated(EventHandler):
                     "end_date": data["end_date"],
                     "start_date": data["start_date"],
                     "budget_id": budget_id,
+                    "expenses": [],
                 }
             )
 

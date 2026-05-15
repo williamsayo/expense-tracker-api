@@ -12,15 +12,14 @@ from src.spending.expenses.domain.read_models.expense_read_model import ExpenseR
 class BudgetSummaryReadModelProps(TypedDict):
     """Typed dictionary for budget entity fields."""
 
-    budget_id: UUID
+    budget_id: str
     name: str | None
-    user_id: UUID
+    auth_id: str
     allocations: List[BudgetAllocationSummaryReadModel]
     start_date: date
     end_date: date
     currency: Currency
     expenses: List[ExpenseReadModel]
-
 
 class BudgetSummaryReadModel:
     """Read model for budget."""
@@ -30,7 +29,7 @@ class BudgetSummaryReadModel:
         props: BudgetSummaryReadModelProps,
     ):
         self._budget_id = props["budget_id"]
-        self._user_id = props["user_id"]
+        self._auth_id = props["auth_id"]
         self._allocations = props["allocations"]
         self._start_date = props["start_date"]
         self._end_date = props["end_date"]
@@ -39,7 +38,7 @@ class BudgetSummaryReadModel:
         self._expenses = props["expenses"]
 
     @property
-    def budget_id(self) -> UUID:
+    def budget_id(self) -> str:
         return self._budget_id
     
     @property
@@ -47,8 +46,8 @@ class BudgetSummaryReadModel:
         return self._name
 
     @property
-    def user_id(self) -> UUID:
-        return self._user_id
+    def auth_id(self) -> str:
+        return self._auth_id
 
     @property
     def allocations(self) -> List[BudgetAllocationSummaryReadModel]:

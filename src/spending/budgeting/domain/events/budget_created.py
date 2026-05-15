@@ -10,11 +10,11 @@ from src.shared.domain.types.currency_types import Currency
 
 
 class BudgetCreatedData(TypedDict):
-    """Typed dictionary for the data payload of the ExpenseCreated event."""
+    """Typed dictionary for the data payload of the BudgetCreated event."""
 
     name: str | None
-    user_id: str | UUID
-    budget_id: str | UUID
+    auth_id: str
+    budget_id: str
     currency: Currency
     start_date: date
     end_date: date
@@ -22,7 +22,7 @@ class BudgetCreatedData(TypedDict):
 
 
 class BudgetCreated(DomainEvent[BudgetCreatedData]):
-    """Domain event representing the creation of a new expense."""
+    """Domain event representing the creation of a new budget."""
 
     def __init__(
         self,
@@ -34,19 +34,19 @@ class BudgetCreated(DomainEvent[BudgetCreatedData]):
     def create_event(
         cls, data: BudgetCreatedData, *, metadata: dict[str, Any] | None = None
     ) -> Self:
-        """Factory method to create an instance of ExpenseCreated with the given data and optional metadata."""
+        """Factory method to create an instance of BudgetCreated with the given data and optional metadata."""
         return cls(
             {
                 "data": data,
                 "metadata": cast(
                     DomainEventMetadata,
-                    {**expense_created_metadata, **(metadata or {})},
+                    {**budget_created_metadata, **(metadata or {})},
                 ),
             }
         )
 
 
-expense_created_metadata: DomainEventMetadata = {
+budget_created_metadata: DomainEventMetadata = {
     "type": BudgetCreated.__name__,
-    "description": "Event triggered when a new expense is created.",
+    "description": "Event triggered when a new budget is created.",
 }

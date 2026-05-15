@@ -8,7 +8,7 @@ from src.spending.budgeting.domain.read_models.budget_summary import (
 class BudgetOverviewReadModelProps(TypedDict):
     """Typed dictionary for budget entity fields."""
 
-    user_id: UUID
+    auth_id: UUID
     recent_budgets: List[BudgetSummaryReadModel]
     upcoming_budget: BudgetSummaryReadModel | None
     active_budget: BudgetSummaryReadModel | None
@@ -22,15 +22,15 @@ class BudgetOverviewReadModel:
         self,
         props: BudgetOverviewReadModelProps,
     ):
-        self._user_id = props["user_id"]
+        self._auth_id = props["auth_id"]
         self._recent_budgets = props["recent_budgets"]
         self._upcoming_budget = props["upcoming_budget"]
         self._active_budget = props["active_budget"]
         self._total_allocated = props["total_allocated"]
 
     @property
-    def user_id(self) -> UUID:
-        return self._user_id
+    def auth_id(self) -> UUID:
+        return self._auth_id
 
     @property
     def recent_budgets(self) -> List[BudgetSummaryReadModel]:

@@ -32,12 +32,6 @@ class BudgetPeriodValueObject(ValueObject[BudgetPeriodValueObjectProps]):
     def create(
         cls, props: BudgetPeriodValueObjectProps
     ) -> Either[Self, DomainRuleError]:
-        # if props["end_date"] <= props["start_date"]:
-        #     return result_fail(
-        #         DomainRuleError(
-        #             None, "end_date cannot be less than or equal to start_date"
-        #         )
-        #     )
         result = apply_rules(props, BudgetPeriodSchema)
         if is_fail(result):
             return result_fail(DomainRuleError(result.value))

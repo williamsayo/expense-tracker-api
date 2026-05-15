@@ -1,3 +1,4 @@
+from uuid import UUID
 from boilerplate import (
     AuthenticationError,
     IllegalArgumentError,
@@ -6,7 +7,6 @@ from boilerplate import (
     CoreError,
 )
 from result import is_fail, result_ok, result_fail, Either
-from src.shared.domain.types.user_id import UserId
 from src.spending.budgeting.utils.setup_dependencies import BudgetDeps
 from src.spending.budgeting.infrastructure.adapters.dto.budget import BudgetUpdateModel
 from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
@@ -20,7 +20,7 @@ class UpdateBudgetUsecase:
         self.deps = deps
 
     async def execute(
-        self, aggregate_id: str, user_id: UserId, budget_data: BudgetUpdateModel
+        self, aggregate_id: str, auth_id: UUID, budget_data: BudgetUpdateModel
     ) -> Either[
         BudgetEntity,
         CoreError
@@ -41,7 +41,7 @@ class UpdateBudgetUsecase:
 
         budget_entity = budget_result.value
 
-        if budget_entity.user_id != user_id:
+        if budget_entity.auth_id != auth_id:
             return result_fail(
                 AuthenticationError("Unauthorized to update this budget.")
             )

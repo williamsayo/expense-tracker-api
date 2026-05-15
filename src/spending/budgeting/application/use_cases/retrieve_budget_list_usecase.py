@@ -1,7 +1,7 @@
-from typing import Protocol, Sequence
+from typing import Sequence
+from uuid import UUID
 from boilerplate import CoreError
-from result import Either, is_fail, result_ok, result_fail
-from src.shared.domain.types.user_id import UserId
+from result import Either, is_fail, result_ok
 from boilerplate.errors.repository import (
     RepositoryUnexpectedError,
     DataIntegrityError,
@@ -16,12 +16,12 @@ class GetBudgetsUsecase:
     def __init__(self, deps: BudgetReadDeps):
         self.deps = deps
 
-    async def execute(self, user_id: UserId) -> Either[
+    async def execute(self, auth_id: UUID) -> Either[
         Sequence[BudgetSummaryReadModel],
         CoreError | RepositoryUnexpectedError | DataIntegrityError,
     ]:
         """Lists all budgets."""
-        result = await self.deps.repo.list({"filter": {"user_id": user_id}})
+        result = await self.deps.repo.list({"filter": {"auth_id": auth_id}})
 
         if is_fail(result):
             return result

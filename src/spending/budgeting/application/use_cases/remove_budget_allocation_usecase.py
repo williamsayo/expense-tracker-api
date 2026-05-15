@@ -1,3 +1,4 @@
+from uuid import UUID
 from boilerplate import (
     AuthenticationError,
     RepositoryUnexpectedError,
@@ -17,7 +18,7 @@ class RemoveBudgetAllocationUsecase:
         self.deps = deps
 
     async def execute(
-        self, aggregate_id: str, allocation_id: str, user_id: UserId
+        self, aggregate_id: str, allocation_id: str, auth_id: UUID
     ) -> Either[
         None,
         CoreError
@@ -43,7 +44,7 @@ class RemoveBudgetAllocationUsecase:
 
         budget_entity = budget_result.value
 
-        if budget_entity.user_id != user_id:
+        if budget_entity.auth_id != auth_id:
             return result_fail(
                 AuthenticationError("Unauthorized to delete this budget allocation.")
             )

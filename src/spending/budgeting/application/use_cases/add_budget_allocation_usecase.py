@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 from boilerplate import (
     AuthenticationError,
     RepositoryUnexpectedError,
@@ -33,7 +34,7 @@ class AddBudgetAllocationUsecase:
     async def execute(
         self,
         aggregate_id: str,
-        user_id: UserId,
+        auth_id: UUID,
         allocation_data: BudgetAllocationWriteModel,
     ) -> Either[
         BudgetEntity,
@@ -71,7 +72,7 @@ class AddBudgetAllocationUsecase:
 
         budget_entity = budget_result.value
 
-        if budget_entity.user_id != user_id:
+        if budget_entity.auth_id != auth_id:
             return result_fail(
                 AuthenticationError("Unauthorized to modify this budget.")
             )

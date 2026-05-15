@@ -1,4 +1,5 @@
 from boilerplate import CoreError
+from uuid import UUID
 from result import Either, is_fail, result_ok, result_fail
 from src.shared.domain.types.user_id import UserId
 from boilerplate import (
@@ -20,7 +21,7 @@ class GetBudgetUsecase:
     def __init__(self, deps: BudgetReadDeps):
         self.deps = deps
 
-    async def execute(self, aggregate_id: str, user_id: UserId) -> Either[
+    async def execute(self, aggregate_id: str, auth_id: UUID) -> Either[
         BudgetSummaryReadModel,
         CoreError
         | RepositoryNotFoundError
@@ -41,7 +42,8 @@ class GetBudgetUsecase:
             return result
 
         budget = result.value
-        if budget.user_id != user_id:
+        
+        if budget.auth_id != auth_id:
             return result_fail(
                 AuthenticationError("Unauthorized to access this budget.")
             )

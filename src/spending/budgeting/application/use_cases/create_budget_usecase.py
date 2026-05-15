@@ -1,4 +1,5 @@
 from typing import List, TypedDict
+from uuid import UUID
 from boilerplate import (
     AsyncCommandUseCase,
     AsyncCommandUseCase,
@@ -28,7 +29,7 @@ from src.shared.domain.value_objects.category_value_object import CategoryValueO
 
 
 class CreateBudgetInput(TypedDict):
-    user_id: UserId
+    auth_id: UUID
     budget_data: BudgetWriteModel
 
 
@@ -43,7 +44,7 @@ class CreateBudgetUseCase(AsyncCommandUseCase[CreateBudgetInput, UniqueEntityId]
         UniqueEntityId, CoreError | RepositoryUnexpectedError | DataIntegrityError
     ]:
         """Creates a new budget."""
-        user_id = input["user_id"]
+        auth_id = input["auth_id"]
         budget_data = input["budget_data"]
 
         budget_period_result = BudgetPeriodValueObject.create(
@@ -62,7 +63,7 @@ class CreateBudgetUseCase(AsyncCommandUseCase[CreateBudgetInput, UniqueEntityId]
 
         budget_period_check_result = (
             await budget_period_checker_domain_service.ensureNoBudgetExistsForPeriod(
-                budget_period, user_id
+                budget_period, auth_id
             )
         )
 
@@ -98,7 +99,7 @@ class CreateBudgetUseCase(AsyncCommandUseCase[CreateBudgetInput, UniqueEntityId]
         budget_entity = BudgetEntity.create(
             {
                 "name": budget_data.name,
-                "user_id": user_id,
+                "auth_id": auth_id,
                 "allocations": allocations,
                 "budget_period": budget_period,
                 "currency": budget_data.currency,

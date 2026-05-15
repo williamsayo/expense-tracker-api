@@ -1,13 +1,10 @@
 from dataclasses import dataclass
 from fastapi import Depends
-from typing import Annotated
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.config import settings
+from typing import Annotated, Any
 from src.shared.utils.setup_dependencies import BaseDependency
-from src.shared.infrastructure.db.dependencies import get_session
+from src.shared.infrastructure.db.dependencies import get_dynamodb
 from src.shared.utils.auth.token_verifier import TokenVerifier
-from src.identity.infrastructure.repositories.postgres.user_repo import UserRepository
-from src.identity.infrastructure.repositories.local.user_repo import LocalUserRepository
+from src.identity.infrastructure.repositories.dynamodb.user_repo import UserRepository
 from src.identity.infrastructure.services.token.jwt_token_service import JWTTokenService
 from src.identity.infrastructure.adapters.ports.token import TokenServiceProtocol
 from src.identity.infrastructure.adapters.ports.repository import UserRepositoryProtocol
@@ -18,12 +15,12 @@ from src.identity.infrastructure.services.encryption.argon2_encrption import (
 
 
 def get_user_repository_dependency(
-    session: AsyncSession = Depends(get_session),
+    dynamo_resource: Any = Depends(get_dynamodb),
 ) -> UserRepositoryProtocol:
     """Factory function to select the appropriate UserRepository based on settings."""
     # if settings.use_local_repository:
     #     return LocalUserRepository()
-    return UserRepository(session)
+    return UserRepository(dynamo_resource)
 
 
 def get_token_service() -> TokenServiceProtocol:

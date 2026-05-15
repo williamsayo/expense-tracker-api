@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 from src.core.config import settings
 from src.shared.utils.setup_dependencies import BaseDependency
-from src.shared.infrastructure.db.dependencies import get_session
+from src.shared.infrastructure.db.dependencies import get_session, get_dynamodb
 from src.spending.budgeting.infrastructure.repositories.postgres.budget_repo import (
     BudgetRepository,
 )
@@ -26,12 +26,10 @@ from src.shared.infrastructure.dispatcher.dependencies import get_event_bus
 
 
 def get_budget_repository(
-    db: AsyncSession = Depends(get_session),
+    dynamodb_resource: AsyncSession = Depends(get_dynamodb),
 ) -> BudgetRepositoryProtocol:
     """Factory function to create a BudgetRepository instance."""
-    # if settings.use_local_repository:
-    #     return LocalBudgetRepository()
-    return BudgetRepository(db)
+    return BudgetRepository(dynamodb_resource)
 
 
 def get_budget_read_repository(
@@ -41,7 +39,6 @@ def get_budget_read_repository(
     # if settings.use_local_repository:
     #     return LocalBudgetReadRepository()
     return BudgetReadRepository(db)
-
 
 @dataclass(slots=True)
 class BudgetDependencies(BaseDependency):

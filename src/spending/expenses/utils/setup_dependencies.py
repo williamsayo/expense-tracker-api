@@ -1,18 +1,15 @@
 from dataclasses import dataclass
+from boilerplate import CommandDependency, IEventBus
 from fastapi import Depends
-from typing import Annotated
+from typing import Annotated, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.config import settings
 from src.shared.utils.setup_dependencies import BaseDependency
-from src.shared.infrastructure.db.dependencies import get_session
-from src.spending.expenses.infrastructure.repositories.postgres.expense_repo import (
+from src.shared.infrastructure.db.dependencies import get_session, get_dynamodb
+from src.spending.expenses.infrastructure.repositories.dynamodb.expense_repo import (
     ExpenseRepository,
 )
-from src.spending.expenses.infrastructure.repositories.postgres.expense_read_repo import (
+from src.spending.expenses.infrastructure.repositories.dynamodb.expense_read_repo import (
     ExpenseReadRepository,
-)
-from src.spending.expenses.infrastructure.repositories.local.expense_repo import (
-    LocalExpenseRepository,
 )
 from src.spending.expenses.infrastructure.adapters.ports.repository import (
     ExpenseRepositoryProtocol,
@@ -30,20 +27,18 @@ def get_expense_read_repository(
 
 
 def get_expense_repository(
-    db: AsyncSession = Depends(get_session),
+    resource: Any = Depends(get_dynamodb),
 ) -> ExpenseRepositoryProtocol:
     """Factory function to select the appropriate ExpenseRepository based on settings."""
-    # if settings.use_local_repository:
-    #     return LocalExpenseRepository()
-    return ExpenseRepository(db)
+    return ExpenseRepository(resource)
 
 
 @dataclass(slots=True)
-class ExpenseDependencies(BaseDependency):
-    """Dependency container for expense use cases."""
+class ExpenseDependencies(CommandDependency):
+    """Dependency container for Spending use cases."""
 
-    repo: ExpenseRepositoryProtocol = Depends(get_expense_repository)
-    dispatcher: EventBus = Depends(get_event_bus)
+    expense_repo: ExpenseRepository = Depends(get_expense_repository)
+    eventPublisher: IEventBus = Depends(get_event_bus)
 
 
 @dataclass(slots=True)

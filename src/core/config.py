@@ -9,6 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 for env_file in sorted(BASE_DIR.glob(".env*")):
     load_dotenv(env_file, override=True)
 
+
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
@@ -31,6 +32,12 @@ class Settings(BaseSettings):
     hash_len: int = 32
     salt_len: int = 16
     use_local_repository: bool = False
+    aws_region_name: str = "us-east-1"
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    USER_TABLE_NAME: str = "users"
+    EXPENSE_TABLE_NAME: str = "expenses"
+    BUDGET_TABLE_NAME: str = "budgets"
 
     model_config = SettingsConfigDict(
         env_file=(".env.local", ".env", ".env.prod"), extra="ignore"

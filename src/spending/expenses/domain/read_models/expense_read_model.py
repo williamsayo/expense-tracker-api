@@ -11,7 +11,7 @@ class ExpenseReadModelProps(TypedDict):
 
     id: UUID
     name: str | None
-    user_id: UserId
+    auth_id: UUID
     category: CategoryType
     amount: float
     currency: Currency
@@ -28,7 +28,7 @@ class ExpenseReadModel:
     ):
         self._id = props["id"]
         self._name = props["name"]
-        self._user_id = props["user_id"]
+        self._auth_id = props["auth_id"]
         self._category = props["category"]
         self._amount = props["amount"]
         self._currency = props["currency"]
@@ -40,9 +40,9 @@ class ExpenseReadModel:
         return self._id
 
     @property
-    def user_id(self) -> UserId:
-        return self._user_id
-    
+    def auth_id(self) -> UUID:
+        return self._auth_id
+
     @property
     def name(self) -> str | None:
         return self._name

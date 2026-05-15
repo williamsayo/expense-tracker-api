@@ -1,4 +1,6 @@
 from uuid import UUID
+from typing import TypedDict
+from aiodynamo.types import Item
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy import Text, ForeignKey, String, Index, DateTime
 from datetime import datetime, UTC
@@ -7,6 +9,19 @@ from src.shared.infrastructure.db.base import Base
 from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
 from src.shared.domain.types.category_types import CategoryType
 from src.shared.domain.types.currency_types import Currency
+
+class ExpenseSchema(TypedDict):
+    id: str
+    auth_id: str
+    budget_id: str | None
+
+    name: str
+    category: str
+    amount: int
+    currency: str
+    note: str | None
+    date: str
+    version: int
 
 
 class Expense(Base, TimeStampMixin, VersionMixin):

@@ -49,11 +49,6 @@ class ExpenseRepositoryProtocol(Protocol):
         self, aggregate: ExpenseEntity
     ) -> Either[None, RepositoryUnexpectedError | AuthenticationError]: ...
 
-    async def remove_all(
-        self, category: str, user_id: UserId
-    ) -> Either[int, RepositoryUnexpectedError | AuthenticationError]: ...
-
-
 class ExpenseReadRepositoryProtocol(Protocol):
     """Defines the contract for expense read repository operations."""
 

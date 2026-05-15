@@ -12,7 +12,6 @@ from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 class ExpenseModel(BaseModel):
     """Data model for expense."""
 
-    name: str | None = Field(None, description="Name of the expense")
     note: str | None = Field(None, description="Note about the expense")
 
 
@@ -20,6 +19,7 @@ class ExpenseReadModel(ExpenseModel, BaseReadModel):
     """Read model for expense data."""
 
     id: str | UUID
+    name: str = Field(..., description="Name of the expense")
     category: CategoryType = Field(..., description="Category of the expense")
     amount: float = Field(..., description="Amount of the expense in cents")
     currency: Currency = Field(..., description="Currency of the expense")
@@ -49,6 +49,7 @@ class ExpenseOverviewReadModel(BaseReadModel):
 class ExpenseWriteModel(ExpenseModel):
     """Write model for expense data."""
 
+    name: str = Field(..., description="Name of the expense")
     category: CategoryType = Field(..., description="Category of the expense")
     date: datetime = Field(
         default=datetime.now(UTC), description="Date the expense was made"
@@ -66,6 +67,7 @@ class ExpenseWriteModel(ExpenseModel):
 class ExpenseUpdateModel(ExpenseModel):
     """Update model for expense data."""
 
+    name: str | None = Field(None, description="Name of the expense")
     date: datetime | None = Field(None, description="Date the expense was made")
     category: CategoryType | None = Field(None, description="Category of the expense")
     amount: Decimal | None = Field(None, decimal_places=2, ge=Decimal("0.1"))

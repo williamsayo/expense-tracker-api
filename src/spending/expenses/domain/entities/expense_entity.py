@@ -19,8 +19,8 @@ from src.spending.expenses.domain.events.expense_created import ExpenseCreated
 class ExpenseEntityProps(TypedDict):
     """Typed dictionary for expense entity fields."""
 
-    name: str | None
-    user_id: UserId
+    name: str
+    auth_id: UUID
     budget_id: NotRequired[UUID | str]
     category: CategoryValueObject
     money: MoneyValueObject
@@ -40,14 +40,14 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         super().__init__(props, id, version)
 
     @property
-    def name(self) -> str | None:
+    def name(self) -> str:
         self._check_is_discarded_entity()
         return self.props["name"]
 
     @property
-    def user_id(self) -> UserId:
+    def auth_id(self) -> UUID:
         self._check_is_discarded_entity()
-        return self.props["user_id"]
+        return self.props["auth_id"]
 
     @property
     def category(self) -> CategoryValueObject:
@@ -138,7 +138,7 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
             ExpenseCreated.create_event(
                 {
                     "expense_id": entity.id.value,
-                    "user_id": entity.user_id,
+                    "auth_id": entity.auth_id,
                     "category": entity.category.name,
                     "amount": entity.money.amount,
                     "currency": entity.money.currency,

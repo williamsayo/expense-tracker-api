@@ -12,7 +12,7 @@ from src.shared.domain.types.currency_types import Currency
 class ExpenseCreatedData(TypedDict):
     """Typed dictionary for the data payload of the ExpenseCreated event."""
 
-    user_id: str | UUID
+    auth_id: str | UUID
     expense_id: str | UUID
     category: CategoryType
     amount: int

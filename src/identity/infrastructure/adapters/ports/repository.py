@@ -30,11 +30,11 @@ class UserRepositoryProtocol(Protocol):
         self, username: str, *, email: str
     ) -> Either[bool, RepositoryUnexpectedError]: ...
 
-    async def exists(self, aggregate_id: UniqueEntityId) -> Either[bool, RepositoryUnexpectedError]: ...
+    async def exists(
+        self, aggregate_id: UniqueEntityId
+    ) -> Either[bool, RepositoryUnexpectedError]: ...
 
-    async def first(
-        self, options: GetOptions, encryption: EncryptionService, password: str
-    ) -> Either[
+    async def first(self, options: GetOptions, password: str) -> Either[
         UserEntity,
         RepositoryNotFoundError
         | DataIntegrityError

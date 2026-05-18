@@ -10,6 +10,7 @@ from boilerplate import (
     UnexpectedError,
     CoreError,
     AuthorizationError,
+    ApplicationErrorID,
 )
 from result import result_fail, is_fail, Either, result_ok, result_combine
 from src.shared.application.services.base import BaseService
@@ -75,7 +76,6 @@ class UserService(BaseService[UserDeps]):
         encryption = self.deps.argon2_encryption_service
         entity_result = await self.deps.repo.first(
             {"filter": {"username": username}},
-            encryption,
             password,
         )
 
@@ -83,6 +83,14 @@ class UserService(BaseService[UserDeps]):
             return entity_result
 
         user_entity = entity_result.value
+
+        if not encryption.verify(password, user_entity.hashed_password):
+            return result_fail(
+                AuthorizationError(
+                    ApplicationErrorID.AUTHORIZATION,
+                    "Incorrect username or password",
+                )
+            )
 
         if encryption.password_needs_rehash(user_entity.hashed_password):
             new_hash = encryption.hash(password)

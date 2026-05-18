@@ -6,6 +6,7 @@ from aiodynamo.client import Client
 from aiodynamo.models import (
     KeySchema,
     GlobalSecondaryIndex,
+    LocalSecondaryIndex,
     KeySpec,
     KeyType,
     Projection,
@@ -29,9 +30,6 @@ from result import result_fail, result_ok, is_fail, Either, result_combine
 from src.shared.utils.dynamo_util import build_condition, build_update_expression
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from src.spending.expenses.infrastructure.mappers.expense import ExpenseMapper
-
-
-from src.spending.expenses.infrastructure.repositories.schema import ExpenseSchema
 
 
 class ExpenseRepository(AsyncWriteRepository[ExpenseEntity, UniqueEntityId]):
@@ -130,7 +128,7 @@ class ExpenseRepository(AsyncWriteRepository[ExpenseEntity, UniqueEntityId]):
         self, aggregate_id: UniqueEntityId
     ) -> Either[bool, RepositoryUnexpectedError]:
         try:
-            response = await self.table.get_item(
+            await self.table.get_item(
                 {
                     "id": aggregate_id.to_string(),
                 }
@@ -205,38 +203,21 @@ class ExpenseRepository(AsyncWriteRepository[ExpenseEntity, UniqueEntityId]):
                 table_name,
                 Throughput(read=5, write=5),
                 KeySchema(
-                    hash_key=KeySpec("id", KeyType.string),
-                    range_key=KeySpec("date", KeyType.string),
+                    hash_key=KeySpec("auth_id", KeyType.string),
+                    range_key=KeySpec("id", KeyType.string),
                 ),
                 wait_for_active=True,
-                gsis=[
-                    GlobalSecondaryIndex(
+                lsis=[
+                    LocalSecondaryIndex(
                         "auth_id-date-index",
                         KeySchema(
                             hash_key=KeySpec("auth_id", KeyType.string),
                             range_key=KeySpec("date", KeyType.string),
                         ),
                         Projection(ProjectionType.all),
-                        Throughput(read=2, write=2),
-                    ),
-                    GlobalSecondaryIndex(
-                        "auth_id-category-index",
-                        KeySchema(
-                            hash_key=KeySpec("auth_id", KeyType.string),
-                            range_key=KeySpec("category", KeyType.string),
-                        ),
-                        Projection(ProjectionType.all),
-                        Throughput(read=2, write=2),
-                    ),
-                    GlobalSecondaryIndex(
-                        "auth_id-amount-index",
-                        KeySchema(
-                            hash_key=KeySpec("auth_id", KeyType.string),
-                            range_key=KeySpec("amount", KeyType.number),
-                        ),
-                        Projection(ProjectionType.all),
-                        Throughput(read=2, write=2),
-                    ),
+                    )
+                ],
+                gsis=[
                     GlobalSecondaryIndex(
                         "budget_id-date-index",
                         KeySchema(

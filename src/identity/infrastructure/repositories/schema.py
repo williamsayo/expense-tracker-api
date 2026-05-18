@@ -8,7 +8,6 @@ from src.shared.infrastructure.db.base import Base
 
 class UserSchema(TypedDict):
     """Defines the structure of the user data in DynamoDB."""
-
     # dynamoDB key attribute
     pk: str
 
@@ -20,7 +19,6 @@ class UserSchema(TypedDict):
     password_hash: str
     version: int
     created_at: str
-
 
 class User(Base, TimeStampMixin, VersionMixin):
     """Represents user."""

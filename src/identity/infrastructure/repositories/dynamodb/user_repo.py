@@ -21,15 +21,12 @@ from boilerplate import (
     UniqueEntityId,
     AsyncWriteRepository,
     AuthorizationError,
-    ApplicationErrorID,
     GetAllOptions,
     GetOptions,
 )
 from src.identity.domain.entities.user_entity import UserEntity
 from src.identity.infrastructure.mappers.user_mapper import UserMapper
-from src.identity.infrastructure.adapters.ports.encryption import EncryptionService
 from src.shared.utils.dynamo_util import build_update_expression
-from src.shared.utils.type_cast import typed
 from src.core.config import settings
 
 class UserRepository(AsyncWriteRepository[UserEntity, UniqueEntityId]):
@@ -124,9 +121,7 @@ class UserRepository(AsyncWriteRepository[UserEntity, UniqueEntityId]):
 
         return result_ok(result.value)
 
-    async def first(
-        self, options: GetOptions, encryption: EncryptionService, password: str
-    ) -> Either[
+    async def first(self, options: GetOptions, password: str) -> Either[
         UserEntity,
         RepositoryNotFoundError
         | DataIntegrityError
@@ -171,17 +166,7 @@ class UserRepository(AsyncWriteRepository[UserEntity, UniqueEntityId]):
             }
         )
 
-        persistence_output = user_result["Item"]
-
-        if not encryption.verify(password, persistence_output["password_hash"]):
-            return result_fail(
-                AuthorizationError(
-                    ApplicationErrorID.AUTHORIZATION,
-                    "Incorrect username or password",
-                )
-            )
-
-        result = UserMapper.to_domain(persistence_output)
+        result = UserMapper.to_domain(user_result)
         if is_fail(result):
             return result_fail(DataIntegrityError(Exception(result.value)))
 
@@ -242,7 +227,7 @@ class UserRepository(AsyncWriteRepository[UserEntity, UniqueEntityId]):
         try:
             table = await client.create_table(
                 table_name,
-                Throughput(read=5, write=5),
+                Throughput(read=2, write=2),
                 KeySchema(
                     hash_key=KeySpec("pk", KeyType.string),
                 ),

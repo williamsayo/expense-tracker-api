@@ -4,12 +4,12 @@ from boilerplate.domain.rules.apply_rule import apply_rules
 from boilerplate.errors.domain import DomainRuleError
 from result import is_fail, result_ok, result_fail, Either
 from src.shared.domain.rules.category_rule import CategorySchema
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 
 
 class CategoryValueObjectProps(TypedDict):
     """Typed dictionary for category value object fields."""
-    name: CategoryType
+    name: Category
 
 
 class CategoryValueObject(ValueObject[CategoryValueObjectProps]):
@@ -21,7 +21,7 @@ class CategoryValueObject(ValueObject[CategoryValueObjectProps]):
         super().__init__(props)
 
     @property
-    def name(self) -> CategoryType:
+    def name(self) -> Category:
         return self.props["name"]
 
     @classmethod

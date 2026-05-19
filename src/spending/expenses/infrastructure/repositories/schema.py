@@ -1,4 +1,3 @@
-from typing import TypedDict
 from uuid import UUID
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy import Text, ForeignKey, String, Index, DateTime
@@ -8,20 +7,6 @@ from src.shared.infrastructure.db.base import Base
 from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
-
-
-class ExpenseSchema(TypedDict):
-    id: UUID
-    budget_id: UUID | None
-    user_id: UUID
-    merchant: str | None
-    name: str | None
-    category: Category
-    amount: int
-    currency: Currency
-    note: str | None
-    date: datetime
-
 
 class Expense(Base, TimeStampMixin, VersionMixin):
     """Represents expense."""

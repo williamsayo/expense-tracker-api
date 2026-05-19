@@ -10,7 +10,7 @@ class User(Base, TimeStampMixin, VersionMixin):
 
     __tablename__ = "users"
 
-    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, index=True)
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
     username: Mapped[str] = mapped_column(
         String(50), unique=True, index=True, nullable=False
     )

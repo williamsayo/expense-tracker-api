@@ -1,4 +1,3 @@
-from uuid import uuid4
 import jwt
 from result import result_fail, result_ok, Either
 from boilerplate.errors.http import AuthorizationError

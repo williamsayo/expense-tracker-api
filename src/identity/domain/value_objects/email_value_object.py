@@ -22,13 +22,16 @@ class EmailValueObject(ValueObject[EmailProps]):
     def value(self) -> str:
         return self.props["value"]
 
+    def domain(self) -> str:
+        return self.value.split("@")[1]
+
+    @staticmethod
+    def format(email: str) -> str:
+        return email.strip().lower()
+
     @classmethod
     def create(cls, props: EmailProps) -> Either[Self, DomainRuleError]:
         result = apply_rules(props, EmailSchema)
         if is_fail(result):
             return result_fail(DomainRuleError(result.value))
         return result_ok(cls({"value": EmailValueObject.format(result.value["value"])}))
-
-    @staticmethod
-    def format(email: str) -> str:
-        return email.strip().lower()

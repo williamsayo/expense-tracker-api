@@ -31,7 +31,9 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
         ExpenseReadModel,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]:
-        query = await self.db.execute(select(Expense).where(Expense.id == aggregate_id))
+        query = await self.db.execute(
+            select(Expense.__table__).where(Expense.id == aggregate_id)
+        )
         result = query.mappings().one_or_none()
 
         if result is None:
@@ -61,10 +63,12 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
                 )
             )
 
-        statement = build_query(Expense, options)
+        statement = build_query(Expense.__table__, options)
 
         result = await self.db.execute(statement)
         persistence_output = result.mappings().all()
+
+        print(persistence_output[0])
 
         read_model = [
             ExpenseReadModel(**persistence) for persistence in persistence_output
@@ -76,8 +80,6 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
         ExpenseOverviewReadModel,
         RepositoryUnexpectedError | DataIntegrityError,
     ]:
-        statement = select(Expense)
-
         user_id = options.get("filter", {}).get("user_id")
 
         if user_id is None:
@@ -88,8 +90,7 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
                 )
             )
 
-        if filter := options.get("filter"):
-            statement = statement.filter_by(**filter)
+        statement = build_query(Expense.__table__, options)
 
         recent_expenses = statement.order_by(Expense.date.desc()).limit(
             options.get("limit", 5)
@@ -130,7 +131,7 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
         ExpenseReadModel,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]:
-        user_id =  options.get("filter",{}).get("user_id")
+        user_id = options.get("filter", {}).get("user_id")
 
         if user_id is None:
             return result_fail(
@@ -139,7 +140,7 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
                 )
             )
 
-        statement = build_query(Expense, options)
+        statement = build_query(Expense.__table__, options)
 
         result = await self.db.execute(statement)
 

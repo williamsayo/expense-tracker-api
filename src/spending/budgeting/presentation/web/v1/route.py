@@ -109,7 +109,7 @@ async def add_budget_allocation(
 @router.get("", response_model=List[BudgetReadModel], status_code=status.HTTP_200_OK)
 async def retrieve_all_budgets(
     params: BudgetUrlParams,
-    auth: Annotated[AuthDeps, Depends()],
+    auth: AuthDeps,
     use_case: Annotated[GetBudgetsUsecase, Depends()],
 ):
     result = await use_case.execute(auth.user_id)
@@ -127,7 +127,7 @@ async def retrieve_all_budgets(
 )
 async def retrieve_budget_overview(
     params: BudgetUrlParams,
-    auth: Annotated[AuthDeps, Depends()],
+    auth: AuthDeps,
     use_case: Annotated[GetBudgetOverviewUsecase, Depends()],
 ):
     result = await use_case.execute(auth.user_id, params.page_size)
@@ -145,7 +145,7 @@ async def retrieve_budget_overview(
 )
 async def retrieve_budget(
     aggregate_id: str,
-    auth: Annotated[AuthDeps, Depends()],
+    auth: AuthDeps,
     use_case: Annotated[GetBudgetUsecase, Depends()],
 ):
     result = await use_case.execute(aggregate_id, auth.user_id)

@@ -58,24 +58,25 @@ class CreateExpenseUsecase(AsyncCommandUseCase[CreateExpenseInput, UniqueEntityI
             }
         )
 
-        expense_allocation_domain_service = ExpenseAllocationService(
-            self.deps.uow.budget_repository
-        )
-
-        budget_result = (
-            await expense_allocation_domain_service.allocate_expense_to_budget(
-                entity_result.value
+        async with self.deps.uow as uow:
+            expense_allocation_domain_service = ExpenseAllocationService(
+                uow.budget_repository
             )
-        )
 
-        result = await self.deps.uow.expense_repository.add(entity_result.value)
+            budget_result = (
+                await expense_allocation_domain_service.allocate_expense_to_budget(
+                    entity_result.value
+                )
+            )
 
-        if is_fail(result):
-            return result
+            result = await uow.expense_repository.add(
+                entity_result.value, auto_commit=False
+            )
 
-        if not is_fail(budget_result):
-            await self.deps.uow.budget_repository.add(budget_result.value)
+            if is_fail(result):
+                return result
 
-        await self.deps.uow.commit()
+            if not is_fail(budget_result):
+                await uow.budget_repository.add(budget_result.value, auto_commit=False)
 
-        return result_ok(entity_result.value.id)
+            return result_ok(entity_result.value.id)

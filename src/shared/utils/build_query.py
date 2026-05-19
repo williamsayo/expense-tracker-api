@@ -1,28 +1,33 @@
 from typing import Type
 from sqlalchemy import select, asc, desc
-from boilerplate import GetOptions
+from boilerplate import GetAllOptions
 
-def build_query[Model](model: Type[Model], options: GetOptions):
-    statement = select(model)
+
+def build_query[Model](model: Type[Model], options: GetAllOptions):
+    if projection := options.get("select"):
+        statement = select(*(getattr(model, col) for col in projection))
+    else:
+        statement = select(model)
 
     if filter := options.get("filter"):
         statement = statement.filter_by(**filter)
 
-    if projection := options.get("projection"):
-        columns = [
-            getattr(model, col) for col, include in projection.items() if include
-        ]
-        statement = statement.with_only_columns(*columns)
+    if sort := options.get("sort"):
+        sort_options = []
 
-    if order_by := options.get("order_by"):
-        for col, direction in order_by.items():
+        for col, direction in sort.items():
             column = getattr(model, col)
-            statement = statement.order_by(asc(column) if direction == "asc" else desc(column))
+            if direction == "asc":
+                sort_options.append(asc(column))
+            else:
+                sort_options.append(desc(column))
 
-    if limit := options.get("limit"):
-        statement = statement.limit(limit)
+        statement = statement.order_by(*sort_options)
 
     if offset := options.get("offset"):
         statement = statement.offset(offset)
+
+    if limit := options.get("limit"):
+        statement = statement.limit(limit)
 
     return statement

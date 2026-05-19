@@ -7,6 +7,7 @@ from src.spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetOverviewReadModel,
 )
 
+
 class GetBudgetOverviewUsecase:
     def __init__(self, deps: BudgetReadDeps):
         self.deps = deps
@@ -17,7 +18,11 @@ class GetBudgetOverviewUsecase:
     ]:
         """Retrieves the budget overview for a user."""
         result = await self.deps.repo.get_budget_overview(
-            {"filter": {"user_id": user_id}, "limit": limit}
+            {
+                "filter": {"user_id": user_id},
+                "limit": limit,
+                "select": ["id", "currency", "name", "start_date", "end_date"],
+            }
         )
 
         if is_fail(result):

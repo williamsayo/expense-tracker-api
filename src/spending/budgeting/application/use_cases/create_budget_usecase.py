@@ -75,7 +75,7 @@ class CreateBudgetUseCase(AsyncCommandUseCase[CreateBudgetInput, UniqueEntityId]
             category_result = CategoryValueObject.create({"name": allocation.category})
             amount_result = AmountValueObject.create(
                 {
-                    "amount": AmountValueObject.to_amount(allocation.amount),
+                    "amount": AmountValueObject.cents(allocation.amount),
                 }
             )
 

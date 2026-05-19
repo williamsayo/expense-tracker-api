@@ -12,7 +12,6 @@ from src.shared.domain.types.user_id import UserId
 class BudgetPeriodConflictError(Exception):
     """Custom error to indicate a conflict when creating a budget for a period that already has a budget."""
 
-
 class BudgetPeriodConflictChecker:
     def __init__(self, budget_repository: BudgetRepositoryProtocol):
         self.repo = budget_repository

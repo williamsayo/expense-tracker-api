@@ -4,9 +4,12 @@ from boilerplate import ValueObject, DomainRuleError, apply_rules
 from result import is_fail, result_ok, result_fail, Either
 from src.spending.budgeting.domain.rules.amount_rule import AmountSchema
 
+
 class AmountValueObjectProps(TypedDict):
     """Typed dictionary for Amount value object fields."""
+
     amount: int
+
 
 class AmountValueObject(ValueObject[AmountValueObjectProps]):
     """
@@ -20,11 +23,11 @@ class AmountValueObject(ValueObject[AmountValueObjectProps]):
     def value(self) -> int:
         return self.props["amount"]
 
-    def to_currency(self) -> str:
-        return f'{self.props["amount"]/100:.2f}'
+    def major_unit(self) -> float:
+        return round(self.props["amount"] / 100, 2)
 
     @staticmethod
-    def to_amount(amount: Decimal) -> int:
+    def cents(amount: Decimal) -> int:
         return int(round(amount * 100))
 
     @classmethod

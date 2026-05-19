@@ -47,7 +47,7 @@ class AddBudgetAllocationUsecase:
 
         category_result = CategoryValueObject.create({"name": allocation_data.category})
         money_result = AmountValueObject.create(
-            {"amount": AmountValueObject.to_amount(allocation_data.amount)}
+            {"amount": AmountValueObject.cents(allocation_data.amount)}
         )
 
         combined_result = result_combine((entity_id, category_result, money_result))

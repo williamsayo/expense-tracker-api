@@ -1,7 +1,6 @@
 from typing import Never, NotRequired, TypedDict, Self
 from boilerplate import Entity, UniqueEntityId
 from result import Either, result_ok
-from src.shared.domain.types.currency_types import Currency
 from src.spending.budgeting.domain.value_objects.amount_value_object import (
     AmountValueObject,
 )

@@ -1,7 +1,7 @@
 from typing import TypedDict, List
 from datetime import date
 from uuid import UUID
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.spending.budgeting.domain.read_models.allocation_summary import (
     BudgetAllocationSummaryReadModel,
@@ -41,7 +41,7 @@ class BudgetSummaryReadModel:
     @property
     def budget_id(self) -> UUID:
         return self._budget_id
-    
+
     @property
     def name(self) -> str | None:
         return self._name
@@ -53,7 +53,7 @@ class BudgetSummaryReadModel:
     @property
     def allocations(self) -> List[BudgetAllocationSummaryReadModel]:
         return self._allocations
-    
+
     @property
     def expenses(self) -> List[ExpenseReadModel]:
         return self._expenses
@@ -93,9 +93,19 @@ class BudgetSummaryReadModel:
         return max(1.0 - self.used_percentage, 0.0)
 
     def track_expense(
-        self, *, category: CategoryType, amount: int, currency: Currency
+        self, *, category: Category, amount: int, currency: Currency
     ) -> None:
 
-        for allocation in self.allocations:
-            if allocation.category == category:
-                allocation.apply_spending(amount, currency)
+        existing_allocation = next(
+            (
+                allocation
+                for allocation in self.allocations
+                if allocation.category == category
+            ),
+            None,
+        )
+
+        if existing_allocation is None:
+            return
+
+        existing_allocation.apply_spending(amount, currency)

@@ -1,15 +1,17 @@
 from typing import TypedDict
 from uuid import UUID
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
+
 
 class BudgetAllocationSummaryReadModelProps(TypedDict):
     """Typed dictionary for budget allocation summary entity fields."""
 
     allocation_id: UUID
     budget_amount: float
-    category: CategoryType
+    category: Category
     spent_amount: float
+
 
 class BudgetAllocationSummaryReadModel:
     """Entity for budget allocation summary."""
@@ -22,7 +24,7 @@ class BudgetAllocationSummaryReadModel:
         self._budget_amount = props["budget_amount"]
         self._category = props["category"]
         self._spent_amount = props["spent_amount"]
-        
+
     @property
     def allocation_id(self) -> UUID:
         return self._allocation_id
@@ -32,13 +34,13 @@ class BudgetAllocationSummaryReadModel:
         return self._budget_amount / 100
 
     @property
-    def category(self) -> CategoryType:
+    def category(self) -> Category:
         return self._category
 
     @property
     def spent_amount(self) -> float:
         return self._spent_amount / 100
-    
+
     @property
     def remaining_amount(self) -> float:
         return max(self.budget_amount - self.spent_amount, 0)
@@ -51,9 +53,7 @@ class BudgetAllocationSummaryReadModel:
 
     @property
     def left_percentage(self) -> float:
-        return (max(1.0 - self.used_percentage, 0.0))
+        return max(1.0 - self.used_percentage, 0.0)
 
-    def apply_spending(
-        self, amount: int, currency: Currency
-    ) -> None:
-        self._spent_amount =self.spent_amount + amount
+    def apply_spending(self, amount: int, currency: Currency) -> None:
+        self._spent_amount = self.spent_amount + amount

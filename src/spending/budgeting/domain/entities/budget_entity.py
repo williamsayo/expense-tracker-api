@@ -1,10 +1,10 @@
 from decimal import Decimal
+from uuid import UUID
 from typing import Never, TypedDict, Self
 from datetime import date
 from boilerplate import DomainRuleError, AggregateRoot, UniqueEntityId
 from result import Either, is_fail, result_fail, result_ok
-from src.shared.domain.types.user_id import UserId
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
@@ -24,7 +24,7 @@ class BudgetEntityProps(TypedDict):
     """Typed dictionary for budget entity fields."""
 
     name: str | None
-    user_id: UserId
+    user_id: UUID
     allocations: list[BudgetAllocationEntity]
     currency: Currency
     budget_period: BudgetPeriodValueObject
@@ -47,7 +47,7 @@ class BudgetEntity(AggregateRoot[BudgetEntityProps]):
         return self.props["name"]
 
     @property
-    def user_id(self) -> UserId:
+    def user_id(self) -> UUID:
         return self.props["user_id"]
 
     @property
@@ -62,10 +62,24 @@ class BudgetEntity(AggregateRoot[BudgetEntityProps]):
     def budget_period(self) -> BudgetPeriodValueObject:
         return self.props["budget_period"]
 
-    def track_expense(self, category: CategoryValueObject, money: MoneyValueObject) -> None:
-        for allocation in self.allocations:
-            if allocation.category == category:
-                allocation.apply_spending(money.to_currency())
+    def track_expense(
+        self, category: CategoryValueObject, money: MoneyValueObject
+    ) -> None:
+
+        existing_allocation = next(
+            (
+                allocation
+                for allocation in self.allocations
+                if allocation.category == category
+            ),
+            None,
+        )
+
+        if existing_allocation is None:
+            # TODO: decide on how to handle errors
+            return
+
+        existing_allocation.apply_spending(money.major_unit)
 
     def allocate_budget(
         self, allocation: BudgetAllocationEntity
@@ -90,60 +104,67 @@ class BudgetEntity(AggregateRoot[BudgetEntityProps]):
         *,
         amount: Decimal | None = None,
         currency: Currency | None = None,
-        category: CategoryType | None = None,
+        category: Category | None = None,
     ) -> Either[None, DomainRuleError]:
         self._check_is_discarded_entity()
 
-        for existing_allocation in self.allocations:
-            if existing_allocation.id == allocation_id:
-                if category is not None:
-                    category_result = CategoryValueObject.create({"name": category})
-                    if is_fail(category_result):
-                        return result_fail(
-                            DomainRuleError(
-                                category_result.value, "Invalid category value"
-                            )
-                        )
-                    existing_allocation.props["category"] = category_result.value
+        existing_allocation = next(
+            (
+                allocation
+                for allocation in self.allocations
+                if allocation.id == allocation_id
+            ),
+            None,
+        )
 
-                if amount is not None or currency is not None:
-                    money_result = AmountValueObject.create(
-                        {
-                            "amount": (
-                                AmountValueObject.to_amount(amount)
-                                if amount is not None
-                                else existing_allocation.amount.value
-                            ),
-                        }
-                    )
+        if existing_allocation is None:
+            return result_fail(DomainRuleError(None, "Budget allocation not found"))
 
-                    if is_fail(money_result):
-                        return result_fail(
-                            DomainRuleError(money_result.value, "Invalid money value")
-                        )
+        if category is not None:
+            category_result = CategoryValueObject.create({"name": category})
+            if is_fail(category_result):
+                return result_fail(
+                    DomainRuleError(category_result.value, "Invalid category value")
+                )
+            existing_allocation.props["category"] = category_result.value
 
-                    existing_allocation.props["amount"] = money_result.value
+        if amount is not None or currency is not None:
+            money_result = AmountValueObject.create(
+                {
+                    "amount": (
+                        AmountValueObject.cents(amount)
+                        if amount is not None
+                        else existing_allocation.amount.value
+                    ),
+                }
+            )
 
-                self._increment_version()
-                return result_ok()
+            if is_fail(money_result):
+                return result_fail(
+                    DomainRuleError(money_result.value, "Invalid money value")
+                )
 
-        return result_fail(DomainRuleError(None, "Budget allocation not found"))
+            existing_allocation.props["amount"] = money_result.value
+
+        self._increment_version()
+        return result_ok()
 
     def change_budget_context(
         self, currency: Currency | None, start_date: date | None, end_date: date | None
     ) -> Either[None, DomainRuleError]:
-        if start_date is None or end_date is None or currency is None:
-            return (
-                result_ok()
-            )  # No changes to make, so we consider it a successful no-op
+
+        if not all([start_date, end_date, currency]):
+            return result_fail(
+                DomainRuleError(Exception("No budget context value provided"))
+            )
 
         self._check_is_discarded_entity()
-        currency_result = self.change_currency(currency)
+        currency_result = self._change_currency(currency)
 
         if is_fail(currency_result):
             return result_fail(currency_result.value)
 
-        budget_period_result = self.update_budget_period(
+        budget_period_result = self._update_budget_period(
             start_date=start_date, end_date=end_date
         )
 
@@ -153,17 +174,18 @@ class BudgetEntity(AggregateRoot[BudgetEntityProps]):
         self._increment_version()
         return result_ok()
 
-    def change_currency(
+    def _change_currency(
         self, currency: Currency | None
     ) -> Either[None, DomainRuleError]:
         if currency is None:
             return result_fail(
                 DomainRuleError(None, "Currency must be provided for update")
             )
+
         self.props["currency"] = currency
         return result_ok()
 
-    def update_budget_period(
+    def _update_budget_period(
         self, start_date: date | None, end_date: date | None
     ) -> Either[None, DomainRuleError]:
         if start_date is None and end_date is None:

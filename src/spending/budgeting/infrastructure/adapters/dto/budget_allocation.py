@@ -1,5 +1,5 @@
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from typing import Annotated, Self
 from decimal import Decimal
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
@@ -34,28 +34,36 @@ class BudgetAllocationReadModel(BaseReadModel):
         description="The unique identifier of the budget allocation",
         serialization_alias="id",
     )
-    spent_amount: float = Field(
+    spent_amount: int = Field(
         ...,
         description="The amount spent from this allocation",
         serialization_alias="amountSpent",
     )
-    used_percentage: Percentage = Field(..., description="Percentage of budget used")
     category: Category = Field(..., description="The category of the allocation")
-    budget_amount: float = Field(
+    budget_amount: int = Field(
         ..., description="The amount allocated", serialization_alias="allocatedAmount"
     )
+
+    @computed_field(description="Remaining amount in the budget allocation")
+    @property
+    def remaining_amount(self) -> float:
+        return max(self.budget_amount - self.spent_amount, 0)
+
+    @computed_field(description="Percentage of budget used")
+    @property
+    def used_percentage(self) -> Percentage:
+        if self.budget_amount == 0:
+            return 0.0
+        return min(self.spent_amount / self.budget_amount, 1.0)
 
     @classmethod
     def from_entity(cls, entity: BudgetAllocationEntity) -> Self:
         return cls(
             allocation_id=entity.id.value,
             spent_amount=0,  # This will be calculated in the service layer
-            used_percentage=0,  # This will be calculated in the service layer
             category=entity.category.name,
             budget_amount=entity.amount.value,
         )
-
-
 class BudgetAllocationWriteModel(BudgetAllocationModel):
     """Write model for BudgetAllocation data."""
 

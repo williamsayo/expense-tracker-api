@@ -1,9 +1,18 @@
-from typing import Type
+from typing import Required, Type, TypedDict
+from uuid import UUID
 from sqlalchemy import select, asc, desc
-from boilerplate import GetAllOptions
+from boilerplate import GetAllOptions, GetOptions
+
+class AppFilter(TypedDict, total=False):
+    user_id: Required[UUID]
+    category: str
+    # Add more filter fields as needed
 
 
-def build_query[Model](model: Type[Model], options: GetAllOptions):
+def build_query[Model](
+    model: Type[Model],
+    options: GetAllOptions[AppFilter] | GetOptions[AppFilter],
+):
     if projection := options.get("select"):
         statement = select(*(getattr(model, col) for col in projection))
     else:

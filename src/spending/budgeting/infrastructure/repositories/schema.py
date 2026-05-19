@@ -1,4 +1,4 @@
-from typing import List, TypedDict, NotRequired
+from typing import List
 from uuid import UUID
 from datetime import date, timedelta
 from sqlalchemy.orm import mapped_column, Mapped, relationship
@@ -7,29 +7,7 @@ from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
 from src.shared.infrastructure.db.base import Base
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
-from src.spending.expenses.infrastructure.repositories.schema import (
-    Expense,
-    ExpenseSchema,
-)
-
-class BudgetSchema(TypedDict):
-    id: UUID
-    name: str | None
-    user_id: UUID
-    start_date: date
-    end_date: date
-    currency: Currency
-    allocations: NotRequired[List["BudgetAllocationSchema"]]
-    expenses: NotRequired[List[ExpenseSchema]]
-
-
-class BudgetAllocationSchema(TypedDict):
-    id: UUID
-    budget_id: UUID
-    category: Category
-    amount: int
-    spent_amount: int
-
+from src.spending.expenses.infrastructure.repositories.schema import Expense
 
 class Budget(Base, TimeStampMixin, VersionMixin):
     """Represents budget."""

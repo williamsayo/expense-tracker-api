@@ -17,6 +17,10 @@ from result import Either, result_ok, result_fail
 from src.spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetReadModel,
     BudgetOverviewReadModel,
+    BudgetSummaryReadModel,
+)
+from src.spending.budgeting.infrastructure.mappers.budget_read_mapper import (
+    BudgetReadMapper,
 )
 from src.spending.budgeting.infrastructure.repositories.schema import (
     Budget,
@@ -74,16 +78,17 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
     ) -> Either[
         Sequence[BudgetReadModel], RepositoryUnexpectedError | DataIntegrityError
     ]:
-        statement = build_query(Budget.__table__, options).options(
+        statement = build_query(Budget, options).options(
             selectinload(Budget.allocations), selectinload(Budget.expenses)
         )
 
-        result = await self.db.execute(statement)
-        persistence_output = result.mappings().all()
+        result = await self.db.scalars(statement)
+        persistence_output = result.all()
 
-        result = tuple(
-            BudgetReadModel(**persistence) for persistence in persistence_output
-        )
+        result = [
+            BudgetReadMapper.to_read_model(persistence)
+            for persistence in persistence_output
+        ]
 
         return result_ok(result)
 
@@ -92,7 +97,7 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]:
 
-        statement = build_query(Budget.__table__, options).options(
+        statement = build_query(Budget, options).options(
             selectinload(Budget.allocations),
             selectinload(Budget.expenses),
         )
@@ -106,7 +111,7 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
                 )
             )
 
-        persistence_output = (await self.db.execute(statement)).mappings().one_or_none()
+        persistence_output = (await self.db.scalars(statement)).one_or_none()
 
         if persistence_output is None:
             return result_fail(
@@ -115,7 +120,7 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
                 )
             )
 
-        entity_result = BudgetReadModel(**persistence_output)
+        entity_result = BudgetReadMapper.to_read_model(persistence_output)
 
         return result_ok(entity_result)
 
@@ -123,14 +128,6 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
         BudgetOverviewReadModel,
         RepositoryUnexpectedError,
     ]:
-        budget_columns = Budget.__table__.columns
-        statement = select(
-            budget_columns.id, budget_columns.currency, budget_columns.name
-        ).options(
-            selectinload(Budget.allocations),
-            selectinload(Budget.expenses),
-        )
-
         user_id = options.get("filter", {}).get("user_id")
 
         if user_id is None:
@@ -143,21 +140,21 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
 
         statement = build_query(Budget.__table__, options)
 
-        recent_budgets = statement.order_by(Budget.start_date.desc()).limit(
+        recent_budgets = statement.order_by(Budget.__table__.columns.start_date.desc()).limit(
             options.get("limit", 5)
         )
 
         active_budget = statement.where(
             and_(
-                Budget.user_id == user_id,
-                Budget.start_date <= func.current_date(),
-                Budget.end_date >= func.current_date(),
+                Budget.__table__.columns.user_id == user_id,
+                Budget.__table__.columns.start_date <= func.current_date(),
+                Budget.__table__.columns.end_date >= func.current_date(),
             )
-        ).order_by(Budget.start_date.desc())
+        ).order_by(Budget.__table__.columns.start_date.desc())
 
         total_budgeted = (
             select(
-                func.sum(BudgetAllocation.__table__.columns.amount).label(
+                func.sum(BudgetAllocation.amount).label(
                     "total_budgeted"
                 )
             )
@@ -170,10 +167,10 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
 
         upcoming_budget = statement.where(
             and_(
-                Budget.user_id == user_id,
-                Budget.start_date > func.current_date(),
+                Budget.__table__.columns.user_id == user_id,
+                Budget.__table__.columns.start_date > func.current_date(),
             )
-        ).order_by(Budget.start_date.asc())
+        ).order_by(Budget.__table__.columns.start_date.asc())
 
         result = await self.db.execute(recent_budgets)
         persistence_output = result.mappings().all()
@@ -188,14 +185,14 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
         total_budgeted_output = total_budgeted_result.first()
 
         read_model = [
-            BudgetReadModel(**persistence) for persistence in persistence_output
+            BudgetSummaryReadModel(**persistence) for persistence in persistence_output
         ]
 
         if upcoming_budget_output is not None:
-            upcoming_budget_output = BudgetReadModel(**upcoming_budget_output)
+            upcoming_budget_output = BudgetSummaryReadModel(**upcoming_budget_output)
 
         if active_budget_output is not None:
-            active_budget_output = BudgetReadModel(**active_budget_output)
+            active_budget_output = BudgetSummaryReadModel(**active_budget_output)
 
         overview_read_model = BudgetOverviewReadModel(
             recent_budgets=read_model,

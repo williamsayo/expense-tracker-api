@@ -28,6 +28,12 @@ class BudgetModel(BaseModel):
 
     name: str | None = Field(None, description="Name of the budget")
 
+class BudgetSummaryReadModel(BudgetModel, BaseReadModel):
+    """Read model for budget summary data."""
+    name: str | None = Field(..., description="Name of the budget")
+    currency: Currency = Field(..., description="Currency code (e.g., 'USD', 'EUR')")
+    start_date: date = Field(..., description="Date the Budget was made")
+    end_date: date = Field(..., description="Date the Budget ends")
 
 class BudgetReadModel(BudgetModel, BaseReadModel):
     """Read model for Budget data."""
@@ -42,13 +48,13 @@ class BudgetReadModel(BudgetModel, BaseReadModel):
     )
     name: str | None = Field(..., description="Name of the budget")
     currency: Currency = Field(..., description="Currency code (e.g., 'USD', 'EUR')")
-    total_amount: float = Field(..., description="Total budget amount")
-    amount_spent: float = Field(..., description="Total amount spent")
-    remaining_amount: float = Field(..., description="Remaining budget amount")
-    used_percentage: Percentage = Field(..., description="Percentage of budget used")
-    remaining_percentage: Percentage = Field(
-        default=100, description="Remaining budget percentage"
-    )
+    # total_amount: float = Field(..., description="Total budget amount")
+    # amount_spent: float = Field(..., description="Total amount spent")
+    # remaining_amount: float = Field(..., description="Remaining budget amount")
+    # used_percentage: Percentage = Field(..., description="Percentage of budget used")
+    # remaining_percentage: Percentage = Field(
+    #     default=100, description="Remaining budget percentage"
+    # )
     start_date: date = Field(..., description="Date the Budget was made")
     end_date: date = Field(..., description="Date the Budget ends")
     allocations: List[BudgetAllocationReadModel] = Field(
@@ -58,39 +64,39 @@ class BudgetReadModel(BudgetModel, BaseReadModel):
         ..., description="List of expenses associated with the budget"
     )
 
-    @classmethod
-    def from_entity(cls, entity: BudgetEntity) -> Self:
-        return cls(
-            budget_id=entity.id.value,
-            name=entity.name,
-            currency=entity.currency,
-            start_date=entity.budget_period.start_date,
-            end_date=entity.budget_period.end_date,
-            allocations=[
-                BudgetAllocationReadModel.from_entity(allocation)
-                for allocation in entity.allocations
-            ],
-            user_id=entity.user_id,
-            expenses=[],
-            total_amount=0,
-            amount_spent=0,
-            remaining_amount=0,
-            used_percentage=0,
-            remaining_percentage=0,
-        )
+    # @classmethod
+    # def from_entity(cls, entity: BudgetEntity) -> Self:
+    #     return cls(
+    #         budget_id=entity.id.value,
+    #         name=entity.name,
+    #         currency=entity.currency,
+    #         start_date=entity.budget_period.start_date,
+    #         end_date=entity.budget_period.end_date,
+    #         allocations=[
+    #             BudgetAllocationReadModel.from_entity(allocation)
+    #             for allocation in entity.allocations
+    #         ],
+    #         user_id=entity.user_id,
+    #         expenses=[],
+    #         total_amount=0,
+    #         amount_spent=0,
+    #         remaining_amount=0,
+    #         used_percentage=0,
+    #         remaining_percentage=0,
+    #     )
 
 
 class BudgetOverviewReadModel(BaseReadModel):
     """Read model for Budget data."""
 
     total_allocated: float = Field(..., description="Total budget amount")
-    active_budget: BudgetReadModel | None = Field(
+    active_budget: BudgetSummaryReadModel | None = Field(
         ..., description="Active budget for the user"
     )
-    recent_budgets: List[BudgetReadModel] = Field(
+    recent_budgets: List[BudgetSummaryReadModel] = Field(
         ..., description="List of recent budgets for the user"
     )
-    upcoming_budget: BudgetReadModel | None = Field(
+    upcoming_budget: BudgetSummaryReadModel | None = Field(
         ..., description="upcoming budgets for the user"
     )
 

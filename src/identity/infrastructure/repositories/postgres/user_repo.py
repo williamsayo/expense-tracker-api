@@ -30,26 +30,26 @@ class UserRepository(AsyncWriteRepository[UserEntity, UniqueEntityId]):
         self.db = db
 
     async def add(
-        self, aggregate: UserEntity
+        self, aggregate: UserEntity, *, auto_commit: bool = True
     ) -> Either[None, RepositoryUnexpectedError | ConflictError | ConcurrencyError]:
-        try:
-            persistence = UserMapper.to_persistence(aggregate)
-            exists = await self.exists(aggregate.id)
 
-            if exists:
-                await self.db.merge(persistence)
-            else:
-                self.db.add(persistence)
+        persistence = UserMapper.to_persistence(aggregate)
+        exists = await self.exists(aggregate.id)
 
-            await self.db.commit()
-            return result_ok(None)
+        if exists:
+            await self.db.merge(persistence)
+        else:
+            self.db.add(persistence)
 
-        except IntegrityError as error:
-            await self.db.rollback()
-            return result_fail(ConflictError(error, "Username or email already exists"))
-        except Exception as error:
-            await self.db.rollback()
-            return result_fail(RepositoryUnexpectedError(error))
+        if not auto_commit:
+            return result_ok()
+
+        result = await self.commit()
+
+        if is_fail(result):
+            return result_fail(result.value)
+
+        return result
 
     async def get_by_id(self, aggregate_id: UniqueEntityId) -> Either[
         UserEntity,
@@ -144,3 +144,16 @@ class UserRepository(AsyncWriteRepository[UserEntity, UniqueEntityId]):
         self, aggregate: UserEntity
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]:
         raise NotImplementedError
+
+    async def commit(
+        self,
+    ) -> Either[None, RepositoryUnexpectedError | ConflictError]:
+        try:
+            await self.db.commit()
+            return result_ok()
+        except IntegrityError as error:
+            await self.db.rollback()
+            return result_fail(ConflictError(error, "Username or email already exists"))
+        except Exception as error:
+            await self.db.rollback()
+            return result_fail(RepositoryUnexpectedError(error))

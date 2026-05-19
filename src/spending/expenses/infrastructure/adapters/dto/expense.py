@@ -20,6 +20,9 @@ class ExpenseReadModel(ExpenseModel, BaseReadModel):
     """Read model for expense data."""
 
     id: str | UUID
+    user_id: UUID = Field(
+        ..., description="ID of the user who made the expense", exclude=True
+    )
     category: Category = Field(..., description="Category of the expense")
     amount: float = Field(..., description="Amount of the expense in cents")
     currency: Currency = Field(..., description="Currency of the expense")
@@ -29,6 +32,7 @@ class ExpenseReadModel(ExpenseModel, BaseReadModel):
     def from_entity(cls, entity: ExpenseEntity) -> Self:
         return cls(
             id=entity.id.value,
+            user_id=entity.user_id,
             category=entity.category.name,
             amount=entity.money.major_unit,
             note=entity.note,
@@ -41,6 +45,9 @@ class ExpenseReadModel(ExpenseModel, BaseReadModel):
 class ExpenseOverviewReadModel(BaseReadModel):
     """Read model for expense data."""
 
+    user_id: UUID = Field(
+        ..., description="ID of the user who made the expense", exclude=True
+    )
     total_spent: float
     highest_expense: ExpenseReadModel | None
     recent_expenses: List[ExpenseReadModel]

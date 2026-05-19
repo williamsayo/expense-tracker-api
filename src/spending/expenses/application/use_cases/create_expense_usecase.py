@@ -34,7 +34,7 @@ class CreateExpenseUsecase(AsyncCommandUseCase[CreateExpenseInput, UniqueEntityI
         user_id = input["user_id"]
         expense_data = input["expense_data"]
 
-        amount = MoneyValueObject.to_amount(expense_data.amount)
+        amount = MoneyValueObject.cents(expense_data.amount)
         money_result = MoneyValueObject.create(
             {"amount": amount, "currency": expense_data.currency}
         )

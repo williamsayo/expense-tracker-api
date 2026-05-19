@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from uuid import UUID
 from typing import Protocol, Sequence
 from result import Either
@@ -19,9 +19,11 @@ from src.spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetOverviewReadModel,
 )
 
+
 class BudgetFilter(AppFilter):
-    start_date: datetime
-    end_date: datetime
+    start_date: date
+    end_date: date
+
 
 class BudgetRepositoryProtocol(Protocol):
     """Defines the contract for budgeting repository operations."""

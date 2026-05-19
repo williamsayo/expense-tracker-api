@@ -1,34 +1,33 @@
 from typing import List
+from src.spending.budgeting.infrastructure.adapters.dto.budget_allocation import (
+    BudgetAllocationReadModel,
+)
 from src.spending.budgeting.infrastructure.repositories.schema import (
     Budget,
     BudgetAllocation,
 )
-from src.spending.budgeting.domain.read_models.budget_summary import (
-    BudgetSummaryReadModel,
+from src.spending.budgeting.infrastructure.adapters.dto.budget import (
+    BudgetReadModel,
 )
-from src.spending.budgeting.domain.read_models.allocation_summary import (
-    BudgetAllocationSummaryReadModel,
-)
-from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseReadModel
 from src.spending.expenses.infrastructure.repositories.schema import Expense
 
 
 def create_budget_allocation_summary(
     allocations: List[BudgetAllocation],
-) -> List[BudgetAllocationSummaryReadModel]:
+) -> List[BudgetAllocationReadModel]:
 
-    result: List[BudgetAllocationSummaryReadModel] = []
+    result: List[BudgetAllocationReadModel] = []
 
     for allocation in allocations:
 
         result.append(
-            BudgetAllocationSummaryReadModel(
-                {
-                    "allocation_id": allocation.id,
-                    "category": allocation.category,
-                    "budget_amount": allocation.amount,
-                    "spent_amount": allocation.spent_amount,
-                }
+            BudgetAllocationReadModel(
+                allocation_id=allocation.id,
+                category=allocation.category,
+                budget_amount=allocation.amount,
+                spent_amount=allocation.spent_amount,
+                # used_percentage=allocation.used_percentage,
             )
         )
 
@@ -44,16 +43,14 @@ def create_budget_expense_summary(
     for expense in expenses:
         result.append(
             ExpenseReadModel(
-                {
-                    "id": expense.id,
-                    "name": expense.name,
-                    "user_id": expense.user_id,
-                    "category": expense.category,
-                    "amount": expense.amount,
-                    "currency": expense.currency,
-                    "date": expense.date,
-                    "note": expense.note,
-                }
+                id=expense.id,
+                name=expense.name,
+                user_id=expense.user_id,
+                category=expense.category,
+                amount=expense.amount,
+                currency=expense.currency,
+                date=expense.date,
+                note=expense.note,
             )
         )
 
@@ -64,7 +61,7 @@ class BudgetReadMapper:
     """Maps budget summary data between domain and persistence models."""
 
     @staticmethod
-    def to_persistence(read_model: BudgetSummaryReadModel) -> Budget:
+    def to_persistence(read_model: BudgetReadModel) -> Budget:
         allocations = [
             BudgetAllocation(
                 id=allocation.allocation_id,
@@ -88,22 +85,20 @@ class BudgetReadMapper:
     @staticmethod
     def to_read_model(
         persistence: Budget,
-    ) -> BudgetSummaryReadModel:
+    ) -> BudgetReadModel:
 
         allocations_result = create_budget_allocation_summary(persistence.allocations)
         expenses_result = create_budget_expense_summary(persistence.expenses)
 
-        budget_entity = BudgetSummaryReadModel(
-            {
-                "name": persistence.name,
-                "user_id": persistence.user_id,
-                "currency": persistence.currency,
-                "allocations": allocations_result,
-                "end_date": persistence.end_date,
-                "start_date": persistence.start_date,
-                "budget_id": persistence.id,
-                "expenses": expenses_result,
-            }
+        budget_entity = BudgetReadModel(
+            name=persistence.name,
+            user_id=persistence.user_id,
+            currency=persistence.currency,
+            allocations=allocations_result,
+            end_date=persistence.end_date,
+            start_date=persistence.start_date,
+            budget_id=persistence.id,
+            expenses=expenses_result,
         )
 
         return budget_entity

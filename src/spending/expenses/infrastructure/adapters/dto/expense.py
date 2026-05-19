@@ -13,22 +13,33 @@ class ExpenseModel(BaseModel):
     """Data model for expense."""
 
     name: str | None = Field(None, description="Name of the expense")
-    note: str | None = Field(None, description="Note about the expense")
+    note: str | None = Field(
+        None,
+        description="Note about the expense",
+        json_schema_extra={"example": "Dinner with friends"},
+        
+    )
 
 
-class ExpenseReadModel(ExpenseModel, BaseReadModel):
+class ExpenseReadModel(BaseReadModel):
     """Read model for expense data."""
 
-    id: str | UUID
+    id: str | UUID = Field(..., description="ID of the expense")
+    user_id: UUID = Field(
+        ..., description="ID of the user who made the expense", exclude=True
+    )
+    name: str | None = Field(None, description="Name of the expense")
     category: Category = Field(..., description="Category of the expense")
     amount: float = Field(..., description="Amount of the expense in cents")
     currency: Currency = Field(..., description="Currency of the expense")
     date: datetime = Field(..., description="Date the expense was made")
+    note: str | None = Field(None, description="Note about the expense")
 
     @classmethod
     def from_entity(cls, entity: ExpenseEntity) -> Self:
         return cls(
             id=entity.id.value,
+            user_id=entity.user_id,
             category=entity.category.name,
             amount=entity.money.major_unit,
             note=entity.note,
@@ -41,6 +52,9 @@ class ExpenseReadModel(ExpenseModel, BaseReadModel):
 class ExpenseOverviewReadModel(BaseReadModel):
     """Read model for expense data."""
 
+    user_id: UUID = Field(
+        ..., description="ID of the user who made the expense", exclude=True
+    )
     total_spent: float
     highest_expense: ExpenseReadModel | None
     recent_expenses: List[ExpenseReadModel]

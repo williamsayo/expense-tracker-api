@@ -1,6 +1,6 @@
 from typing import Sequence, cast
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func, select, exists, delete
+from sqlalchemy import select, exists, delete
 from sqlalchemy.engine import CursorResult
 from boilerplate import (
     DataIntegrityError,
@@ -13,11 +13,11 @@ from boilerplate import (
     AuthenticationError,
     AuthenticationError,
     AsyncWriteRepository,
-    AsyncReadRepository,
     UniqueEntityId,
 )
 from result import result_fail, result_ok, is_fail, Either, result_combine
 from src.shared.domain.types.user_id import UserId
+from src.shared.utils.build_query import AppFilter, build_query
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from src.spending.expenses.infrastructure.mappers.expense_mapper import ExpenseMapper
 from src.spending.expenses.infrastructure.repositories.schema import Expense
@@ -30,28 +30,21 @@ class ExpenseRepository(AsyncWriteRepository[ExpenseEntity, UniqueEntityId]):
         self.db = db
 
     async def list(
-        self, options: GetAllOptions[str]
+        self, options: GetAllOptions[AppFilter]
     ) -> Either[
         Sequence[ExpenseEntity], RepositoryUnexpectedError | DataIntegrityError
     ]:
-        statement = select(Expense)
-        if filter := options.get("filter"):
-            statement = statement.filter_by(**filter)
+        user_id = options.get("filter", {}).get("user_id")
 
-        if sort := options.get("sort"):
-            statement = statement.order_by(
-                *[
-                    (
-                        getattr(Expense, col).desc()
-                        if direction == "desc"
-                        else getattr(Expense, col).asc()
-                    )
-                    for col, direction in sort.items()
-                ]
+        if user_id is None:
+            return result_fail(
+                RepositoryUnexpectedError(
+                    Exception("User ID filter is required for listing expenses"),
+                    "User ID filter is required for listing expenses",
+                )
             )
 
-        if limit := options.get("limit"):
-            statement = statement.limit(limit)
+        statement = build_query(Expense, options)
 
         result = await self.db.scalars(statement)
         persistence_output = result.all()
@@ -114,23 +107,20 @@ class ExpenseRepository(AsyncWriteRepository[ExpenseEntity, UniqueEntityId]):
         )
         return result_ok(cast(bool, query.one_or_none()))
 
-    async def first(self, options: GetOptions) -> Either[
+    async def first(self, options: GetOptions[AppFilter]) -> Either[
         ExpenseEntity,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]:
-        if filter := options.get("filter"):
-            user_id = filter.get("user_id")
+        user_id = options.get("filter", {}).get("user_id")
 
-            if user_id is None:
-                return result_fail(
-                    RepositoryUnexpectedError(
-                        Exception("User ID is required in filter for first method")
-                    )
+        if user_id is None:
+            return result_fail(
+                RepositoryUnexpectedError(
+                    Exception("User ID is required in filter for first method")
                 )
+            )
 
-        result = await self.db.scalars(
-            select(Expense).filter_by(**options.get("filter", {}))
-        )
+        result = await self.db.scalars(build_query(Expense, options))
 
         persistence_output = result.first()
 

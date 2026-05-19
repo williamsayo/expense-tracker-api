@@ -11,9 +11,13 @@ from boilerplate import (
     GetAllOptions,
     GetOptions,
 )
+from src.shared.utils.build_query import AppFilter
 from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
-from src.spending.budgeting.domain.read_models.budget_summary import BudgetSummaryReadModel
-from src.spending.budgeting.domain.read_models.budget_overview import BudgetOverviewReadModel
+from src.spending.budgeting.infrastructure.adapters.dto.budget import (
+    BudgetReadModel,
+    BudgetOverviewReadModel,
+)
+
 
 class BudgetRepositoryProtocol(Protocol):
     """Defines the contract for budgeting repository operations."""
@@ -27,7 +31,9 @@ class BudgetRepositoryProtocol(Protocol):
         self, aggregate: BudgetEntity
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
-    async def exists(self, aggregate_id: UniqueEntityId) -> Either[bool, RepositoryUnexpectedError]: ...
+    async def exists(
+        self, aggregate_id: UniqueEntityId
+    ) -> Either[bool, RepositoryUnexpectedError]: ...
 
     async def list(
         self, options: GetAllOptions
@@ -53,36 +59,38 @@ class BudgetReadRepositoryProtocol(Protocol):
     """Defines the contract for budgeting repository operations."""
 
     async def get_by_id(self, aggregate_id: UUID | str) -> Either[
-        BudgetSummaryReadModel,
+        BudgetReadModel,
         RepositoryNotFoundError | RepositoryUnexpectedError | DataIntegrityError,
     ]: ...
 
     async def add(
-        self, aggregate: BudgetSummaryReadModel
+        self, aggregate: BudgetReadModel
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
-    async def exists(self, aggregate_id: UUID | str) -> Either[bool, RepositoryUnexpectedError]: ...
+    async def exists(
+        self, aggregate_id: UUID | str
+    ) -> Either[bool, RepositoryUnexpectedError]: ...
 
     async def list(
-        self, options: GetAllOptions
+        self, options: GetAllOptions[AppFilter]
     ) -> Either[
-        Sequence[BudgetSummaryReadModel], RepositoryUnexpectedError | DataIntegrityError
+        Sequence[BudgetReadModel], RepositoryUnexpectedError | DataIntegrityError
     ]: ...
 
-    async def first(self, options: GetOptions) -> Either[
-        BudgetSummaryReadModel,
+    async def first(self, options: GetOptions[AppFilter]) -> Either[
+        BudgetReadModel,
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]: ...
 
     async def remove(
-        self, aggregate: BudgetSummaryReadModel
+        self, aggregate: BudgetReadModel
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
     async def remove_all(
-        self, options: GetAllOptions
+        self, options: GetAllOptions[AppFilter]
     ) -> Either[int, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
-    async def get_budget_overview(self, options: GetAllOptions[str]) -> Either[
+    async def get_budget_overview(self, options: GetAllOptions[AppFilter]) -> Either[
         BudgetOverviewReadModel,
         RepositoryUnexpectedError,
     ]: ...

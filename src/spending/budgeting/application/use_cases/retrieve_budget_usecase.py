@@ -10,9 +10,7 @@ from boilerplate import (
 from src.spending.budgeting.infrastructure.mappers.budget_mapper import (
     create_unique_entity_id,
 )
-from src.spending.budgeting.domain.read_models.budget_summary import (
-    BudgetSummaryReadModel,
-)
+from src.spending.budgeting.infrastructure.adapters.dto.budget import BudgetReadModel
 from src.spending.budgeting.utils.setup_dependencies import BudgetReadDeps
 
 
@@ -21,7 +19,7 @@ class GetBudgetUsecase:
         self.deps = deps
 
     async def execute(self, aggregate_id: str, user_id: UserId) -> Either[
-        BudgetSummaryReadModel,
+        BudgetReadModel,
         CoreError
         | RepositoryNotFoundError
         | RepositoryUnexpectedError
@@ -41,6 +39,7 @@ class GetBudgetUsecase:
             return result
 
         budget = result.value
+        
         if budget.user_id != user_id:
             return result_fail(
                 AuthenticationError("Unauthorized to access this budget.")

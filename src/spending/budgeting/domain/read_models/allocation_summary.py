@@ -8,7 +8,7 @@ class BudgetAllocationSummaryReadModelProps(TypedDict):
     """Typed dictionary for budget allocation summary entity fields."""
 
     allocation_id: UUID
-    budget_amount: float
+    amount: float
     category: Category
     spent_amount: float
 
@@ -21,7 +21,7 @@ class BudgetAllocationSummaryReadModel:
         props: BudgetAllocationSummaryReadModelProps,
     ):
         self._allocation_id = props["allocation_id"]
-        self._budget_amount = props["budget_amount"]
+        self._budget_amount = props["amount"]
         self._category = props["category"]
         self._spent_amount = props["spent_amount"]
 

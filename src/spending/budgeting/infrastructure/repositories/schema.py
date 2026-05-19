@@ -9,7 +9,6 @@ from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.spending.expenses.infrastructure.repositories.schema import Expense
 
-
 class Budget(Base, TimeStampMixin, VersionMixin):
     """Represents budget."""
 

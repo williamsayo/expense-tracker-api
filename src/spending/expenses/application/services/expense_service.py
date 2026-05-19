@@ -1,5 +1,4 @@
 from fastapi import BackgroundTasks
-from typing import Sequence, List
 from result import result_ok, result_fail, is_fail, Either, result_combine
 from boilerplate import (
     DataIntegrityError,

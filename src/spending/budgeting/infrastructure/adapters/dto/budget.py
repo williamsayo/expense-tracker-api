@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from uuid import UUID
 from typing import Annotated, Self, List
 from datetime import date, timedelta
@@ -29,9 +29,21 @@ class BudgetModel(BaseModel):
     name: str | None = Field(None, description="Name of the budget")
 
 
+class BudgetSummaryReadModel(BudgetModel, BaseReadModel):
+    """Read model for budget summary data."""
+
+    name: str | None = Field(..., description="Name of the budget")
+    currency: Currency = Field(..., description="Currency code (e.g., 'USD', 'EUR')")
+    start_date: date = Field(..., description="Date the Budget was made")
+    end_date: date = Field(..., description="Date the Budget ends")
+
+
 class BudgetReadModel(BudgetModel, BaseReadModel):
     """Read model for Budget data."""
 
+    user_id: UUID = Field(
+        ..., description="The unique identifier of the user", exclude=True
+    )
     budget_id: str | UUID = Field(
         ...,
         description="The unique identifier of the budget",
@@ -39,13 +51,6 @@ class BudgetReadModel(BudgetModel, BaseReadModel):
     )
     name: str | None = Field(..., description="Name of the budget")
     currency: Currency = Field(..., description="Currency code (e.g., 'USD', 'EUR')")
-    total_amount: float = Field(..., description="Total budget amount")
-    amount_spent: float = Field(..., description="Total amount spent")
-    remaining_amount: float = Field(..., description="Remaining budget amount")
-    used_percentage: Percentage = Field(..., description="Percentage of budget used")
-    remaining_percentage: Percentage = Field(
-        default=100, description="Remaining budget percentage"
-    )
     start_date: date = Field(..., description="Date the Budget was made")
     end_date: date = Field(..., description="Date the Budget ends")
     allocations: List[BudgetAllocationReadModel] = Field(
@@ -54,6 +59,33 @@ class BudgetReadModel(BudgetModel, BaseReadModel):
     expenses: List[ExpenseReadModel] = Field(
         ..., description="List of expenses associated with the budget"
     )
+
+    @computed_field(description="Total budget amount")
+    @property
+    def total_amount(self) -> int:
+        return sum(allocation.budget_amount for allocation in self.allocations)
+
+    @computed_field(description="Total amount spent")
+    @property
+    def amount_spent(self) -> int:
+        return sum(allocation.spent_amount for allocation in self.allocations)
+
+    @computed_field(description="Remaining amount in the budget")
+    @property
+    def remaining_amount(self) -> int:
+        return max(self.total_amount - self.amount_spent, 0)
+
+    @computed_field(description="Percentage of budget used")
+    @property
+    def used_percentage(self) -> float:
+        if self.total_amount <= 0:
+            return 0.0
+        return min(self.amount_spent / self.total_amount, 1.0)
+
+    @computed_field(description="Remaining percentage of the budget")
+    @property
+    def remaining_percentage(self) -> float:
+        return max(1.0 - self.used_percentage, 0.0)
 
     @classmethod
     def from_entity(cls, entity: BudgetEntity) -> Self:
@@ -67,12 +99,8 @@ class BudgetReadModel(BudgetModel, BaseReadModel):
                 BudgetAllocationReadModel.from_entity(allocation)
                 for allocation in entity.allocations
             ],
+            user_id=entity.user_id,
             expenses=[],
-            total_amount=0,
-            amount_spent=0,
-            remaining_amount=0,
-            used_percentage=0,
-            remaining_percentage=0,
         )
 
 
@@ -80,13 +108,13 @@ class BudgetOverviewReadModel(BaseReadModel):
     """Read model for Budget data."""
 
     total_allocated: float = Field(..., description="Total budget amount")
-    active_budget: BudgetReadModel | None = Field(
+    active_budget: BudgetSummaryReadModel | None = Field(
         ..., description="Active budget for the user"
     )
-    recent_budgets: List[BudgetReadModel] = Field(
+    recent_budgets: List[BudgetSummaryReadModel] = Field(
         ..., description="List of recent budgets for the user"
     )
-    upcoming_budget: BudgetReadModel | None = Field(
+    upcoming_budget: BudgetSummaryReadModel | None = Field(
         ..., description="upcoming budgets for the user"
     )
 

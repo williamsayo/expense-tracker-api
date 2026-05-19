@@ -2,10 +2,10 @@ from boilerplate import CoreError
 from result import Either, is_fail, result_ok
 from src.shared.domain.types.user_id import UserId
 from boilerplate.errors.repository import RepositoryUnexpectedError
-from src.spending.budgeting.domain.read_models.budget_overview import (
+from src.spending.budgeting.utils.setup_dependencies import BudgetReadDeps
+from src.spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetOverviewReadModel,
 )
-from src.spending.budgeting.utils.setup_dependencies import BudgetReadDeps
 
 
 class GetBudgetOverviewUsecase:
@@ -18,7 +18,11 @@ class GetBudgetOverviewUsecase:
     ]:
         """Retrieves the budget overview for a user."""
         result = await self.deps.repo.get_budget_overview(
-            {"filter": {"user_id": user_id}, "limit": limit}
+            {
+                "filter": {"user_id": user_id},
+                "limit": limit,
+                "select": ["id", "currency", "name", "start_date", "end_date"],
+            }
         )
 
         if is_fail(result):

@@ -1,23 +1,19 @@
-from typing import Protocol, Sequence
+from typing import Sequence
 from boilerplate import CoreError
-from result import Either, is_fail, result_ok, result_fail
+from result import Either, is_fail, result_ok
 from src.shared.domain.types.user_id import UserId
 from boilerplate.errors.repository import (
     RepositoryUnexpectedError,
     DataIntegrityError,
 )
-from src.spending.budgeting.domain.read_models.budget_summary import (
-    BudgetSummaryReadModel,
-)
+from src.spending.budgeting.infrastructure.adapters.dto.budget import BudgetReadModel
 from src.spending.budgeting.utils.setup_dependencies import BudgetReadDeps
-
-
 class GetBudgetsUsecase:
     def __init__(self, deps: BudgetReadDeps):
         self.deps = deps
 
     async def execute(self, user_id: UserId) -> Either[
-        Sequence[BudgetSummaryReadModel],
+        Sequence[BudgetReadModel],
         CoreError | RepositoryUnexpectedError | DataIntegrityError,
     ]:
         """Lists all budgets."""

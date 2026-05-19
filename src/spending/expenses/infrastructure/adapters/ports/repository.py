@@ -13,11 +13,9 @@ from boilerplate import (
     GetOptions,
 )
 from src.shared.domain.types.user_id import UserId
+from src.shared.utils.build_query import AppFilter
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
-from src.spending.expenses.domain.read_models.expense_overview_read_model import (
-    ExpenseOverviewReadModel,
-)
-from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseReadModel,ExpenseOverviewReadModel
 
 
 class ExpenseRepositoryProtocol(Protocol):
@@ -35,12 +33,12 @@ class ExpenseRepositoryProtocol(Protocol):
     async def exists(self, aggregate_id: UniqueEntityId) -> Either[bool, RepositoryUnexpectedError]: ...
 
     async def list(
-        self, options: GetAllOptions
+        self, options: GetAllOptions[AppFilter]
     ) -> Either[
         Sequence[ExpenseEntity], RepositoryUnexpectedError | DataIntegrityError
     ]: ...
 
-    async def first(self, options: GetOptions) -> Either[
+    async def first(self, options: GetOptions[AppFilter]) -> Either[
         ExpenseEntity,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]: ...
@@ -63,17 +61,17 @@ class ExpenseReadRepositoryProtocol(Protocol):
     ]: ...
 
     async def list(
-        self, options: GetAllOptions
+        self, options: GetAllOptions[AppFilter]
     ) -> Either[
         Sequence[ExpenseReadModel], RepositoryUnexpectedError | DataIntegrityError
     ]: ...
 
-    async def first(self, options: GetOptions) -> Either[
+    async def first(self, options: GetOptions[AppFilter]) -> Either[
         ExpenseReadModel,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]: ...
 
-    async def get_expense_overview(self, options: GetAllOptions) -> Either[
+    async def get_expense_overview(self, options: GetAllOptions[AppFilter]) -> Either[
         ExpenseOverviewReadModel,
         RepositoryUnexpectedError | DataIntegrityError,
     ]: ...

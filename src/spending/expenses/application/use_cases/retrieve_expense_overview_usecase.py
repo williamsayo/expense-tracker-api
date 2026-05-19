@@ -6,7 +6,7 @@ from boilerplate import (
     DataIntegrityError,
     RepositoryNotFoundError,
 )
-from src.spending.expenses.domain.read_models.expense_overview_read_model import (
+from src.spending.expenses.infrastructure.adapters.dto.expense import (
     ExpenseOverviewReadModel,
 )
 from src.spending.expenses.utils.setup_dependencies import ExpenseReadDeps

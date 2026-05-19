@@ -1,4 +1,5 @@
 from typing import Sequence, TypedDict
+from uuid import UUID
 from result import Either, is_fail, result_ok
 from boilerplate import (
     RepositoryUnexpectedError,
@@ -6,15 +7,14 @@ from boilerplate import (
     RepositoryNotFoundError,
     AsyncQueryUseCase,
 )
-from src.shared.domain.types.user_id import UserId
 from src.shared.domain.types.category_types import Category
-from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseReadModel
 from src.spending.expenses.utils.setup_dependencies import ExpenseReadDeps
 
 
 class GetExpenseByCategoryInput(TypedDict):
     category: Category
-    user_id: UserId
+    user_id: UUID
 
 
 class GetExpenseByCategoryUsecase(

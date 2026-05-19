@@ -1,5 +1,4 @@
 from typing import TypedDict
-
 from result import Either, is_fail, result_fail, result_ok
 from boilerplate import (
     ApplicationErrorID,
@@ -14,7 +13,7 @@ from src.shared.domain.types.user_id import UserId
 from src.spending.expenses.infrastructure.mappers.expense_mapper import (
     create_unique_entity_id,
 )
-from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
+from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseReadModel
 from src.spending.expenses.utils.setup_dependencies import ExpenseReadDeps
 
 

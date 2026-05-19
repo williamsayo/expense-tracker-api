@@ -16,7 +16,7 @@ class BudgetPeriodConflictChecker:
     def __init__(self, budget_repository: BudgetRepositoryProtocol):
         self.repo = budget_repository
 
-    async def ensureNoBudgetExistsForPeriod(
+    async def ensure_no_budget_exists_for_period(
         self, period: BudgetPeriodValueObject, user_id: UserId
     ) -> Either[None, DomainRuleError | CoreError]:
         existing_budget = await self.repo.list(

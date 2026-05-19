@@ -1,3 +1,4 @@
+from typing import Any
 from sqlalchemy import select, exists, and_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,8 +11,6 @@ from boilerplate import (
     DataIntegrityError,
     RepositoryNotFoundError,
     RepositoryUnexpectedError,
-    WriteRepository,
-    ReadRepository,
     UniqueEntityId,
     GetAllOptions,
     GetOptions,
@@ -19,6 +18,7 @@ from boilerplate import (
 
 from result import Either, result_combine, result_ok, result_fail, is_fail
 from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.infrastructure.adapters.ports.repository import BudgetFilter
 from src.spending.budgeting.infrastructure.repositories.schema import Budget
 from src.spending.budgeting.infrastructure.mappers.budget_mapper import BudgetMapper
 
@@ -30,9 +30,10 @@ class BudgetRepository(AsyncWriteRepository[BudgetEntity, UniqueEntityId]):
         self.db = db
 
     async def add(
-        self, aggregate: BudgetEntity
+        self, aggregate: BudgetEntity, *, auto_commit: bool = True
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]:
         """Adds a new budget entity to the database."""
+
         persistence = BudgetMapper.to_persistence(aggregate)
         exists = await self.exists(aggregate.id)
 
@@ -48,9 +49,15 @@ class BudgetRepository(AsyncWriteRepository[BudgetEntity, UniqueEntityId]):
         else:
             self.db.add(persistence)
 
-        await self.db.commit()
+        if not auto_commit:
+            return result_ok()
 
-        return result_ok()
+        result = await self.commit()
+
+        if is_fail(result):
+            return result_fail(result.value)
+
+        return result
 
     async def exists(
         self, aggregate_id: UniqueEntityId
@@ -87,7 +94,7 @@ class BudgetRepository(AsyncWriteRepository[BudgetEntity, UniqueEntityId]):
         return result_ok(entity_result.value)
 
     async def list(
-        self, options: GetAllOptions
+        self, options: GetAllOptions[BudgetFilter]
     ) -> Either[Sequence[BudgetEntity], RepositoryUnexpectedError | DataIntegrityError]:
         statement = select(Budget).options(selectinload(Budget.allocations))
 
@@ -119,26 +126,26 @@ class BudgetRepository(AsyncWriteRepository[BudgetEntity, UniqueEntityId]):
 
         return result_ok(entity_result.value)
 
-    async def first(self, options: GetOptions) -> Either[
+    async def first(self, options: GetOptions[BudgetFilter]) -> Either[
         BudgetEntity,
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]:
         statement = select(Budget).options(selectinload(Budget.allocations))
 
-        if filter := options.get("filter"):
-            # Handle date range overlap
-            if "start_date" in filter and "end_date" in filter:
-                new_start = filter.pop("start_date")
-                new_end = filter.pop("end_date")
+        filter = options.get("filter", {})
 
-                statement = statement.where(
-                    and_(
-                        Budget.start_date <= new_end,  # existing starts before new ends
-                        Budget.end_date >= new_start,  # existing ends after new starts
-                    )
+        if "start_date" in filter and "end_date" in filter:
+            new_start = filter.pop("start_date")
+            new_end = filter.pop("end_date")
+
+            statement = statement.where(
+                and_(
+                    Budget.start_date <= new_end,  # existing starts before new ends
+                    Budget.end_date >= new_start,  # existing ends after new starts
                 )
+            )
 
-            statement = statement.filter_by(**filter)
+        statement = statement.filter_by(**filter)
 
         persistence_output = await self.db.scalar(statement)
 
@@ -161,5 +168,13 @@ class BudgetRepository(AsyncWriteRepository[BudgetEntity, UniqueEntityId]):
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
     async def remove_all(
-        self, options: GetAllOptions
+        self, options: GetAllOptions[BudgetFilter]
     ) -> Either[int, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
+
+    async def commit(self) -> Either[None, RepositoryUnexpectedError]:
+        try:
+            await self.db.commit()
+            return result_ok()
+        except Exception as error:
+            await self.db.rollback()
+            return result_fail(RepositoryUnexpectedError(error))

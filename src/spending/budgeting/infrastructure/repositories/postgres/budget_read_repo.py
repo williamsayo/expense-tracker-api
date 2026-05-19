@@ -140,9 +140,9 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
 
         statement = build_query(Budget.__table__, options)
 
-        recent_budgets = statement.order_by(Budget.__table__.columns.start_date.desc()).limit(
-            options.get("limit", 5)
-        )
+        recent_budgets = statement.order_by(
+            Budget.__table__.columns.start_date.desc()
+        ).limit(options.get("limit", 5))
 
         active_budget = statement.where(
             and_(
@@ -153,11 +153,7 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
         ).order_by(Budget.__table__.columns.start_date.desc())
 
         total_budgeted = (
-            select(
-                func.sum(BudgetAllocation.amount).label(
-                    "total_budgeted"
-                )
-            )
+            select(func.sum(BudgetAllocation.amount).label("total_budgeted"))
             .join(
                 Budget,
                 Budget.id == BudgetAllocation.budget_id,
@@ -210,3 +206,13 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
     async def remove_all(
         self, options: GetAllOptions[AppFilter]
     ) -> Either[int, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
+
+    async def commit(self) -> Either[None, RepositoryUnexpectedError]:
+        try:
+            await self.db.commit()
+            return result_ok()
+        except Exception as error:
+            await self.db.rollback()
+            return result_fail(
+                RepositoryUnexpectedError(error)
+            )

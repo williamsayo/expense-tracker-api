@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 from typing import Protocol, Sequence
 from result import Either
@@ -18,6 +19,9 @@ from src.spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetOverviewReadModel,
 )
 
+class BudgetFilter(AppFilter):
+    start_date: datetime
+    end_date: datetime
 
 class BudgetRepositoryProtocol(Protocol):
     """Defines the contract for budgeting repository operations."""
@@ -28,7 +32,7 @@ class BudgetRepositoryProtocol(Protocol):
     ]: ...
 
     async def add(
-        self, aggregate: BudgetEntity
+        self, aggregate: BudgetEntity, *, auto_commit: bool = True
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
     async def exists(
@@ -36,12 +40,12 @@ class BudgetRepositoryProtocol(Protocol):
     ) -> Either[bool, RepositoryUnexpectedError]: ...
 
     async def list(
-        self, options: GetAllOptions
+        self, options: GetAllOptions[BudgetFilter]
     ) -> Either[
         Sequence[BudgetEntity], RepositoryUnexpectedError | DataIntegrityError
     ]: ...
 
-    async def first(self, options: GetOptions) -> Either[
+    async def first(self, options: GetOptions[BudgetFilter]) -> Either[
         BudgetEntity,
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]: ...
@@ -51,7 +55,7 @@ class BudgetRepositoryProtocol(Protocol):
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
     async def remove_all(
-        self, options: GetAllOptions
+        self, options: GetAllOptions[BudgetFilter]
     ) -> Either[int, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
 
@@ -64,7 +68,7 @@ class BudgetReadRepositoryProtocol(Protocol):
     ]: ...
 
     async def add(
-        self, aggregate: BudgetReadModel
+        self, aggregate: BudgetReadModel, *, auto_commit: bool = True
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
     async def exists(

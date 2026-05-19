@@ -9,16 +9,15 @@ from boilerplate import (
     RepositoryNotFoundError,
     GetAllOptions,
     GetOptions,
-    ReadRepository,
-    UniqueEntityId,
     ConcurrencyError,
     ConflictError,
 )
 from result import result_fail, result_ok, Either
-from src.spending.expenses.domain.read_models.expense_overview_read_model import (
+from src.shared.utils.build_query import AppFilter, build_query
+from src.spending.expenses.infrastructure.adapters.dto.expense import (
+    ExpenseReadModel,
     ExpenseOverviewReadModel,
 )
-from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
 from src.spending.expenses.infrastructure.repositories.schema import Expense
 
 
@@ -32,8 +31,8 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
         ExpenseReadModel,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]:
-        query = await self.db.scalars(select(Expense).where(Expense.id == aggregate_id))
-        result = query.one_or_none()
+        query = await self.db.execute(select(Expense).where(Expense.id == aggregate_id))
+        result = query.mappings().one_or_none()
 
         if result is None:
             return result_fail(
@@ -42,67 +41,38 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
                 )
             )
 
-        read_model = ExpenseReadModel(
-            {
-                "id": result.id,
-                "name": result.name,
-                "user_id": result.user_id,
-                "category": result.category,
-                "amount": result.amount,
-                "currency": result.currency,
-                "note": result.note,
-                "date": result.date,
-            }
-        )
+        read_model = ExpenseReadModel(**result)
 
         return result_ok(read_model)
 
     async def list(
-        self, options: GetAllOptions[str]
+        self, options: GetAllOptions[AppFilter]
     ) -> Either[
         Sequence[ExpenseReadModel], RepositoryUnexpectedError | DataIntegrityError
     ]:
-        statement = select(Expense)
-        if filter := options.get("filter"):
-            statement = statement.filter_by(**filter)
 
-        if sort := options.get("sort"):
-            statement = statement.order_by(
-                *[
-                    (
-                        getattr(Expense, col).desc()
-                        if direction == "desc"
-                        else getattr(Expense, col).asc()
-                    )
-                    for col, direction in sort.items()
-                ]
+        user_id = options.get("filter", {}).get("user_id")
+
+        if user_id is None:
+            return result_fail(
+                RepositoryUnexpectedError(
+                    Exception("User ID filter is required for listing expenses"),
+                    "User ID filter is required for listing expenses",
+                )
             )
 
-        if limit := options.get("limit"):
-            statement = statement.limit(limit)
+        statement = build_query(Expense, options)
 
-        result = await self.db.scalars(statement)
-        persistence_output = result.all()
+        result = await self.db.execute(statement)
+        persistence_output = result.mappings().all()
 
-        read_model = tuple(
-            ExpenseReadModel(
-                {
-                    "id": persistence.id,
-                    "name": persistence.name,
-                    "user_id": persistence.user_id,
-                    "category": persistence.category,
-                    "amount": persistence.amount,
-                    "currency": persistence.currency,
-                    "note": persistence.note,
-                    "date": persistence.date,
-                }
-            )
-            for persistence in persistence_output
-        )
+        read_model = [
+            ExpenseReadModel(**persistence) for persistence in persistence_output
+        ]
 
         return result_ok(read_model)
 
-    async def get_expense_overview(self, options: GetAllOptions[str]) -> Either[
+    async def get_expense_overview(self, options: GetAllOptions[AppFilter]) -> Either[
         ExpenseOverviewReadModel,
         RepositoryUnexpectedError | DataIntegrityError,
     ]:
@@ -131,75 +101,49 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
 
         highest_spent = statement.order_by(Expense.amount.desc())
 
-        result = await self.db.scalars(recent_expenses)
-        persistence_output = result.all()
+        result = await self.db.execute(recent_expenses)
+        persistence_output = result.mappings().all()
 
-        highest_spent_result = await self.db.scalars(highest_spent)
-        highest_spent_output = highest_spent_result.first()
+        highest_spent_result = await self.db.execute(highest_spent)
+        highest_spent_output = highest_spent_result.mappings().first()
 
         total_spent_result = await self.db.scalars(total_spent)
         total_spent_output = total_spent_result.first()
 
         read_model = [
-            ExpenseReadModel(
-                {
-                    "id": persistence.id,
-                    "name": persistence.name,
-                    "user_id": persistence.user_id,
-                    "category": persistence.category,
-                    "amount": persistence.amount,
-                    "currency": persistence.currency,
-                    "note": persistence.note,
-                    "date": persistence.date,
-                }
-            )
-            for persistence in persistence_output
+            ExpenseReadModel(**persistence) for persistence in persistence_output
         ]
 
         if highest_spent_output is not None:
-            highest_spent_output = ExpenseReadModel(
-                {
-                    "id": highest_spent_output.id,
-                    "name": highest_spent_output.name,
-                    "user_id": highest_spent_output.user_id,
-                    "category": highest_spent_output.category,
-                    "amount": highest_spent_output.amount,
-                    "currency": highest_spent_output.currency,
-                    "note": highest_spent_output.note,
-                    "date": highest_spent_output.date,
-                }
-            )
+            highest_spent_output = ExpenseReadModel(**highest_spent_output)
 
         overview_read_model = ExpenseOverviewReadModel(
-            {
-                "user_id": user_id,
-                "recent_expenses": read_model,
-                "total_spent": total_spent_output if total_spent_output else 0,
-                "highest_expense": highest_spent_output,
-            }
+            user_id=user_id,
+            recent_expenses=read_model,
+            total_spent=total_spent_output if total_spent_output else 0,
+            highest_expense=highest_spent_output,
         )
 
         return result_ok(overview_read_model)
 
-    async def first(self, options: GetOptions) -> Either[
+    async def first(self, options: GetOptions[AppFilter]) -> Either[
         ExpenseReadModel,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
     ]:
-        if filter := options.get("filter"):
-            user_id = filter.get("user_id")
+        user_id =  options.get("filter",{}).get("user_id")
 
-            if user_id is None:
-                return result_fail(
-                    RepositoryUnexpectedError(
-                        Exception("User ID is required in filter for first method")
-                    )
+        if user_id is None:
+            return result_fail(
+                RepositoryUnexpectedError(
+                    Exception("User ID is required in filter for first method")
                 )
+            )
 
-        result = await self.db.scalars(
-            select(Expense).filter_by(**options.get("filter", {}))
-        )
+        statement = build_query(Expense, options)
 
-        persistence_output = result.first()
+        result = await self.db.execute(statement)
+
+        persistence_output = result.mappings().first()
 
         if not persistence_output:
             return result_fail(
@@ -208,18 +152,7 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
                 )
             )
 
-        read_model = ExpenseReadModel(
-            {
-                "id": persistence_output.id,
-                "name": persistence_output.name,
-                "user_id": persistence_output.user_id,
-                "category": persistence_output.category,
-                "amount": persistence_output.amount,
-                "currency": persistence_output.currency,
-                "note": persistence_output.note,
-                "date": persistence_output.date,
-            }
-        )
+        read_model = ExpenseReadModel(**persistence_output)
 
         return result_ok(read_model)
 

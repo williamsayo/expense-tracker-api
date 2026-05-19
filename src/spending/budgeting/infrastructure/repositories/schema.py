@@ -5,9 +5,8 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Enum, String, Uuid, ForeignKey, UniqueConstraint
 from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
 from src.shared.infrastructure.db.base import Base
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
-from src.shared.domain.types.user_id import UserId
 from src.spending.expenses.infrastructure.repositories.schema import Expense
 
 
@@ -16,10 +15,10 @@ class Budget(Base, TimeStampMixin, VersionMixin):
 
     __tablename__ = "budgets"
 
-    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, index=True)
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=True)
-    user_id: Mapped[UserId] = mapped_column(
-        ForeignKey("users.id"), nullable=False, index=True, type_=Uuid(as_uuid=True)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id"), nullable=False, index=True
     )
     start_date: Mapped[date] = mapped_column(
         default=lambda: date.today(), nullable=False
@@ -46,11 +45,11 @@ class BudgetAllocation(Base, TimeStampMixin, VersionMixin):
 
     __tablename__ = "budget_allocations"
 
-    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, index=True)
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
     budget_id: Mapped[UUID] = mapped_column(
         ForeignKey("budgets.id"), nullable=False, index=True
     )
-    category: Mapped[CategoryType] = mapped_column(Enum(CategoryType), nullable=False)
+    category: Mapped[Category] = mapped_column(Enum(Category), nullable=False)
     amount: Mapped[int]
     spent_amount: Mapped[int] = mapped_column(default=0, nullable=False)
     budget = relationship("Budget", back_populates="allocations")

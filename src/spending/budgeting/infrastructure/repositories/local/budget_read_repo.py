@@ -8,7 +8,7 @@ from boilerplate import (
     RepositoryUnexpectedError,
     GetAllOptions,
     GetOptions,
-    ReadRepository,
+    AsyncReadRepository,
     UniqueEntityId,
 )
 from result import Either, result_ok, result_fail
@@ -17,7 +17,7 @@ from src.spending.budgeting.domain.read_models.budget_summary import (
 )
 
 
-class LocalBudgetReadRepository(ReadRepository[BudgetSummaryReadModel]):
+class LocalBudgetReadRepository(AsyncReadRepository[BudgetSummaryReadModel]):
     """Repository implementation for budget data."""
 
     db: dict[str | UUID, BudgetSummaryReadModel] = {}
@@ -42,13 +42,13 @@ class LocalBudgetReadRepository(ReadRepository[BudgetSummaryReadModel]):
         result = aggregate_id.value in self.db
         return result
 
-    async def get_by_id(self, aggregate_id: UniqueEntityId) -> Either[
+    async def get_by_id(self, aggregate_id: str | UUID) -> Either[
         BudgetSummaryReadModel,
         RepositoryNotFoundError | RepositoryUnexpectedError | DataIntegrityError,
     ]:
         """Retrieves a budget entity by its unique identifier."""
 
-        result = self.db.get(aggregate_id.value)
+        result = self.db.get(aggregate_id)
 
         if result is None:
             return result_fail(

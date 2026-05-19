@@ -7,6 +7,7 @@ from src.shared.infrastructure.dispatcher.dependencies import register_handler
 from src.shared.domain.types.event_types import EventTypes
 from src.core.exception_handler import register_errors
 from src.core.middlewares import register_middlewares
+from src.core.router import register_routers
 from contextlib import asynccontextmanager
 from src.identity.presentation.web.v1.route import router as identity_router
 from src.spending.expenses.presentation.web.v1.route import router as expense_router
@@ -39,12 +40,14 @@ router = APIRouter()
 register_errors(app=app)
 register_middlewares(app=app)
 
+
 # health check endpoint
 @router.get("/healthz", tags=["Health Check"])
 async def health_check():
     return {"status": "ok"}
 
+
 app.include_router(router)
-app.include_router(identity_router, prefix="/api/v1")
-app.include_router(expense_router, prefix="/api/v1")
-app.include_router(budget_router, prefix="/api/v1")
+register_routers(
+    app, routers=[identity_router, expense_router, budget_router], version="v1"
+)

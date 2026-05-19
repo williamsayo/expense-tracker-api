@@ -6,7 +6,7 @@ type Rates = dict[str, Decimal]
 
 class FxService:
     async def get_rates(self, currency: str) -> Rates:
-        url = f"https://api.fxapi.app/api/{currency}.json"
+        url = f"https://api.frankfurter.dev/v1/latest?from={currency}"
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url)

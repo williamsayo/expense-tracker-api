@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class CategoryType(StrEnum):
+class Category(StrEnum):
     """Enumerates supported category values."""
 
     FOOD = "food"

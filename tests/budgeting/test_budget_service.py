@@ -20,15 +20,17 @@ from budgeting.infrastructure.adapters.dto.budget import (
     BudgetUpdateModel,
     BudgetWriteModel,
 )
-from budgeting.infrastructure.adapters.dto.budget_allocation import BudgetAllocationWriteModel
-from shared.domain.types.category_types import CategoryType
+from budgeting.infrastructure.adapters.dto.budget_allocation import (
+    BudgetAllocationWriteModel,
+)
+from shared.domain.types.category_types import Category
 from shared.domain.types.currency_types import Currency
 from shared.domain.types.user_id import UserId
 from shared.domain.value_objects.category_value_object import CategoryValueObject
 from shared.domain.value_objects.money_value_object import MoneyValueObject
 
 
-def _build_allocation(category: CategoryType, amount: int) -> BudgetAllocationEntity:
+def _build_allocation(category: Category, amount: int) -> BudgetAllocationEntity:
     category_result = CategoryValueObject.create({"name": category})
     money_result = MoneyValueObject.create({"amount": amount, "currency": Currency.EUR})
 
@@ -52,7 +54,7 @@ def _build_budget(user_id: UserId | None = None) -> BudgetEntity:
     budget_result = BudgetEntity.create(
         {
             "user_id": user_id or UserId(uuid4()),
-            "allocations": [_build_allocation(CategoryType.FOOD, 10000)],
+            "allocations": [_build_allocation(Category.FOOD, 10000)],
             "budget_period": period_result.value,
         }
     )
@@ -73,7 +75,7 @@ def test_create_budget_usecase_persists_budget() -> None:
             {
                 "amount": Decimal("100.00"),
                 "currency": Currency.EUR,
-                "category": CategoryType.FOOD,
+                "category": Category.FOOD,
             }
         ],
     )
@@ -100,7 +102,7 @@ def test_add_budget_allocation_usecase_rejects_unauthorized_user() -> None:
     allocation_data = BudgetAllocationWriteModel(
         amount=Decimal("20.00"),
         currency=Currency.EUR,
-        category=CategoryType.RENT,
+        category=Category.RENT,
     )
 
     result = asyncio.run(
@@ -132,7 +134,7 @@ def test_update_budget_usecase_updates_allocation_and_period() -> None:
             "id": allocation_id,
             "amount": Decimal("150.00"),
             "currency": Currency.USD,
-            "category": CategoryType.TRANSPORT,
+            "category": Category.TRANSPORT,
         },
     )
 
@@ -143,7 +145,7 @@ def test_update_budget_usecase_updates_allocation_and_period() -> None:
     assert not is_fail(result)
     assert budget.allocations[0].money.amount == 15000
     assert budget.allocations[0].money.currency == Currency.USD
-    assert budget.allocations[0].category.name == CategoryType.TRANSPORT
+    assert budget.allocations[0].category.name == Category.TRANSPORT
     assert budget.budget_period.start_date == date(2026, 4, 1)
     assert budget.budget_period.end_date == date(2026, 4, 30)
     repo.add.assert_awaited_once_with(budget)

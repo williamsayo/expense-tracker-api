@@ -14,7 +14,7 @@ from expenses.infrastructure.adapters.dto.expense import (
     ExpenseUpdateModel,
     ExpenseWriteModel,
 )
-from shared.domain.types.category_types import CategoryType
+from shared.domain.types.category_types import Category
 from shared.domain.types.currency_types import Currency
 from shared.domain.types.user_id import UserId
 from shared.domain.value_objects.category_value_object import CategoryValueObject
@@ -22,7 +22,7 @@ from shared.domain.value_objects.money_value_object import MoneyValueObject
 
 
 def _build_expense(user_id: UserId | None = None) -> ExpenseEntity:
-    category_result = CategoryValueObject.create({"name": CategoryType.FOOD})
+    category_result = CategoryValueObject.create({"name": Category.FOOD})
     money_result = MoneyValueObject.create({"amount": 1000, "currency": Currency.EUR})
 
     assert not is_fail(category_result)
@@ -50,7 +50,7 @@ def test_create_expense_usecase_persists_entity() -> None:
     write_model = ExpenseWriteModel(
         amount=Decimal("12.50"),
         currency=Currency.EUR,
-        category=CategoryType.FOOD,
+        category=Category.FOOD,
         note="Lunch",
         date=datetime(2026, 3, 21, 10, 30, 0),
     )
@@ -77,7 +77,7 @@ def test_update_expense_usecase_rejects_unauthorized_user() -> None:
     update_model = ExpenseUpdateModel(
         amount=Decimal("20.00"),
         currency=Currency.USD,
-        category=CategoryType.RENT,
+        category=Category.RENT,
         note="Updated",
         date=datetime(2026, 3, 22, 9, 0, 0),
     )
@@ -97,8 +97,8 @@ def test_delete_expense_by_category_usecase_calls_repo_with_category_and_user() 
     service = ExpenseService(SimpleNamespace(repo=repo))
 
     result = asyncio.run(
-        service.delete_expense_by_category_usecase(CategoryType.FOOD, user_id)
+        service.delete_expense_by_category_usecase(Category.FOOD, user_id)
     )
 
     assert not is_fail(result)
-    repo.remove_all.assert_awaited_once_with(CategoryType.FOOD.value, user_id)
+    repo.remove_all.assert_awaited_once_with(Category.FOOD.value, user_id)

@@ -11,14 +11,14 @@ from src.budgeting.domain.entities.budget_entity import BudgetEntity
 from src.budgeting.domain.value_objects.budget_period_value_object import (
     BudgetPeriodValueObject,
 )
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.shared.domain.types.user_id import UserId
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
 
 
-def _build_allocation(category: CategoryType, amount: int) -> BudgetAllocationEntity:
+def _build_allocation(category: Category, amount: int) -> BudgetAllocationEntity:
     category_result = CategoryValueObject.create({"name": category})
     money_result = MoneyValueObject.create({"amount": amount, "currency": Currency.EUR})
 
@@ -43,7 +43,7 @@ def _build_budget() -> BudgetEntity:
     budget_result = BudgetEntity.create(
         {
             "user_id": UserId(uuid4()),
-            "allocations": [_build_allocation(CategoryType.FOOD, 10000)],
+            "allocations": [_build_allocation(Category.FOOD, 10000)],
             "budget_period": period_result.value,
         }
     )
@@ -62,7 +62,7 @@ def test_budget_period_rejects_equal_or_earlier_end_date() -> None:
 
 def test_allocate_budget_rejects_duplicate_category() -> None:
     budget = _build_budget()
-    duplicate_allocation = _build_allocation(CategoryType.FOOD, 12000)
+    duplicate_allocation = _build_allocation(Category.FOOD, 12000)
 
     result = budget.allocate_budget(duplicate_allocation)
 

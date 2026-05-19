@@ -169,3 +169,11 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
         None,
         RepositoryUnexpectedError | ConcurrencyError | ConflictError,
     ]: ...
+
+    async def commit(self) -> Either[None, RepositoryUnexpectedError]:
+        try:
+            await self.db.commit()
+            return result_ok()
+        except Exception as error:
+            await self.db.rollback()
+            return result_fail(RepositoryUnexpectedError(error))

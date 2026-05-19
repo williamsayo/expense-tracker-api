@@ -83,21 +83,24 @@ class ExpenseRepository(AsyncWriteRepository[ExpenseEntity, UniqueEntityId]):
         return result_ok(entity_result.value)
 
     async def add(
-        self, aggregate: ExpenseEntity
+        self, aggregate: ExpenseEntity, *, auto_commit: bool = True
     ) -> Either[None, RepositoryUnexpectedError | ConflictError | ConcurrencyError]:
-        try:
-            persistence = ExpenseMapper.to_persistence(aggregate)
-            exists = await self.exists(aggregate.id)
-            if exists:
-                await self.db.merge(persistence)
-            else:
-                self.db.add(persistence)
 
-            await self.db.commit()
+        persistence = ExpenseMapper.to_persistence(aggregate)
+        exists = await self.exists(aggregate.id)
+        if exists:
+            await self.db.merge(persistence)
+        else:
+            self.db.add(persistence)
 
+        if not auto_commit:
             return result_ok()
-        except Exception as error:
-            return result_fail(RepositoryUnexpectedError(error))
+
+        result = await self.commit()
+        if is_fail(result):
+            return result_fail(result.value)
+
+        return result
 
     async def exists(
         self, aggregate_id: UniqueEntityId
@@ -139,31 +142,47 @@ class ExpenseRepository(AsyncWriteRepository[ExpenseEntity, UniqueEntityId]):
         return result_ok(result.value)
 
     async def remove(
-        self, aggregate: ExpenseEntity
+        self, aggregate: ExpenseEntity, *, auto_commit: bool = True
     ) -> Either[None, RepositoryUnexpectedError]:
         # TODO: optimize this by removing the select query and directly executing the delete query, but we need to ensure that the expense belongs to the user before deleting it
         # persistence = ExpenseMapper.to_persistence(aggregate)
-        try:
-            statement = delete(Expense).where(Expense.id == aggregate.id.value)
-            await self.db.execute(statement)
-            await self.db.commit()
-        except Exception as error:
-            print("Error removing expense:", error)
-            return result_fail(RepositoryUnexpectedError(error))
 
-        return result_ok()
+        statement = delete(Expense).where(Expense.id == aggregate.id.value)
+        await self.db.execute(statement)
+
+        if not auto_commit:
+            return result_ok()
+
+        result = await self.commit()
+
+        if is_fail(result):
+            return result_fail(result.value)
+
+        return result
 
     async def remove_all(
-        self, category: str, user_id: UserId
+        self, category: str, user_id: UserId, *, auto_commit: bool = True
     ) -> Either[int, RepositoryUnexpectedError | AuthenticationError]:
         statement = delete(Expense).where(
             Expense.category == category, Expense.user_id == user_id
         )
-        try:
-            result = await self.db.execute(statement)
-            await self.db.commit()
-            cursor_result = cast(CursorResult, result)
-        except Exception as error:
-            return result_fail(RepositoryUnexpectedError(error))
+
+        result = await self.db.execute(statement)
+
+        cursor_result = cast(CursorResult, result)
+
+        if auto_commit:
+            commit_result = await self.commit()
+
+            if is_fail(commit_result):
+                return result_fail(commit_result.value)
 
         return result_ok(cursor_result.rowcount)
+
+    async def commit(self) -> Either[None, RepositoryUnexpectedError]:
+        try:
+            await self.db.commit()
+            return result_ok()
+        except Exception as error:
+            await self.db.rollback()
+            return result_fail(RepositoryUnexpectedError(error))

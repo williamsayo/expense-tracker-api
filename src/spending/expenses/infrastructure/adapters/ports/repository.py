@@ -27,7 +27,7 @@ class ExpenseRepositoryProtocol(Protocol):
     ]: ...
 
     async def add(
-        self, aggregate: ExpenseEntity
+        self, aggregate: ExpenseEntity, *, auto_commit: bool = True
     ) -> Either[None, RepositoryUnexpectedError | ConflictError | ConcurrencyError]: ...
 
     async def exists(self, aggregate_id: UniqueEntityId) -> Either[bool, RepositoryUnexpectedError]: ...
@@ -44,11 +44,11 @@ class ExpenseRepositoryProtocol(Protocol):
     ]: ...
 
     async def remove(
-        self, aggregate: ExpenseEntity
+        self, aggregate: ExpenseEntity, *, auto_commit: bool = True
     ) -> Either[None, RepositoryUnexpectedError | AuthenticationError]: ...
 
     async def remove_all(
-        self, category: str, user_id: UserId
+        self, category: str, user_id: UserId, *, auto_commit: bool = True
     ) -> Either[int, RepositoryUnexpectedError | AuthenticationError]: ...
 
 

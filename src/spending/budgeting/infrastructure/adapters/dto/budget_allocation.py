@@ -1,10 +1,13 @@
 from uuid import UUID
 from pydantic import BaseModel, Field
-from typing import Annotated
+from typing import Annotated, Self
 from decimal import Decimal
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
+from src.spending.budgeting.domain.entities.budget_allocation_entity import (
+    BudgetAllocationEntity,
+)
 
 Percentage = Annotated[
     float,
@@ -16,10 +19,12 @@ Percentage = Annotated[
     ),
 ]
 
+
 class BudgetAllocationModel(BaseModel):
     """Data model for budget allocation."""
 
     category: Category = Field(..., description="The category of the allocation")
+
 
 class BudgetAllocationReadModel(BaseReadModel):
     """Read model for BudgetAllocation data."""
@@ -40,6 +45,17 @@ class BudgetAllocationReadModel(BaseReadModel):
         ..., description="The amount allocated", serialization_alias="allocatedAmount"
     )
 
+    @classmethod
+    def from_entity(cls, entity: BudgetAllocationEntity) -> Self:
+        return cls(
+            allocation_id=entity.id.value,
+            spent_amount=0,  # This will be calculated in the service layer
+            used_percentage=0,  # This will be calculated in the service layer
+            category=entity.category.name,
+            budget_amount=entity.amount.value,
+        )
+
+
 class BudgetAllocationWriteModel(BudgetAllocationModel):
     """Write model for BudgetAllocation data."""
 
@@ -50,6 +66,7 @@ class BudgetAllocationWriteModel(BudgetAllocationModel):
         decimal_places=2,
         examples=["100.00", "250.50"],
     )
+
 
 class BudgetAllocationUpdateModel(BudgetAllocationModel):
     """Update model for BudgetAllocation data."""

@@ -32,6 +32,9 @@ class BudgetModel(BaseModel):
 class BudgetReadModel(BudgetModel, BaseReadModel):
     """Read model for Budget data."""
 
+    user_id: UUID = Field(
+        ..., description="The unique identifier of the user", exclude=True
+    )
     budget_id: str | UUID = Field(
         ...,
         description="The unique identifier of the budget",
@@ -67,6 +70,7 @@ class BudgetReadModel(BudgetModel, BaseReadModel):
                 BudgetAllocationReadModel.from_entity(allocation)
                 for allocation in entity.allocations
             ],
+            user_id=entity.user_id,
             expenses=[],
             total_amount=0,
             amount_spent=0,

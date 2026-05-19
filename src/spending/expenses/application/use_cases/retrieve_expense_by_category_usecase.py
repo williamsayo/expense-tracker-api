@@ -7,13 +7,13 @@ from boilerplate import (
     AsyncQueryUseCase,
 )
 from src.shared.domain.types.user_id import UserId
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.spending.expenses.domain.read_models.expense_read_model import ExpenseReadModel
 from src.spending.expenses.utils.setup_dependencies import ExpenseReadDeps
 
 
 class GetExpenseByCategoryInput(TypedDict):
-    category: CategoryType
+    category: Category
     user_id: UserId
 
 

@@ -4,7 +4,7 @@ from typing import List, Self
 from datetime import datetime, UTC
 from decimal import Decimal
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 
@@ -20,7 +20,7 @@ class ExpenseReadModel(ExpenseModel, BaseReadModel):
     """Read model for expense data."""
 
     id: str | UUID
-    category: CategoryType = Field(..., description="Category of the expense")
+    category: Category = Field(..., description="Category of the expense")
     amount: float = Field(..., description="Amount of the expense in cents")
     currency: Currency = Field(..., description="Currency of the expense")
     date: datetime = Field(..., description="Date the expense was made")
@@ -30,7 +30,7 @@ class ExpenseReadModel(ExpenseModel, BaseReadModel):
         return cls(
             id=entity.id.value,
             category=entity.category.name,
-            amount=entity.money.to_currency(),
+            amount=entity.money.major_unit,
             note=entity.note,
             date=entity.date,
             currency=entity.money.currency,
@@ -49,7 +49,7 @@ class ExpenseOverviewReadModel(BaseReadModel):
 class ExpenseWriteModel(ExpenseModel):
     """Write model for expense data."""
 
-    category: CategoryType = Field(..., description="Category of the expense")
+    category: Category = Field(..., description="Category of the expense")
     date: datetime = Field(
         default=datetime.now(UTC), description="Date the expense was made"
     )
@@ -67,6 +67,6 @@ class ExpenseUpdateModel(ExpenseModel):
     """Update model for expense data."""
 
     date: datetime | None = Field(None, description="Date the expense was made")
-    category: CategoryType | None = Field(None, description="Category of the expense")
+    category: Category | None = Field(None, description="Category of the expense")
     amount: Decimal | None = Field(None, decimal_places=2, ge=Decimal("0.1"))
     currency: Currency | None = Field(default=None)

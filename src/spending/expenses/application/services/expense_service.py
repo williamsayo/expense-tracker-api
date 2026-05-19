@@ -13,7 +13,7 @@ from boilerplate import (
 from src.shared.application.services.base import BaseService
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.user_id import UserId
 from src.spending.expenses.utils.setup_dependencies import ExpenseDeps
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
@@ -47,7 +47,7 @@ class ExpenseService(BaseService[ExpenseDeps]):
         | RepositoryUnexpectedError
         | DataIntegrityError,
     ]:
-        amount = MoneyValueObject.to_amount(expense_data.amount)
+        amount = MoneyValueObject.cents(expense_data.amount)
         money_result = MoneyValueObject.create(
             {"amount": amount, "currency": expense_data.currency}
         )
@@ -164,7 +164,7 @@ class ExpenseService(BaseService[ExpenseDeps]):
         return result_ok()
 
     async def delete_expense_by_category_usecase(
-        self, category: CategoryType, user_id: UserId
+        self, category: Category, user_id: UserId
     ) -> Either[
         None,
         RepositoryUnexpectedError | AuthenticationError | CoreError,

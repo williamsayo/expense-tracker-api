@@ -1,7 +1,7 @@
 from typing import TypedDict
 from datetime import datetime
 from uuid import UUID
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.shared.domain.types.user_id import UserId
 
@@ -12,7 +12,7 @@ class ExpenseReadModelProps(TypedDict):
     id: UUID
     name: str | None
     user_id: UserId
-    category: CategoryType
+    category: Category
     amount: float
     currency: Currency
     note: str | None
@@ -42,7 +42,7 @@ class ExpenseReadModel:
     @property
     def user_id(self) -> UserId:
         return self._user_id
-    
+
     @property
     def name(self) -> str | None:
         return self._name
@@ -60,7 +60,7 @@ class ExpenseReadModel:
         return self._amount / 100
 
     @property
-    def category(self) -> CategoryType:
+    def category(self) -> Category:
         return self._category
 
     @property

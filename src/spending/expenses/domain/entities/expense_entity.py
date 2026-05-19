@@ -11,7 +11,7 @@ from boilerplate import (
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
 from src.shared.domain.types.user_id import UserId
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.spending.expenses.domain.events.expense_created import ExpenseCreated
 
@@ -81,7 +81,7 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
     def update_expense(
         self,
         amount: Decimal | None,
-        category: CategoryType | None,
+        category: Category | None,
         currency: Currency | None,
         note: str | None,
         date: datetime | None,
@@ -90,7 +90,7 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         self._check_is_discarded_entity()
         if amount is not None or currency is not None:
             amount_value_object = (
-                MoneyValueObject.to_amount(amount)
+                MoneyValueObject.cents(amount)
                 if amount is not None
                 else self.props["money"].amount
             )

@@ -2,7 +2,7 @@ from fastapi.routing import APIRouter
 from fastapi import status, Depends, BackgroundTasks
 from typing import List, Annotated
 from result import is_fail
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.utils.auth.dependencies import AuthDeps
 from src.shared.application.dtos.url_params import UrlParams
 from src.spending.expenses.application.services.expense_service import ExpenseService
@@ -130,7 +130,7 @@ async def retrieve_expense(
 )
 async def retrieve_expense_by_category(
     params: ExpenseUrlParams,
-    category_name: CategoryType,
+    category_name: Category,
     auth: AuthDeps,
     use_case: Annotated[GetExpenseByCategoryUsecase, Depends()],
 ):
@@ -149,7 +149,7 @@ async def retrieve_expense_by_category(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_all_expense_by_category(
-    category_name: CategoryType,
+    category_name: Category,
     auth: AuthDeps,
     expense_service: Annotated[ExpenseService, Depends()],
 ):

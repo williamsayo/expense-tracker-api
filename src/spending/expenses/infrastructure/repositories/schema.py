@@ -5,7 +5,7 @@ from datetime import datetime, UTC
 from sqlalchemy import Uuid, Enum
 from src.shared.infrastructure.db.base import Base
 from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
-from src.shared.domain.types.category_types import CategoryType
+from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 
 
@@ -14,15 +14,14 @@ class Expense(Base, TimeStampMixin, VersionMixin):
 
     __tablename__ = "expenses"
 
-    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, index=True)
-    budget_id: Mapped[UUID] = mapped_column(ForeignKey("budgets.id"), nullable=True)
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    budget_id: Mapped[UUID] = mapped_column(
+        ForeignKey("budgets.id"), nullable=True, index=True
+    )
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    merchant: Mapped[str] = mapped_column(String(255), nullable=True)
     name: Mapped[str] = mapped_column(String(255), nullable=True)
-    user_id: Mapped[UUID] = mapped_column(
-        ForeignKey("users.id"), nullable=False, index=True
-    )
-    category: Mapped[CategoryType] = mapped_column(
-        Enum(CategoryType), nullable=False, index=True
-    )
+    category: Mapped[Category] = mapped_column(Enum(Category), nullable=False)
     amount: Mapped[int] = mapped_column(nullable=False)
     currency: Mapped[Currency] = mapped_column(Enum(Currency), default=Currency.EUR)
     note: Mapped[str] = mapped_column(Text, nullable=True)
@@ -30,10 +29,7 @@ class Expense(Base, TimeStampMixin, VersionMixin):
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
-    __table_args__ = (
-        Index("idx_expenses_user_category", "category", "user_id"),
-        Index("idx_expenses_user_category_date", "user_id", "category", "date"),
-    )
+    __table_args__ = (Index("idx_expenses_user_category", "user_id", "category"),)
 
     def __repr__(self) -> str:
         return f"Expense (category={self.category!r}, amount={self.amount!r}, currency={self.currency!r})"

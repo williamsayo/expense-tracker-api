@@ -49,7 +49,7 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
         """Retrieves a budget entity by its unique identifier."""
 
         statement = (
-            select(Budget)
+            select(Budget.__table__)
             .where(Budget.id == aggregate_id)
             .options(
                 selectinload(Budget.allocations),
@@ -74,7 +74,7 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
     ) -> Either[
         Sequence[BudgetReadModel], RepositoryUnexpectedError | DataIntegrityError
     ]:
-        statement = build_query(Budget, options).options(
+        statement = build_query(Budget.__table__, options).options(
             selectinload(Budget.allocations), selectinload(Budget.expenses)
         )
 
@@ -91,12 +91,11 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
         BudgetReadModel,
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]:
-        statement = select(Budget).options(
+
+        statement = build_query(Budget.__table__, options).options(
             selectinload(Budget.allocations),
             selectinload(Budget.expenses),
         )
-
-        statement = build_query(Budget, options)
 
         if "expense_date" in options.get("filter", {}):
             date = options["filter"].pop("expense_date")
@@ -120,13 +119,14 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
 
         return result_ok(entity_result)
 
-    async def get_budget_overview(
-        self, options: GetAllOptions[AppFilter]
-    ) -> Either[
+    async def get_budget_overview(self, options: GetAllOptions[AppFilter]) -> Either[
         BudgetOverviewReadModel,
         RepositoryUnexpectedError,
     ]:
-        statement = select(Budget.id, Budget.currency, Budget.name).options(
+        budget_columns = Budget.__table__.columns
+        statement = select(
+            budget_columns.id, budget_columns.currency, budget_columns.name
+        ).options(
             selectinload(Budget.allocations),
             selectinload(Budget.expenses),
         )
@@ -141,7 +141,7 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
                 )
             )
 
-        statement = build_query(Budget, options)
+        statement = build_query(Budget.__table__, options)
 
         recent_budgets = statement.order_by(Budget.start_date.desc()).limit(
             options.get("limit", 5)
@@ -156,7 +156,11 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
         ).order_by(Budget.start_date.desc())
 
         total_budgeted = (
-            select(func.sum(BudgetAllocation.amount).label("total_budgeted"))
+            select(
+                func.sum(BudgetAllocation.__table__.columns.amount).label(
+                    "total_budgeted"
+                )
+            )
             .join(
                 Budget,
                 Budget.id == BudgetAllocation.budget_id,

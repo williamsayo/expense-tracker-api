@@ -1,7 +1,8 @@
 from typing import Optional
 from datetime import datetime
-from pydantic import EmailStr, BaseModel, Field, field_validator
+from pydantic import EmailStr, BaseModel, Field, HttpUrl, field_validator
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
+
 
 class UserBaseModel(BaseModel):
     """Base model for user data."""
@@ -15,9 +16,25 @@ class UserBaseModel(BaseModel):
         None, min_length=2, max_length=50, description="Last name of the user"
     )
 
+
+class UserAvatarReadModel(BaseModel):
+    """Base model for user avatar data."""
+
+    avatar: HttpUrl = Field(
+        ...,
+        description="URL of the user's avatar",
+        examples=["https://example.com/avatar.jpg"],
+    )
+
+
 class UserReadModel(BaseReadModel, UserBaseModel):
     """Pydantic model for reading user data, excluding sensitive information like password."""
 
+    avatar: HttpUrl | None = Field(
+        None,
+        description="URL of the user's avatar",
+        examples=["https://example.com/avatar.jpg"],
+    )
     created_at: Optional[datetime] = Field(
         default=None, description="Timestamp when the user was created"
     )
@@ -28,6 +45,7 @@ class UserReadModel(BaseReadModel, UserBaseModel):
         if hasattr(email, "value"):
             return email.value
         return email
+
 
 class UserWriteModel(UserBaseModel):
     """Write model for user data."""
@@ -61,6 +79,7 @@ class UserLoginModel(BaseModel):
         description="Password for user login",
         examples=["VerystrongPassword#"],
     )
+
 
 class ResetPasswordModel(BaseModel):
     """Write model for user data."""

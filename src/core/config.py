@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import SecretStr
 from dotenv import load_dotenv
@@ -8,6 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 for env_file in sorted(BASE_DIR.glob(".env*")):
     load_dotenv(env_file, override=True)
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -31,6 +32,16 @@ class Settings(BaseSettings):
     hash_len: int = 32
     salt_len: int = 16
     use_local_repository: bool = False
+    aws_access_key_id: SecretStr | None = None
+    aws_secret_access_key: SecretStr | None = None
+    aws_s3_bucket_name: str
+    aws_s3_region: str = "eu-north-1"
+    aws_s3_account_id: SecretStr | None = None
+    aws_s3_bucket_url: str | None = None
+    aws_distribution_id: str
+    openai_api_key: SecretStr
+    cloudfront_private_key: SecretStr
+    cloudfront_key_pair_id: str
 
     model_config = SettingsConfigDict(
         env_file=(".env.local", ".env", ".env.prod"), extra="ignore"
@@ -41,4 +52,9 @@ class Settings(BaseSettings):
         return self.environment == "development"
 
 
-settings = Settings()  # type: ignore [call-arg]
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()  # type: ignore [call-arg]
+
+
+settings = get_settings()

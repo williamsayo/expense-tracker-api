@@ -11,6 +11,7 @@ from src.identity.infrastructure.adapters.dto.token import (
 from src.identity.application.services.user import UserService
 from src.identity.infrastructure.adapters.dto.user import (
     ResetPasswordModel,
+    UserAvatarReadModel,
     UserWriteModel,
     UserLoginModel,
     UserUpdateModel,
@@ -148,6 +149,7 @@ async def update_user_details(
 
 @router.patch(
     "/upload_avatar",
+    response_model=UserAvatarReadModel,
     status_code=status.HTTP_200_OK,
     name="upload_avatar",
 )
@@ -162,4 +164,4 @@ async def upload_profile_avatar(
     if is_fail(user_result):
         raise user_result.value
 
-    return user_result.value
+    return {"avatar": user_result.value}

@@ -1,6 +1,6 @@
 from datetime import datetime, UTC
 from sqlalchemy.orm import declared_attr, mapped_column, Mapped
-from sqlalchemy import DateTime, Integer
+from sqlalchemy import DateTime
 
 
 class VersionMixin:

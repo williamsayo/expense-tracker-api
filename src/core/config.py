@@ -38,8 +38,10 @@ class Settings(BaseSettings):
     aws_s3_region: str = "eu-north-1"
     aws_s3_account_id: SecretStr | None = None
     aws_s3_bucket_url: str | None = None
+    media_url: str
     aws_distribution_id: str
     openai_api_key: SecretStr
+    google_api_key: SecretStr
     cloudfront_private_key: SecretStr
     cloudfront_key_pair_id: str
 

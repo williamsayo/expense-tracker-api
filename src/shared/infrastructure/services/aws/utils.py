@@ -45,7 +45,7 @@ def invalidate_cache(client: CloudFrontClient, key: str):
     )
 
 
-def generate_object_url(key: str) -> str:
+def generate_bucket_url(key: str) -> str:
     return f"https://{settings.aws_s3_bucket_name}.s3.{settings.aws_s3_region}.amazonaws.com/{key}"
 
 
@@ -108,8 +108,7 @@ async def create_bucket(bucket_name: str, client: S3Client):
             },
             ObjectOwnership="BucketOwnerEnforced",
         )
-
-        await set_public_access(client, bucket_name)
+        logging.info(f"Bucket '{bucket_name}' created successfully.")
     except client.exceptions.BucketAlreadyExists as error:
         logging.error(f"Bucket already exists: {error}")
     except client.exceptions.BucketAlreadyOwnedByYou as error:

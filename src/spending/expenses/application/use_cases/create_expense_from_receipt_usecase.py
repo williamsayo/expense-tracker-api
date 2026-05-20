@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TypedDict
 from fastapi import UploadFile
 from result import Either, is_fail, result_combine, result_fail, result_ok
@@ -6,10 +7,10 @@ from boilerplate import (
     CoreError,
     HttpError,
     AsyncCommandUseCase,
-    UniqueEntityId,
 )
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
+from src.shared.validator.file_validator import FileValidator
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from src.spending.shared.domain.services.expense_allocation_service import (
     ExpenseAllocationService,
@@ -37,28 +38,37 @@ class CreateExpenseFromReceiptUsecase(
         user_id = input["user_id"]
         receipt_file = input["receipt"]
 
-        filename = receipt_file.filename or UUID().hex
+        file_result = FileValidator.validate_receipt_file(receipt_file)
+
+        if is_fail(file_result):
+            return file_result
+
+        filename, content_type = file_result.value
 
         media_result = await self.deps.media_repo.upload_receipt(
-            filename, receipt_file.file
+            filename,
+            receipt_file.file,
+            content_type=content_type,
+            user_id=user_id.hex,
         )
 
         if is_fail(media_result):
             return media_result
 
-        cdn_result = self.deps.cdn.signed_url(media_result.value)
+        key = media_result.value
 
-        if is_fail(cdn_result):
-            return cdn_result
+        public_url = self.deps.cdn.generate_url(key)
 
-        expense_result = await self.deps.llm.extract_receipt_info(cdn_result.value)
+        expense_result = await self.deps.llm.extract_receipt_info(
+            public_url, content_type=content_type
+        )
 
         if is_fail(expense_result):
             return expense_result
 
         expense_data = expense_result.value
 
-        amount = MoneyValueObject.cents(expense_data["amount"])
+        amount = MoneyValueObject.cents(expense_data["total_amount"])
         money_result = MoneyValueObject.create(
             {"amount": amount, "currency": expense_data["currency"]}
         )
@@ -77,7 +87,7 @@ class CreateExpenseFromReceiptUsecase(
                 "user_id": user_id,
                 "category": category,
                 "money": money,
-                "date": expense_data["date"],
+                "date": datetime.fromisoformat(expense_data["date"]),
                 "note": expense_data["note"],
             }
         )

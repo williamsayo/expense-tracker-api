@@ -1,5 +1,5 @@
 from fastapi.routing import APIRouter
-from fastapi import status, Depends, BackgroundTasks
+from fastapi import status, Depends, UploadFile, File
 from typing import List, Annotated
 from result import is_fail
 from src.shared.domain.types.category_types import Category
@@ -8,6 +8,9 @@ from src.shared.application.dtos.url_params import UrlParams
 from src.spending.expenses.application.services.expense_service import ExpenseService
 from src.spending.expenses.application.use_cases.create_expense_usecase import (
     CreateExpenseUsecase,
+)
+from src.spending.expenses.application.use_cases.create_expense_from_receipt_usecase import (
+    CreateExpenseFromReceiptUsecase,
 )
 from src.spending.expenses.application.use_cases.retrieve_expense_overview_usecase import (
     GetExpenseOverviewUsecase,
@@ -50,6 +53,24 @@ async def create_expense(
         raise result.value
 
     return {"id": result.value.value}
+
+
+@router.post(
+    "/upload_receipt",
+    response_model=ExpenseReadModel,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_expense_from_receipt(
+    auth: AuthDeps,
+    receipt: Annotated[UploadFile, File(description="receipt of expense")],
+    use_case: Annotated[CreateExpenseFromReceiptUsecase, Depends()],
+):
+    result = await use_case.execute({"user_id": auth.user_id, "receipt": receipt})
+
+    if is_fail(result):
+        raise result.value
+
+    return result.value
 
 
 @router.put(

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from fastapi import Depends
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.config import settings
+from src.core.config import get_settings, Settings
 from src.shared.utils.setup_dependencies import BaseDependency
 from src.shared.infrastructure.db.dependencies import get_session
 from src.spending.expenses.infrastructure.repositories.postgres.expense_repo import (
@@ -18,6 +18,9 @@ from src.spending.expenses.infrastructure.adapters.ports.repository import (
     ExpenseRepositoryProtocol,
     ExpenseReadRepositoryProtocol,
 )
+from src.shared.infrastructure.services.aws.dependencies import get_s3_client
+from src.shared.infrastructure.repository.s3.s3_repo import S3BucketRepository, S3Client
+from src.shared.infrastructure.adapters.ports.repository import ObjectStorageRepository
 from src.shared.infrastructure.dispatcher.event_bus import EventBus
 from src.shared.infrastructure.dispatcher.dependencies import get_event_bus
 
@@ -38,11 +41,19 @@ def get_expense_repository(
     return ExpenseRepository(db)
 
 
+def get_object_storage(
+    client: S3Client = Depends(get_s3_client),
+    settings: Settings = Depends(get_settings),
+) -> ObjectStorageRepository:
+    return S3BucketRepository(client, settings)
+
+
 @dataclass(slots=True)
 class ExpenseDependencies(BaseDependency):
     """Dependency container for expense use cases."""
 
     repo: ExpenseRepositoryProtocol = Depends(get_expense_repository)
+    object_storage: ObjectStorageRepository = Depends(get_object_storage)
     dispatcher: EventBus = Depends(get_event_bus)
 
 

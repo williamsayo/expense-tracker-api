@@ -54,6 +54,7 @@ class UserMapper(BaseMapper):
                 "username": persistence.username,
                 "hashed_password": persistence.password_hash,
                 "created_at": persistence.created_at,
+                "avatar": None,
             },
             id=entity_id,
             version=persistence.version,

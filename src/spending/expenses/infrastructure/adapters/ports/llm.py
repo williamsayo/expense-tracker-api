@@ -7,16 +7,14 @@ class LLMServiceProtocol(Protocol):
 
     async def extract_receipt_info(
         self,
-        image: str,
+        file_url: str,
         *,
-        is_image: bool = True,
-        is_url: bool = False,
+        content_type: str = "image/jpeg",
     ) -> Either[dict, CoreError]:
         """Extract structured receipt information from text and image using OpenAI.
         Args:
-            image: Optional base64-encoded image of the receipt or URL of the receipt image.
-            is_image: Flag indicating if the provided image is a base64-encoded string.
-            is_url: Flag indicating if the provided image is a URL.
+            file_url: URL of the receipt file.
+            content_type: Type of the file (e.g., "image/jpeg").
         Returns:
             Either the extracted receipt information as a dictionary or a CoreError.
         """

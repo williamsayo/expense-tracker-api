@@ -11,7 +11,6 @@ import rsa
 import logging
 import json
 
-
 PUBLIC_READ_POLICY = {
     "version": "2012-10-17",
     "statement": [
@@ -106,11 +105,6 @@ async def create_bucket(bucket_name: str, client: S3Client):
                 "LocationConstraint": cast(
                     BucketLocationConstraintType, settings.aws_s3_region
                 ),
-                "Location": {"Type": "AvailabilityZone", "Name": "eu-north-1a"},
-                "Bucket": {
-                    "DataRedundancy": "SingleAvailabilityZone",
-                    "Type": "Directory",
-                },
             },
             ObjectOwnership="BucketOwnerEnforced",
         )

@@ -15,6 +15,11 @@ dependencies = [
     "argon2-cffi>=25.1.0",
     "asyncpg>=0.28.0",
     "pyjwt>=2.12.1",
+    "openai>=2.37.0",
+    "google-cloud-vision>=3.14.0",
+    "rsa>=4.9.1",
+    "aioboto3[crt]>=15.5.0",
+    "types-aioboto3[cloudfront,iam,s3]>=15.5.0",
 ]
 
 result-boilerplate = { git = "https://github.com/williamsayo/python-result.git", rev = "v0.3.0" }

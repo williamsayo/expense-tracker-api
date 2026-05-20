@@ -11,17 +11,22 @@ from boilerplate import (
     CoreError,
     AuthorizationError,
 )
+from fastapi import UploadFile
 from result import result_fail, is_fail, Either, result_ok, result_combine
+from src.identity.utils.validators import FileValidator
 from src.shared.application.services.base import BaseService
 from src.identity.utils.setup_dependencies import UserDeps
-from src.identity.infrastructure.adapters.dto.user import UserWriteModel, UserUpdateModel
+from src.identity.infrastructure.adapters.dto.user import (
+    ResetPasswordModel,
+    UserWriteModel,
+    UserUpdateModel,
+)
 from src.identity.domain.entities.user_entity import UserEntity
 from src.identity.domain.value_objects.email_value_object import EmailValueObject
 from src.identity.infrastructure.services.encryption.argon2_encrption import (
     ArgonEncryptionService,
 )
 from src.identity.infrastructure.mappers.user_mapper import create_unique_entity_id
-from src.shared.domain.types.user_id import UserId
 
 
 class UserService(BaseService[UserDeps]):
@@ -51,15 +56,40 @@ class UserService(BaseService[UserDeps]):
                 "last_name": user.last_name,
                 "username": user.username,
                 "hashed_password": hashed_password,
+                "avatar": None,
             }
         )
 
         result = await self.deps.repo.add(entity_result.value)
-        
+
         if is_fail(result):
             return result_fail(result.value)
 
         return entity_result
+
+    async def delete_user_usecase(self, aggregate_id: UUID) -> Either[
+        None,
+        RepositoryNotFoundError | RepositoryUnexpectedError | DataIntegrityError,
+    ]:
+        entity_id_result = create_unique_entity_id(aggregate_id)
+
+        if is_fail(entity_id_result):
+            return result_fail(
+                RepositoryNotFoundError(entity_id_result.value, "User not found")
+            )
+
+        result = await self.deps.repo.get_by_id(entity_id_result.value)
+
+        if is_fail(result):
+            return result_fail(result.value)
+
+        user_entity = result.value
+
+        user_entity.discard()
+
+        await self.deps.repo.add(user_entity)
+
+        return result_ok()
 
     async def authenticate_user_usecase(self, username: str, password: str) -> Either[
         dict[str, str],
@@ -95,9 +125,10 @@ class UserService(BaseService[UserDeps]):
 
         return result
 
-    async def retrieve_user_usecase(self, aggregate_id: UserId) -> Either[
+    async def retrieve_user_usecase(self, aggregate_id: UUID) -> Either[
         UserEntity,
-        IllegalArgumentError
+        CoreError
+        | IllegalArgumentError
         | DataIntegrityError
         | RepositoryNotFoundError
         | RepositoryUnexpectedError,
@@ -114,10 +145,23 @@ class UserService(BaseService[UserDeps]):
         if is_fail(entity_result):
             return result_fail(entity_result.value)
 
+        entity = entity_result.value
+
+        if entity.avatar:
+            cloudfront_result = self.deps.cdn_service.signed_url(entity.avatar)
+
+            if is_fail(cloudfront_result):
+                return result_fail(cloudfront_result.value)
+
+            entity.update_avatar(cloudfront_result.value)
+
         return result_ok(entity_result.value)
 
     async def update_user_usecase(
-        self, aggregate_id: UserId, user: UserUpdateModel
+        self,
+        aggregate_id: UUID,
+        user: UserUpdateModel,
+        avatar: UploadFile | None = None,
     ) -> Either[
         UserEntity,
         CoreError
@@ -137,7 +181,25 @@ class UserService(BaseService[UserDeps]):
         if is_fail(entity_result):
             return result_fail(entity_result.value)
 
+        avatar_url = None
+
+        if avatar is not None:
+            result = await FileValidator().handle_file_validation(avatar)
+
+            if is_fail(result):
+                return result_fail(result.value)
+
+            avatar_url = await self.deps.object_storage.upload_avatar(
+                result.value, avatar.file
+            )
+
+            if is_fail(avatar_url):
+                return result_fail(avatar_url.value)
+
+            avatar_url = avatar_url.value
+
         entity = entity_result.value
+
         username_or_email_exists = (
             user.username
             and await self.deps.repo.username_exists(
@@ -148,13 +210,23 @@ class UserService(BaseService[UserDeps]):
         if username_or_email_exists:
             return result_fail(ConflictError(None, "Username is already taken"))
 
-        entity.update_user(user.first_name, user.last_name, user.username)
+        entity.update_user(
+            user.first_name, user.last_name, user.username, avatar=avatar_url
+        )
 
         entity_result = await self.deps.repo.add(entity)
 
         if is_fail(entity_result):
             return result_fail(entity_result.value)
-        
+
+        if entity.avatar:
+            cloudfront_result = self.deps.cdn_service.signed_url(entity.avatar)
+
+            if is_fail(cloudfront_result):
+                return cloudfront_result
+            
+            entity.update_avatar(cloudfront_result.value)
+
         return result_ok(entity)
 
     def issue_jwt_tokens(
@@ -182,3 +254,84 @@ class UserService(BaseService[UserDeps]):
             return access_token
 
         return result_ok({"access_token": access_token.value})
+
+    async def reset_user_password_usecase(
+        self, user_id: UUID, reset_password_data: ResetPasswordModel
+    ) -> Either[None, CoreError | AuthorizationError]:
+
+        entity_id_result = create_unique_entity_id(user_id)
+        if is_fail(entity_id_result):
+            return result_fail(
+                IllegalArgumentError(entity_id_result.value, "Invalid user ID")
+            )
+
+        entity_result = await self.deps.repo.get_by_id(entity_id_result.value)
+
+        if is_fail(entity_result):
+            return result_fail(entity_result.value)
+
+        entity = entity_result.value
+
+        if not self.deps.argon2_encryption_service.verify(
+            reset_password_data.old_password, entity.hashed_password
+        ):
+            return result_fail(AuthorizationError("Current password is incorrect"))
+
+        if reset_password_data.password != reset_password_data.confirm_password:
+            return result_fail(IllegalArgumentError(None, "Passwords do not match"))
+
+        new_hashed_password = self.deps.argon2_encryption_service.hash(
+            reset_password_data.password
+        )
+
+        entity.change_password(new_hashed_password)
+
+        entity_result = await self.deps.repo.add(entity)
+
+        if is_fail(entity_result):
+            return result_fail(entity_result.value)
+
+        return result_ok()
+
+    async def upload_user_avatar_usecase(
+        self, user_id: UUID, avatar: UploadFile
+    ) -> Either[str, CoreError | RepositoryNotFoundError | RepositoryUnexpectedError]:
+
+        filename_result = await FileValidator().handle_file_validation(avatar)
+
+        if is_fail(filename_result):
+            return result_fail(filename_result.value)
+
+        filename = filename_result.value
+
+        entity_id_result = create_unique_entity_id(user_id)
+
+        if is_fail(entity_id_result):
+            return result_fail(
+                IllegalArgumentError(entity_id_result.value, "Invalid user ID")
+            )
+
+        entity_result = await self.deps.repo.get_by_id(entity_id_result.value)
+
+        if is_fail(entity_result):
+            return result_fail(entity_result.value)
+
+        entity = entity_result.value
+
+        upload_result = await self.deps.object_storage.upload_avatar(
+            filename, avatar.file
+        )
+
+        if is_fail(upload_result):
+            return result_fail(upload_result.value)
+
+        avatar_url = upload_result.value
+
+        entity.update_avatar(avatar_url)
+
+        entity_result = await self.deps.repo.add(entity)
+
+        if is_fail(entity_result):
+            return result_fail(entity_result.value)
+
+        return result_ok(avatar_url)

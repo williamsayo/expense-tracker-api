@@ -2,8 +2,6 @@ from typing import Optional
 from datetime import datetime
 from pydantic import EmailStr, BaseModel, Field, field_validator
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
-from src.identity.domain.value_objects.email_value_object import EmailValueObject
-
 
 class UserBaseModel(BaseModel):
     """Base model for user data."""
@@ -16,7 +14,6 @@ class UserBaseModel(BaseModel):
     last_name: str | None = Field(
         None, min_length=2, max_length=50, description="Last name of the user"
     )
-
 
 class UserReadModel(BaseReadModel, UserBaseModel):
     """Pydantic model for reading user data, excluding sensitive information like password."""
@@ -31,7 +28,6 @@ class UserReadModel(BaseReadModel, UserBaseModel):
         if hasattr(email, "value"):
             return email.value
         return email
-
 
 class UserWriteModel(UserBaseModel):
     """Write model for user data."""
@@ -65,3 +61,32 @@ class UserLoginModel(BaseModel):
         description="Password for user login",
         examples=["VerystrongPassword#"],
     )
+
+class ResetPasswordModel(BaseModel):
+    """Write model for user data."""
+
+    old_password: str = Field(
+        ...,
+        min_length=1,
+        description="Current password for user login",
+        examples=["VerystrongPassword#"],
+    )
+    password: str = Field(
+        ...,
+        min_length=1,
+        description="New password for user login",
+        examples=["password#"],
+    )
+    confirm_password: str = Field(
+        ...,
+        description="Confirm new password for user login",
+        examples=["password#"],
+    )
+
+    @field_validator("confirm_password", mode="before")
+    @classmethod
+    def validate_passwords_match(cls, confirm_password, info):
+        password = info.data.get("password")
+        if confirm_password != password:
+            raise ValueError("Passwords do not match")
+        return confirm_password

@@ -15,6 +15,7 @@ class UserEntityProps(TypedDict):
     hashed_password: str
     username: str
     created_at: NotRequired[datetime]
+    avatar: str | None
 
 
 class UserEntity(AggregateRoot[UserEntityProps]):
@@ -54,6 +55,11 @@ class UserEntity(AggregateRoot[UserEntityProps]):
         return self.props["hashed_password"]
 
     @property
+    def avatar(self) -> str | None:
+        self._check_is_discarded_entity()
+        return self.props["avatar"]
+
+    @property
     def created_at(self) -> datetime:
         self._check_is_discarded_entity()
         return self.props.get("created_at", datetime.now())
@@ -63,16 +69,40 @@ class UserEntity(AggregateRoot[UserEntityProps]):
         self.props["hashed_password"] = new_hash
 
     def update_user(
-        self, firstname: str | None, lastname: str | None, username: str | None
+        self,
+        firstname: str | None,
+        lastname: str | None,
+        username: str | None,
+        *,
+        avatar: str | None = None,
     ) -> None:
         self._check_is_discarded_entity()
-        if firstname is not None:
-            self.props["first_name"] = firstname
-        if lastname is not None:
-            self.props["last_name"] = lastname
+
+        self._change_name(firstname, lastname)
+        self._change_username(username)
+
+        if avatar is not None:
+            self.update_avatar(avatar)
+
+        self._increment_version()
+
+    def _change_name(self, first_name: str | None, last_name: str | None) -> None:
+        if first_name is not None:
+            self.props["first_name"] = first_name
+        if last_name is not None:
+            self.props["last_name"] = last_name
+
+    def _change_username(self, username: str | None) -> None:
         if username is not None:
             self.props["username"] = username
-        self._increment_version()
+
+    def update_avatar(self, avatar_url: str) -> None:
+        self._check_is_discarded_entity()
+        self.props["avatar"] = avatar_url
+
+    def change_password(self, new_hashed_password: str) -> None:
+        self._check_is_discarded_entity()
+        self.props["hashed_password"] = new_hashed_password
 
     @classmethod
     def create(

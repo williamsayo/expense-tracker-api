@@ -1,4 +1,8 @@
-from typing import cast, TYPE_CHECKING
+from typing import cast
+from types_aiobotocore_s3.literals import BucketLocationConstraintType
+from types_aiobotocore_cloudfront import CloudFrontClient
+from types_aiobotocore_iam import IAMClient
+from types_aiobotocore_s3 import S3Client
 from src.core.config import settings
 from botocore.exceptions import ClientError
 from botocore.signers import CloudFrontSigner
@@ -7,11 +11,6 @@ import rsa
 import logging
 import json
 
-if TYPE_CHECKING:
-    from types_aiobotocore_s3.literals import BucketLocationConstraintType
-    from types_aiobotocore_cloudfront import CloudFrontClient
-    from types_aiobotocore_iam import IAMClient
-    from types_aiobotocore_s3 import S3Client
 
 PUBLIC_READ_POLICY = {
     "version": "2012-10-17",

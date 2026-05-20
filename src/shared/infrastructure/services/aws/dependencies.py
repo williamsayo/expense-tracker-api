@@ -1,9 +1,7 @@
-from typing import AsyncGenerator, TYPE_CHECKING
+from typing import AsyncGenerator
 from src.shared.infrastructure.services.aws.config import get_aioboto3_session
-
-if TYPE_CHECKING:
-    from types_aiobotocore_cloudfront import CloudFrontClient
-    from types_aiobotocore_s3 import S3Client
+from types_aiobotocore_cloudfront import CloudFrontClient
+from types_aiobotocore_s3 import S3Client
 
 
 async def get_s3_client() -> AsyncGenerator[S3Client, None]:

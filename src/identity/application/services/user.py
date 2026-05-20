@@ -13,7 +13,7 @@ from boilerplate import (
 )
 from fastapi import UploadFile
 from result import result_fail, is_fail, Either, result_ok, result_combine
-from src.identity.utils.validators import FileValidator
+from src.shared.validator.file_validator import FileValidator
 from src.shared.application.services.base import BaseService
 from src.identity.utils.setup_dependencies import UserDeps
 from src.identity.infrastructure.adapters.dto.user import (
@@ -181,7 +181,9 @@ class UserService(BaseService[UserDeps]):
         if is_fail(entity_result):
             return result_fail(entity_result.value)
 
-        avatar_url = None
+        entity = entity_result.value
+
+        key = None
 
         if avatar is not None:
             result = await FileValidator().handle_file_validation(avatar)
@@ -189,16 +191,19 @@ class UserService(BaseService[UserDeps]):
             if is_fail(result):
                 return result_fail(result.value)
 
+            filename, content_type = result.value
             avatar_url = await self.deps.object_storage.upload_avatar(
-                result.value, avatar.file
+                filename,
+                avatar.file,
+                content_type=content_type,
+                username=entity.username,
+                user_id=entity.id.to_string(),
             )
 
             if is_fail(avatar_url):
                 return result_fail(avatar_url.value)
 
-            avatar_url = avatar_url.value
-
-        entity = entity_result.value
+            key = avatar_url.value
 
         username_or_email_exists = (
             user.username
@@ -210,9 +215,7 @@ class UserService(BaseService[UserDeps]):
         if username_or_email_exists:
             return result_fail(ConflictError(None, "Username is already taken"))
 
-        entity.update_user(
-            user.first_name, user.last_name, user.username, avatar=avatar_url
-        )
+        entity.update_user(user.first_name, user.last_name, user.username, avatar=key)
 
         entity_result = await self.deps.repo.add(entity)
 
@@ -220,12 +223,9 @@ class UserService(BaseService[UserDeps]):
             return result_fail(entity_result.value)
 
         if entity.avatar:
-            cloudfront_result = self.deps.cdn_service.signed_url(entity.avatar)
+            public_url = self.deps.cdn_service.generate_url(entity.avatar)
 
-            if is_fail(cloudfront_result):
-                return cloudfront_result
-            
-            entity.update_avatar(cloudfront_result.value)
+            entity.update_avatar(public_url)
 
         return result_ok(entity)
 
@@ -302,7 +302,7 @@ class UserService(BaseService[UserDeps]):
         if is_fail(filename_result):
             return result_fail(filename_result.value)
 
-        filename = filename_result.value
+        object_key, content_type = filename_result.value
 
         entity_id_result = create_unique_entity_id(user_id)
 
@@ -319,19 +319,25 @@ class UserService(BaseService[UserDeps]):
         entity = entity_result.value
 
         upload_result = await self.deps.object_storage.upload_avatar(
-            filename, avatar.file
+            object_key,
+            avatar.file,
+            content_type=content_type,
+            username=entity.username,
+            user_id=entity.id.to_string(),
         )
 
         if is_fail(upload_result):
             return result_fail(upload_result.value)
 
-        avatar_url = upload_result.value
+        key = upload_result.value
 
-        entity.update_avatar(avatar_url)
+        entity.update_avatar(key)
 
         entity_result = await self.deps.repo.add(entity)
 
         if is_fail(entity_result):
             return result_fail(entity_result.value)
 
-        return result_ok(avatar_url)
+        public_url = self.deps.cdn_service.generate_url(key)
+
+        return result_ok(public_url)

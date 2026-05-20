@@ -14,6 +14,7 @@ class User(Base, TimeStampMixin, VersionMixin):
     username: Mapped[str] = mapped_column(
         String(50), unique=True, index=True, nullable=False
     )
+    #avatar: Mapped[str] = mapped_column(String(100), nullable=True)
     email: Mapped[str] = mapped_column(
         String(150), unique=True, index=True, nullable=False
     )

@@ -70,7 +70,7 @@ async def create_expense_from_receipt(
     if is_fail(result):
         raise result.value
 
-    return result.value
+    return ExpenseReadModel.from_entity(result.value)
 
 
 @router.put(

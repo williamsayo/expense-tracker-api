@@ -1,6 +1,6 @@
 from fastapi.routing import APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Depends,status
+from fastapi import Depends, File, UploadFile, status
 from typing import Annotated
 from result import is_fail
 from src.identity.infrastructure.adapters.dto.token import (
@@ -10,6 +10,7 @@ from src.identity.infrastructure.adapters.dto.token import (
 )
 from src.identity.application.services.user import UserService
 from src.identity.infrastructure.adapters.dto.user import (
+    ResetPasswordModel,
     UserWriteModel,
     UserLoginModel,
     UserUpdateModel,
@@ -39,9 +40,7 @@ async def authenticate_user_for_access_token(
 
 
 @router.post(
-    "/refresh-token",
-    response_model=AccessTokenData,
-    status_code=status.HTTP_200_OK
+    "/refresh-token", response_model=AccessTokenData, status_code=status.HTTP_200_OK
 )
 async def refresh_access_token(
     token: RefreshTokenData,
@@ -55,7 +54,37 @@ async def refresh_access_token(
 
     return token_result.value
 
-@router.post("/register",status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/reset-password",
+    status_code=status.HTTP_200_OK,
+    description="Endpoint to reset a user's password.",
+    response_description="A message indicating the password reset was successful.",
+    summary="Reset User Password",
+    responses={
+        200: {"description": "Password reset successfully"},
+        400: {"description": "Invalid input data or token"},
+        401: {"description": "Unauthorized - invalid or expired token"},
+        500: {"description": "Internal server error"},
+    },
+)
+async def reset_user_password(
+    auth: AuthDeps,
+    reset_password_data: ResetPasswordModel,
+    user_service: Annotated[UserService, Depends()],
+):
+    """Endpoint to reset a user's password."""
+    token_result = await user_service.reset_user_password_usecase(
+        auth.user_id, reset_password_data
+    )
+
+    if is_fail(token_result):
+        raise token_result.value
+
+    return {"message": "Password reset successfully"}
+
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_data: UserWriteModel, user_service: Annotated[UserService, Depends()]
 ):
@@ -95,13 +124,40 @@ async def retrieve_user_details(
     return user_result.value
 
 
-@router.patch("/update_profile", response_model=UserReadModel, status_code=status.HTTP_200_OK)
+@router.patch(
+    "/update_profile", response_model=UserReadModel, status_code=status.HTTP_200_OK
+)
 async def update_user_details(
     user_data: UserUpdateModel,
     auth: AuthDeps,
     user_service: Annotated[UserService, Depends()],
+    avatar: Annotated[
+        UploadFile | None, File(description="Optional avatar image file for the user")
+    ] = None,
 ):
-    user_result = await user_service.update_user_usecase(auth.user_id, user_data)
+
+    user_result = await user_service.update_user_usecase(
+        auth.user_id, user_data, avatar
+    )
+
+    if is_fail(user_result):
+        raise user_result.value
+
+    return user_result.value
+
+
+@router.patch(
+    "/upload_avatar",
+    status_code=status.HTTP_200_OK,
+    name="upload_avatar",
+)
+async def upload_profile_avatar(
+    auth: AuthDeps,
+    user_service: Annotated[UserService, Depends()],
+    avatar: Annotated[UploadFile, File(description="avatar image file for the user")],
+):
+
+    user_result = await user_service.upload_user_avatar_usecase(auth.user_id, avatar)
 
     if is_fail(user_result):
         raise user_result.value

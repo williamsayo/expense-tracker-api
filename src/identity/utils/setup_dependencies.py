@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from fastapi import Depends
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.config import settings
+from src.shared.utils.setup_dependencies import get_cdn_service, get_object_storage
+from src.shared.infrastructure.services.aws.cloudfront_service import (
+    CloudFrontService,
+)
+from src.shared.infrastructure.adapters.ports.repository import ObjectStorageRepository
 from src.shared.utils.setup_dependencies import BaseDependency
 from src.shared.infrastructure.db.dependencies import get_session
 from src.shared.utils.auth.token_verifier import TokenVerifier
@@ -37,6 +41,8 @@ class UserDependencies(BaseDependency):
     repo: UserRepositoryProtocol = Depends(get_user_repository_dependency)
     argon2_encryption_service: EncryptionService = Depends(ArgonEncryptionService)
     token_service: TokenServiceProtocol = Depends(get_token_service)
+    object_storage: ObjectStorageRepository = Depends(get_object_storage)
+    cdn_service: CloudFrontService = Depends(get_cdn_service)
 
 
 UserDeps = Annotated[UserDependencies, Depends()]

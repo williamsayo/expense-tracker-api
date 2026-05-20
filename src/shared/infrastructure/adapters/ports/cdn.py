@@ -1,0 +1,9 @@
+from typing import Protocol
+from boilerplate import UnexpectedError
+from result import Either
+
+
+class CDNService(Protocol):
+    async def invalidate_cache(self, key: str) -> Either[None, UnexpectedError]: ...
+    def signed_url(self, key: str) -> Either[str, UnexpectedError]: ...
+    def generate_url(self, key: str) -> str: ...

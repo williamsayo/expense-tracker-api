@@ -10,14 +10,13 @@ from src.shared.infrastructure.adapters.ports import repository, cdn as cdn_prot
 from src.spending.expenses.infrastructure.services.openai.openai_service import (
     OpenAIService,
 )
-from src.spending.expenses.infrastructure.services.google_cloud.google_cloud_service import (
-    GoogleCloudVisionService,
-)
+from src.spending.expenses.infrastructure.adapters.ports.llm import LLMServiceProtocol
 
 
 def get_spending_unit_of_work() -> SpendingUnitOfWork:
     """Factory function to create an instance of SpendingUnitOfWork."""
     return SpendingUnitOfWork(AsyncSessionLocal)
+
 
 @dataclass(slots=True)
 class SpendingDependencies(CommandDependency):
@@ -26,7 +25,7 @@ class SpendingDependencies(CommandDependency):
     uow: SpendingUnitOfWork = Depends(get_spending_unit_of_work)
     cdn: cdn_protocol.CDNService = Depends(get_cdn_service)
     media_repo: repository.ObjectStorageRepository = Depends(get_object_storage)
-    llm: OpenAIService = Depends(OpenAIService)
+    llm: LLMServiceProtocol = Depends(OpenAIService)
     eventPublisher: IEventBus = Depends(get_event_bus)
 
 

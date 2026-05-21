@@ -156,6 +156,17 @@ async def update_user_details(
     "/upload_avatar",
     response_model=UserAvatarReadModel,
     status_code=status.HTTP_200_OK,
+    summary="Upload or update user avatar",
+    description="Endpoint to upload or update a user's avatar image.",
+    response_description="The URL of the uploaded avatar image.",
+    responses={
+        200: {"description": "Avatar uploaded successfully"},
+        400: {"description": "Invalid image file or upload error"},
+        401: {"description": "Unauthorized - invalid or expired token"},
+        413: {"description": "Uploaded file is too large"},
+        415: {"description": "Unsupported media type - invalid image format"},
+        500: {"description": "Internal server error"},
+    },
     name="upload_avatar",
 )
 async def upload_profile_avatar(

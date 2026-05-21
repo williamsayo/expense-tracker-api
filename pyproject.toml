@@ -20,7 +20,7 @@ dependencies = [
     "rsa>=4.9.1",
     "aioboto3>=15.5.0",
     "types-aioboto3[cloudfront,iam,s3]>=15.5.0",
-    "python-magic>=0.4.27",
+    "python-magic-bin>=0.4.14",
 ]
 
 [tool.uv]

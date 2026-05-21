@@ -8,9 +8,9 @@ from boilerplate import (
     HttpError,
     AsyncCommandUseCase,
 )
+from src.shared.application.dtos.upload import FileUploadDTO
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
-from src.shared.validator.file_validator import FileValidator
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from src.spending.shared.domain.services.expense_allocation_service import (
     ExpenseAllocationService,
@@ -20,7 +20,7 @@ from src.spending.shared.utils.setup_dependencies import SpendingDeps
 
 class CreateExpenseFromReceiptInput(TypedDict):
     user_id: UUID
-    receipt: UploadFile
+    receipt: FileUploadDTO
 
 
 class CreateExpenseFromReceiptUsecase(
@@ -38,18 +38,14 @@ class CreateExpenseFromReceiptUsecase(
         user_id = input["user_id"]
         receipt_file = input["receipt"]
 
-        file_result = FileValidator.validate_receipt_file(receipt_file)
-
-        if is_fail(file_result):
-            return file_result
-
-        filename, content_type = file_result.value
+        filename, content_type = receipt_file.filename, receipt_file.content_type
 
         media_result = await self.deps.media_repo.upload_receipt(
             filename,
-            receipt_file.file,
+            receipt_file.file.file,
             content_type=content_type,
             user_id=user_id.hex,
+            original_filename=receipt_file.original_filename,
         )
 
         if is_fail(media_result):

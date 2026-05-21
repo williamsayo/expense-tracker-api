@@ -34,11 +34,12 @@ def register_errors(app: FastAPI) -> None:
         async def exception_handler(
             _: Request, exception: CoreError | Exception
         ) -> Response:
-            logging.error(exception)
             message = getattr(exception, "message", default_message)
             error_code = getattr(exception, "id", None)
             http_status_code = getattr(exception, "status_code", status_code)
             headers = getattr(exception, "headers", None)
+
+            logging.error(f'{message}', extra={"error_code": error_code,"status_code": http_status_code})
 
             return JSONResponse(
                 status_code=http_status_code,

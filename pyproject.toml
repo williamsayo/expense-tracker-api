@@ -6,8 +6,8 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiosqlite>=0.22.1",
-    "domain-driven-design-boilerplate-core @ git+https://github.com/williamsayo/ddd-boilerplate-core",
     "result-boilerplate",
+    "domain-driven-design-boilerplate-core @ git+https://github.com/williamsayo/ddd-boilerplate-core",
     "fastapi[standard]>=0.135.1",
     "pwdlib[argon2]>=0.3.0",
     "pydantic>=2.12.5",
@@ -18,11 +18,13 @@ dependencies = [
     "openai>=2.37.0",
     "google-cloud-vision>=3.14.0",
     "rsa>=4.9.1",
-    "aioboto3[crt]>=15.5.0",
+    "aioboto3>=15.5.0",
     "types-aioboto3[cloudfront,iam,s3]>=15.5.0",
+    "python-magic>=0.4.27",
 ]
 
-result-boilerplate = { git = "https://github.com/williamsayo/python-result.git", rev = "v0.3.0" }
+[tool.uv]
+override-dependencies = ["result-boilerplate @ git+https://github.com/williamsayo/python-result.git@v0.3.1"]
 
 [tool.ruff]
 lint.extend-select = [

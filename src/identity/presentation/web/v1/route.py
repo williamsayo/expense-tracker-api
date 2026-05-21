@@ -1,6 +1,6 @@
 from fastapi.routing import APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Depends, File, UploadFile, status
+from fastapi import Depends, status
 from typing import Annotated
 from result import is_fail
 from src.identity.infrastructure.adapters.dto.token import (
@@ -17,7 +17,12 @@ from src.identity.infrastructure.adapters.dto.user import (
     UserUpdateModel,
     UserReadModel,
 )
+from src.shared.application.dtos.upload import FileUploadDTO
 from src.shared.utils.auth.dependencies import AuthDeps
+from src.shared.utils.setup_dependencies import (
+    validate_image_upload,
+    validate_optional_image_upload,
+)
 
 router = APIRouter(
     prefix="/auth",
@@ -133,10 +138,10 @@ async def update_user_details(
     auth: AuthDeps,
     user_service: Annotated[UserService, Depends()],
     avatar: Annotated[
-        UploadFile | None, File(description="Optional avatar image file for the user")
-    ] = None,
+        FileUploadDTO | None,
+        Depends(validate_optional_image_upload),
+    ],
 ):
-
     user_result = await user_service.update_user_usecase(
         auth.user_id, user_data, avatar
     )
@@ -156,7 +161,7 @@ async def update_user_details(
 async def upload_profile_avatar(
     auth: AuthDeps,
     user_service: Annotated[UserService, Depends()],
-    avatar: Annotated[UploadFile, File(description="avatar image file for the user")],
+    avatar: Annotated[FileUploadDTO, Depends(validate_image_upload)],
 ):
 
     user_result = await user_service.upload_user_avatar_usecase(auth.user_id, avatar)

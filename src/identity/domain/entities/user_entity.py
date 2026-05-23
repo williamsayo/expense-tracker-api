@@ -3,6 +3,7 @@ from typing import TypedDict, Self, Never, NotRequired
 from boilerplate.domain.aggregate_root import AggregateRoot
 from boilerplate.domain.unique_entity_id import UniqueEntityId
 from result import result_ok, Either
+from src.identity.domain.events.user_created import UserCreated
 from src.identity.domain.value_objects.email_value_object import EmailValueObject
 
 
@@ -111,7 +112,20 @@ class UserEntity(AggregateRoot[UserEntityProps]):
         id: UniqueEntityId | None = None,
         version: int = 0,
     ) -> Either[Self, Never]:
-        return result_ok(cls(props, id, version))
+        entity = cls(props, id, version)
+        entity.apply(
+            UserCreated.create_event(
+                {
+                    "user_id": entity.id.to_string(),
+                    "email": entity.email.value,
+                },
+                metadata={
+                    "aggregate_type": cls.__name__,
+                    "version": entity.version,
+                },
+            )
+        )
+        return result_ok(entity)
 
     @classmethod
     def existing_user_entity(

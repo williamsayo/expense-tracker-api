@@ -64,6 +64,8 @@ class UserService(BaseService[UserDeps]):
         if is_fail(result):
             return result_fail(result.value)
 
+        await self.deps.dispatcher.dispatch_all(entity_result.value.uncommited_events)
+
         return entity_result
 
     async def delete_user_usecase(self, aggregate_id: UUID) -> Either[

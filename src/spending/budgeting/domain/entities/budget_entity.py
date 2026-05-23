@@ -236,11 +236,11 @@ class BudgetEntity(AggregateRoot[BudgetEntityProps]):
         entity.apply(
             BudgetCreated.create_event(
                 {
-                    "user_id": entity.user_id,
+                    "user_id": str(entity.user_id),
                     "name": entity.name,
                     "allocations": [
                         {
-                            "allocation_id": allocation.id.value,
+                            "allocation_id": allocation.id.to_string(),
                             "budget_amount": allocation.amount.value,
                             "category": allocation.category.name,
                         }
@@ -249,7 +249,7 @@ class BudgetEntity(AggregateRoot[BudgetEntityProps]):
                     "start_date": entity.budget_period.start_date,
                     "end_date": entity.budget_period.end_date,
                     "currency": entity.currency,
-                    "budget_id": entity.id.value,
+                    "budget_id": entity.id.to_string(),
                 },
             )
         )

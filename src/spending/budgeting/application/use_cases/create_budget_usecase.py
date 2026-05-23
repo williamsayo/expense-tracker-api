@@ -60,10 +60,8 @@ class CreateBudgetUseCase(AsyncCommandUseCase[CreateBudgetInput, UniqueEntityId]
 
         budget_period = budget_period_result.value
 
-        budget_period_check_result = (
-            await budget_period_checker_domain_service.ensure_no_budget_exists_for_period(
-                budget_period, user_id
-            )
+        budget_period_check_result = await budget_period_checker_domain_service.ensure_no_budget_exists_for_period(
+            budget_period, user_id
         )
 
         if is_fail(budget_period_check_result):
@@ -110,6 +108,11 @@ class CreateBudgetUseCase(AsyncCommandUseCase[CreateBudgetInput, UniqueEntityId]
 
         budget = budget_entity.value
 
-        await self.deps.repo.add(budget)
+        result = await self.deps.repo.add(budget)
+
+        if is_fail(result):
+            return result_fail(result.value)
+
+        await self.deps.dispatcher.dispatch_all(budget.uncommited_events)
 
         return result_ok(budget.id)

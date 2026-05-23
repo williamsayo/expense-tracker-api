@@ -3,13 +3,12 @@ from typing import Any, Self
 from boilerplate import EventHandler
 from result import is_fail
 from types_aiobotocore_dynamodb.service_resource import Table, DynamoDBServiceResource
-from src.dashboard.application.use_cases.update_overview_projection import (
-    UpdateOverviewUsecase,
+from ..use_cases.update_expense_projection import (
+    UpdateExpenseProjectionUsecase,
 )
-from src.dashboard.application.use_cases.update_spending_summary_usecse import (
-    UpdateSpendingSummaryUsecase,
+from ..use_cases.update_budget_projection_usecase import (
+    UpdateBudgetProjectionUsecase,
 )
-from src.dashboard.infrastructure.adapters.dto.dashboard import DashboardWriteModel
 from src.dashboard.infrastructure.adapters.dto.event import (
     ExpenseCreatedEventPayload,
     BudgetCreatedEventPayload,
@@ -75,9 +74,9 @@ class OnExpenseCreated(EventHandler[ExpenseCreatedEventPayload]):
 
         deps = OverviewDependency(repository=dashboard_repository)
 
-        update_overview_usecase = UpdateOverviewUsecase(deps)
+        update_expense_projection_usecase = UpdateExpenseProjectionUsecase(deps)
 
-        result = await update_overview_usecase.execute(
+        result = await update_expense_projection_usecase.execute(
             {"user_id": user_id, "expense": event}  # type: ignore #TODO: refactor to use a DTO instead of raw dict
         )
 
@@ -105,9 +104,9 @@ class OnBudgetCreated(EventHandler[BudgetCreatedEventPayload]):
 
         deps = OverviewDependency(repository=dashboard_repository)
 
-        update_spending_summary_usecase = UpdateSpendingSummaryUsecase(deps)
+        update_budget_projection_usecase = UpdateBudgetProjectionUsecase(deps)
 
-        result = await update_spending_summary_usecase.execute(
+        result = await update_budget_projection_usecase.execute(
             {"user_id": user_id, "budget": event}
         )
 

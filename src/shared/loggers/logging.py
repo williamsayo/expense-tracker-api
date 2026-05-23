@@ -21,7 +21,7 @@ def setup_logging(log_level: int | str | LogLevel):
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
     formatter = logging.Formatter(
-        "[{levelname}] [{filename}:{lineno}] [{status_code}:{error_code}] {asctime} {name}: {message}",
+        "[{levelname}] [{filename}:{lineno}] {asctime} {name}: {message}",
         style="{",
         datefmt="%Y-%m-%d %H:%M:%S",
     )

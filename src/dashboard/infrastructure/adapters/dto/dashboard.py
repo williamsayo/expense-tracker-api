@@ -11,7 +11,8 @@ from src.dashboard.infrastructure.repositories.schema import (
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
 
 
-class ExpenseReadModel(BaseReadModel):
+class TopExpenseReadModel(BaseReadModel):
+
     name: str | None = Field(..., description="The name of the expense.")
     amount: int = Field(..., description="The amount of the expense in cents.")
     currency: str = Field(
@@ -25,7 +26,7 @@ class ExpenseReadModel(BaseReadModel):
 
     @classmethod
     def from_dict(cls, data: TopExpenseItem) -> Self:
-        """Creates an ExpenseReadModel instance from a dictionary."""
+        """Creates an TopExpenseReadModel instance from a dictionary."""
         return cls(
             name=data["name"],
             amount=data["amount"],
@@ -36,7 +37,7 @@ class ExpenseReadModel(BaseReadModel):
         )
 
 
-class BudgetReadModel(BaseReadModel):
+class ActiveBudgetReadModel(BaseReadModel):
     name: str | None = Field(default=None, description="The name of the budget.")
     total_amount: int = Field(..., description="The amount of the budget in cents.")
     start_date: str = Field(..., description="The start date of the budget.")
@@ -74,7 +75,7 @@ class TopCategoryReadModel(BaseModel):
 
 class DashboardReadModel(BaseModel):
     user_id: str = Field(..., description="The ID of the user.", exclude=True)
-    active_budget: BudgetReadModel | None = Field(
+    active_budget: ActiveBudgetReadModel | None = Field(
         ..., description="The active budget for the user in the period."
     )
     total_spent: int = Field(
@@ -83,10 +84,10 @@ class DashboardReadModel(BaseModel):
     total_budgeted: int = Field(
         ..., description="The total amount budgeted for the period."
     )
-    top_expense: ExpenseReadModel | None = Field(
+    top_expense: TopExpenseReadModel | None = Field(
         default=None, description="The most expensive expense in the period."
     )
-    recent_expenses: list[ExpenseReadModel] = Field(
+    recent_expenses: list[TopExpenseReadModel] = Field(
         ...,
         description="A list of recent expenses by date for the user.",
     )
@@ -94,3 +95,20 @@ class DashboardReadModel(BaseModel):
         ...,
         description="A list of top categories by amount spent for the user.",
     )
+
+
+class ExpenseReadModel(BaseModel):
+    id: str = Field(..., description="The ID of the expense.", exclude=True)
+    amount: int = Field(..., description="The amount of the expense in cents.")
+    currency: str = Field(
+        default="EUR", description="The currency of the expense amount."
+    )
+    category: str = Field(..., description="The category of the expense.")
+    date: str = Field(..., description="The date of the expense.")
+
+
+class BudgetReadModel(BaseReadModel):
+    id: str = Field(..., description="The ID of the budget.", exclude=True)
+    total_amount: int = Field(..., description="The amount of the budget in cents.")
+    start_date: str = Field(..., description="The start date of the budget.")
+    end_date: str = Field(..., description="The end date of the budget.")

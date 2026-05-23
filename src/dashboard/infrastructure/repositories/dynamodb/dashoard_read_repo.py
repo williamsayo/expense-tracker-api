@@ -15,7 +15,7 @@ from boilerplate.errors.repository import DataIntegrityError
 from result import Either, is_fail, result_combine, result_fail, result_ok
 from src.core.config import get_settings
 from types_aiobotocore_dynamodb.service_resource import Table, DynamoDBServiceResource
-from src.dashboard.infrastructure.adapters.dto.dashboard import DashboardReadModel
+from src.dashboard.infrastructure.adapters.dto.dashboard import DashboardReadModel, BudgetReadModel, ExpenseReadModel
 from src.dashboard.infrastructure.repositories.schema import (
     BudgetItem,
     ExpenseItem,
@@ -125,11 +125,11 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             return result_fail(RepositoryUnexpectedError(error))
 
     async def add_expense(
-        self, user_id: str, aggregate: ExpenseItem
+        self, user_id: str, aggregate: ExpenseReadModel
     ) -> Either[None, RepositoryUnexpectedError]:
         try:
             exists = await self.exists(
-                user_id, sort_key=f"{self.expense_prefix}#{aggregate['id']}"
+                user_id, sort_key=f"{self.expense_prefix}#{aggregate.id}"
             )
 
             if is_fail(exists):
@@ -139,7 +139,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
                 await self.table.update_item(
                     Key={
                         "user_id": user_id,
-                        "sk": f"{self.expense_prefix}#{aggregate['id']}",
+                        "sk": f"{self.expense_prefix}#{aggregate.id}",
                     },
                     UpdateExpression="SET expenses = list_append(if_not_exists(expenses, :empty_list), :expense)",
                     ExpressionAttributeValues={
@@ -152,7 +152,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
                 await self.table.put_item(
                     Item={
                         "user_id": user_id,
-                        "sk": f"{self.expense_prefix}#{aggregate['id']}",
+                        "sk": f"{self.expense_prefix}#{aggregate.id}",
                         **(cast(Dict[str, Any], aggregate)),
                     }
                 )

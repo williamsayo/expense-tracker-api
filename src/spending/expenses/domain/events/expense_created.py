@@ -1,20 +1,21 @@
 from typing import TypedDict, Self, cast, Any
-from uuid import UUID
 from boilerplate import (
     DomainEvent,
-    DomainEventPayload,
+    DomainEventInput,
     DomainEventMetadata,
 )
 from datetime import datetime
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
+from src.shared.domain.types.event_types import EventTypes
 
 
 class ExpenseCreatedData(TypedDict):
     """Typed dictionary for the data payload of the ExpenseCreated event."""
 
-    user_id: str | UUID
-    expense_id: str | UUID
+    user_id: str
+    name: str | None
+    expense_id: str
     category: Category
     amount: int
     currency: Currency
@@ -26,7 +27,7 @@ class ExpenseCreated(DomainEvent[ExpenseCreatedData]):
 
     def __init__(
         self,
-        payload: DomainEventPayload[ExpenseCreatedData],
+        payload: DomainEventInput[ExpenseCreatedData],
     ):
         super().__init__(payload)
 
@@ -47,6 +48,6 @@ class ExpenseCreated(DomainEvent[ExpenseCreatedData]):
 
 
 expense_created_metadata: DomainEventMetadata = {
-    "type": ExpenseCreated.__name__,
+    "type": EventTypes.EXPENSE_CREATED.value,
     "description": "Event triggered when a new expense is created.",
 }

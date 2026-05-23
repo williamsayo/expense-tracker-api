@@ -137,8 +137,9 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         entity.apply(
             ExpenseCreated.create_event(
                 {
-                    "expense_id": entity.id.value,
-                    "user_id": entity.user_id,
+                    "expense_id": entity.id.to_string(),
+                    "user_id": str(entity.user_id),
+                    "name": entity.name,
                     "category": entity.category.name,
                     "amount": entity.money.amount,
                     "currency": entity.money.currency,

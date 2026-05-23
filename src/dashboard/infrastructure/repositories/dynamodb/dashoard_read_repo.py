@@ -1,8 +1,8 @@
-import asyncio
 from datetime import date
 import logging
-from typing import Any, cast
+from typing import Any, Dict, cast
 from uuid import UUID
+from boto3.dynamodb.conditions import Key
 from boilerplate import (
     AsyncReadRepository,
     ConcurrencyError,
@@ -14,28 +14,25 @@ from boilerplate import (
 from boilerplate.errors.repository import DataIntegrityError
 from result import Either, is_fail, result_combine, result_fail, result_ok
 from src.core.config import get_settings
-from src.dashboard.domain.read_models.overview_read_model import (
-    DashboardOverviewReadModel,
-    ExpenseReadModel,
-)
 from types_aiobotocore_dynamodb.service_resource import Table, DynamoDBServiceResource
+from src.dashboard.infrastructure.adapters.dto.dashboard import DashboardReadModel
 from src.dashboard.infrastructure.repositories.schema import (
-    ExpenseSchema,
-    SpendingSummarySchema,
+    BudgetItem,
+    ExpenseItem,
+    OverviewItem,
 )
-from dataclasses import asdict
 
 settings = get_settings()
 
 
-class DynamoDbReadRepository(AsyncReadRepository[DashboardOverviewReadModel]):
+class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
 
     client: DynamoDBServiceResource
     table: Table
 
     overview_prefix = "overview"
-    recent_expenses_prefix = "recent_expenses"
-    active_budget_prefix = "active_budget"
+    expense_prefix = "expenses"
+    budget_prefix = "budget"
     insights_prefix = "insights"
 
     def __init__(self, client: DynamoDBServiceResource, table: Table):
@@ -45,95 +42,71 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardOverviewReadModel]):
     async def get_by_id(
         self, aggregate_id: str | UUID, *, sort_key: str | None = None
     ) -> Either[
-        DashboardOverviewReadModel, RepositoryNotFoundError | RepositoryUnexpectedError
+        DashboardReadModel, RepositoryNotFoundError | RepositoryUnexpectedError
     ]:
+        if sort_key is None:
+            sort_key = f"{self.overview_prefix}#{date.today().isoformat()}"
+
         try:
-            # get spending summary and recent expenses in parallel
-            response = await asyncio.gather(
-                self.table.get_item(
-                    Key={
-                        "user_id": str(aggregate_id),
-                        "sk": f"{self.overview_prefix}#{date.today().isoformat()}",
-                    }
-                ),
-                self.table.get_item(
-                    Key={
-                        "user_id": str(aggregate_id),
-                        "sk": self.recent_expenses_prefix,
-                    }
-                ),
+            response = await self.table.get_item(
+                Key={
+                    "user_id": str(aggregate_id),
+                    "sk": sort_key,
+                }
             )
 
-            spending_summary, recent_expenses = response
+            dynamo_item = response.get("Item", None)
 
-            spending_summary_item = spending_summary.get("Item", None)
-            recent_expenses_item = recent_expenses.get("Item", None)
-
-            if spending_summary_item is None or recent_expenses_item is None:
+            if dynamo_item is None:
                 return result_fail(
-                    RepositoryNotFoundError(message=f"User Overview not found.")
+                    RepositoryNotFoundError(
+                        message=f"Item with ID {aggregate_id} not found."
+                    )
                 )
 
-            spending_summary_item.pop("recent_expenses", None)
+            overview_item = cast(OverviewItem, dynamo_item)
 
-            read_model = DashboardOverviewReadModel(
-                user_id=spending_summary_item['user_id'],
-                total_spent=spending_summary_item["total_spent"],
-                total_budgeted=spending_summary_item["total_budgeted"],
-                top_expense=spending_summary_item["top_expense"],
-                top_category=spending_summary_item["top_category"], 
-                active_budget=spending_summary_item["active_budget"],
-                recent_expenses=recent_expenses_item["expenses"], 
-            )  # type: ignore
+            read_model = DashboardReadModel(**overview_item)  # type: ignore
 
             return result_ok(read_model)
 
         except Exception as error:
             return result_fail(RepositoryUnexpectedError(error))
 
-    async def get_recent_expenses(
-        self, user_id: str
-    ) -> Either[list[ExpenseReadModel], RepositoryUnexpectedError]:
+    async def get_expenses_projection(
+        self, user_id: str, aggregate_id: str | UUID, *, sort_key: str | None = None
+    ) -> Either[list[ExpenseItem], RepositoryUnexpectedError]:
         try:
-            response = await self.table.get_item(
-                Key={
-                    "user_id": user_id,
-                    "sk": self.recent_expenses_prefix,
-                },
-                ProjectionExpression="expenses",
-            )
-            items = response.get("Item", {})
-            recent_expenses = cast(
-                list[ExpenseSchema], items.get("expenses", [])
+            response = await self.table.query(
+                KeyConditionExpression=Key("user_id").eq(user_id)
+                & Key("sk").begins_with(f"{self.expense_prefix}#{aggregate_id}"),
             )
 
-            read_models = [ExpenseReadModel(**expense) for expense in recent_expenses]
+            items = response["Items"]
+            expenses = cast(list[ExpenseItem], items)
 
-            return result_ok(read_models)
+            return result_ok(expenses)
+
         except Exception as error:
             return result_fail(RepositoryUnexpectedError(error))
 
-    async def get_spending_summary(
-        self, user_id: str, period: date
-    ) -> Either[
-        SpendingSummarySchema, RepositoryNotFoundError | RepositoryUnexpectedError
-    ]:
+    async def get_budgets_projection(
+        self, user_id: str, aggregate_id: str | UUID, *, sort_key: str | None = None
+    ) -> Either[list[BudgetItem], RepositoryUnexpectedError]:
         try:
-            response = await self.table.get_item(
-                Key={
-                    "user_id": user_id,
-                    "sk": f"{self.overview_prefix}#{period.isoformat()}",
-                }
+            response = await self.table.query(
+                KeyConditionExpression=Key("user_id").eq(user_id)
+                & Key("sk").eq(f"{self.budget_prefix}#{aggregate_id}"),
             )
-            items = response.get("Item", {})
+            items = response["Items"]
 
-            return result_ok(cast(SpendingSummarySchema, items))
+            return result_ok(cast(list[BudgetItem], items))
 
         except Exception as error:
             return result_fail(RepositoryUnexpectedError(error))
 
     async def add(
-        self, aggregate: DashboardOverviewReadModel, *, sort_key: str | None = None
+        self, aggregate: DashboardReadModel, *, sort_key: str | None = None
     ) -> Either[None, ConflictError | ConcurrencyError | RepositoryUnexpectedError]:
 
         if sort_key is None:
@@ -144,24 +117,81 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardOverviewReadModel]):
                 Item={
                     "user_id": aggregate.user_id,
                     "sk": sort_key,
-                    **asdict(aggregate),
+                    **aggregate.model_dump(),
                 }
             )
             return result_ok(None)
         except Exception as error:
             return result_fail(RepositoryUnexpectedError(error))
 
-    async def add_recent_expense(
-        self, user_id: str, aggregate: list[ExpenseReadModel]
+    async def add_expense(
+        self, user_id: str, aggregate: ExpenseItem
     ) -> Either[None, RepositoryUnexpectedError]:
         try:
-            await self.table.put_item(
-                Item={
-                    "user_id": user_id,
-                    "sk": self.recent_expenses_prefix,
-                    "expenses": [asdict(expense) for expense in aggregate],
-                }
+            exists = await self.exists(
+                user_id, sort_key=f"{self.expense_prefix}#{aggregate['id']}"
             )
+
+            if is_fail(exists):
+                return result_fail(exists.value)
+
+            if exists.value:
+                await self.table.update_item(
+                    Key={
+                        "user_id": user_id,
+                        "sk": f"{self.expense_prefix}#{aggregate['id']}",
+                    },
+                    UpdateExpression="SET expenses = list_append(if_not_exists(expenses, :empty_list), :expense)",
+                    ExpressionAttributeValues={
+                        ":expense": aggregate,
+                        ":empty_list": [],
+                    },
+                    ReturnValues="UPDATED_NEW",
+                )
+            else:
+                await self.table.put_item(
+                    Item={
+                        "user_id": user_id,
+                        "sk": f"{self.expense_prefix}#{aggregate['id']}",
+                        **(cast(Dict[str, Any], aggregate)),
+                    }
+                )
+            return result_ok(None)
+        except Exception as error:
+            return result_fail(RepositoryUnexpectedError(error))
+
+    async def add_Budget(
+        self, user_id: str, aggregate: BudgetItem
+    ) -> Either[None, RepositoryUnexpectedError]:
+        try:
+            exists = await self.exists(
+                user_id, sort_key=f"{self.budget_prefix}#{aggregate['id']}"
+            )
+
+            if is_fail(exists):
+                return result_fail(exists.value)
+
+            if exists.value:
+                await self.table.update_item(
+                    Key={
+                        "user_id": user_id,
+                        "sk": f"{self.budget_prefix}#{aggregate['id']}",
+                    },
+                    UpdateExpression="SET expenses = list_append(if_not_exists(expenses, :empty_list), :expense)",
+                    ExpressionAttributeValues={
+                        ":expense": aggregate,
+                        ":empty_list": [],
+                    },
+                    ReturnValues="UPDATED_NEW",
+                )
+            else:
+                await self.table.put_item(
+                    Item={
+                        "user_id": user_id,
+                        "sk": f"{self.budget_prefix}#{aggregate['id']}",
+                        **(cast(Dict[str, Any], aggregate)),
+                    }
+                )
             return result_ok(None)
         except Exception as error:
             return result_fail(RepositoryUnexpectedError(error))
@@ -213,18 +243,18 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardOverviewReadModel]):
         return result_ok()
 
     async def first(self, options: GetOptions[Any]) -> Either[
-        DashboardOverviewReadModel,
+        DashboardReadModel,
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]: ...  # Implement if needed, otherwise can be left unimplemented or raise NotImplementedError
 
     async def list(
         self, options: GetOptions[Any]
     ) -> Either[
-        list[DashboardOverviewReadModel], RepositoryUnexpectedError | DataIntegrityError
+        list[DashboardReadModel], RepositoryUnexpectedError | DataIntegrityError
     ]: ...  # Implement if needed, otherwise can be left unimplemented or raise NotImplementedError
 
     async def remove(
-        self, aggregate: DashboardOverviewReadModel, *, sort_key: str | None = None
+        self, aggregate: DashboardReadModel, *, sort_key: str | None = None
     ) -> Either[
         None, RepositoryUnexpectedError | ConcurrencyError | ConflictError
     ]: ...  # Implement if needed, otherwise can be left unimplemented or raise NotImplementedError

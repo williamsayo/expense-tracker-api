@@ -1,39 +1,57 @@
 from typing import Any, Dict, TypedDict
 
 
-class InsightOverviewSchema(TypedDict):
+class InsightOverviewItem(TypedDict):
     period: str
     content: Dict[Any, Any]
     status: str
 
 
-class ExpenseSchema(TypedDict):
-    name: str
-    amount: float
+class ExpenseItem(TypedDict):
+    id: str
+    amount: int
     currency: str
     category: str
-    merchant: str | None
     date: str
 
 
-class BudgetSchema(TypedDict):
-    name: str | None
-    total_amount: float
-    spent_amount: float
+class BudgetItem(TypedDict):
+    id: str
+    total_amount: int
+    spent_amount: int
     start_date: str
     end_date: str
 
 
-class RecentExpensesSchema(TypedDict):
-    expenses: list[ExpenseSchema]
+class TopCategoryItem(TypedDict):
+    name: str
+    amount: int
 
 
-class SpendingSummarySchema(TypedDict):
+# Schema for the dashboard module
+class TopExpenseItem(TypedDict):
+    name: str | None
+    merchant: str | None
+    amount: int
+    currency: str
+    category: str
+    date: str
+
+
+class ActiveBudgetItem(TypedDict):
+    name: str | None
+    total_amount: int
+    start_date: str
+    end_date: str
+
+
+class OverviewItem(TypedDict):
     """Schema for the dashboard module."""
 
-    total_spent: float
-    total_budgeted: float
-    remaining_budget: float
-    top_category: dict
-    top_expense: ExpenseSchema | None
-    active_budget: BudgetSchema | None
+    user_id: str
+    total_spent: int
+    total_budgeted: int
+    top_category: list[TopCategoryItem]
+    top_expense: TopExpenseItem | None
+    active_budget: ActiveBudgetItem | None
+    recent_expenses: list[TopExpenseItem]

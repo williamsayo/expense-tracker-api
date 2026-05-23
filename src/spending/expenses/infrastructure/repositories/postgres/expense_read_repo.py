@@ -68,8 +68,6 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
         result = await self.db.execute(statement)
         persistence_output = result.mappings().all()
 
-        print(persistence_output[0])
-
         read_model = [
             ExpenseReadModel(**persistence) for persistence in persistence_output
         ]

@@ -36,7 +36,7 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
         self.db = db
 
     async def add(
-        self, aggregate: BudgetReadModel
+        self, aggregate: BudgetReadModel, *, auto_commit: bool = True
     ) -> Either[None, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
 
     async def exists(
@@ -213,6 +213,4 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
             return result_ok()
         except Exception as error:
             await self.db.rollback()
-            return result_fail(
-                RepositoryUnexpectedError(error)
-            )
+            return result_fail(RepositoryUnexpectedError(error))

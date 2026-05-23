@@ -9,24 +9,24 @@ from boilerplate import (
 )
 from result import Either, is_fail, result_fail, result_ok
 from src.dashboard.utils.setup_dependencies import OverviewDeps
-from src.dashboard.domain.read_models.overview_read_model import (
-    DashboardOverviewReadModel,
+from src.dashboard.infrastructure.adapters.dto.dashboard import (
+    BudgetReadModel,
     ExpenseReadModel,
 )
 from src.dashboard.infrastructure.adapters.dto.event import ExpenseCreatedEventPayload
 
 
-class UpdateOverviewInput(TypedDict):
+class UpdateExpenseProjectionInput(TypedDict):
     user_id: str
     expense: ExpenseCreatedEventPayload
 
 
-class UpdateOverviewUsecase(AsyncCommandUseCase[UpdateOverviewInput]):
+class UpdateExpenseProjectionUsecase(AsyncCommandUseCase[UpdateExpenseProjectionInput]):
 
     def __init__(self, deps: OverviewDeps):
         self.deps = deps
 
-    async def execute(self, input: UpdateOverviewInput) -> Either[
+    async def execute(self, input: UpdateExpenseProjectionInput) -> Either[
         None,
         CoreError
         | RepositoryNotFoundError
@@ -36,6 +36,8 @@ class UpdateOverviewUsecase(AsyncCommandUseCase[UpdateOverviewInput]):
 
         user_id, expense = input["user_id"], input["expense"]
         data = expense.data
+
+        result = await self.deps.repository.add_expense(user_id=user_id, expense=data)
 
         overview_result = await self.deps.repository.get_by_id(user_id)
 
@@ -77,7 +79,7 @@ class UpdateOverviewUsecase(AsyncCommandUseCase[UpdateOverviewInput]):
         else:
             top_category[data.category] = data.amount
 
-        dashboard_overview = DashboardOverviewReadModel(
+        dashboard_overview = DashboardReadModel(
             user_id=user_id,
             total_spent=updated_total_spent,
             total_budgeted=overview.total_budgeted,

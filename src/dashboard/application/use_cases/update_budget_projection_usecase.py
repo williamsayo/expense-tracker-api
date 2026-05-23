@@ -16,17 +16,17 @@ from src.dashboard.domain.read_models.overview_read_model import (
 from src.dashboard.infrastructure.adapters.dto.event import BudgetCreatedEventPayload
 
 
-class UpdateSpendingSummaryInput(TypedDict):
+class UpdateBudgetProjectionInput(TypedDict):
     user_id: str
     budget: BudgetCreatedEventPayload
 
 
-class UpdateSpendingSummaryUsecase(AsyncCommandUseCase[UpdateSpendingSummaryInput]):
+class UpdateBudgetProjectionUsecase(AsyncCommandUseCase[UpdateBudgetProjectionInput]):
 
     def __init__(self, deps: OverviewDeps):
         self.deps = deps
 
-    async def execute(self, input: UpdateSpendingSummaryInput) -> Either[
+    async def execute(self, input: UpdateBudgetProjectionInput) -> Either[
         None,
         CoreError
         | RepositoryNotFoundError

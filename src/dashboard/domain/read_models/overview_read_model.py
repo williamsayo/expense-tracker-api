@@ -32,6 +32,10 @@ class DashboardOverviewReadModelProps(TypedDict):
     active_budget: BudgetReadModel | None
 
 
+class TopCategoryReadModel(TypedDict):
+    name: str
+    amount: int
+
 @dataclass(slots=True, frozen=True)
 class DashboardOverviewReadModel:
     """Read model for expense overview."""
@@ -39,7 +43,7 @@ class DashboardOverviewReadModel:
     user_id: str
     top_expense: ExpenseReadModel | None
     recent_expenses: List[ExpenseReadModel]
-    total_spent: Decimal
+    total_spent: int
     active_budget: BudgetReadModel | None
-    total_budgeted: Decimal
-    top_category: dict
+    total_budgeted: int
+    top_category: list[TopCategoryReadModel]

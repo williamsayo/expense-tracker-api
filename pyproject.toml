@@ -19,7 +19,7 @@ dependencies = [
     "google-cloud-vision>=3.14.0",
     "rsa>=4.9.1",
     "aioboto3>=15.5.0",
-    "types-aioboto3[cloudfront,iam,s3]>=15.5.0",
+    "types-aioboto3[cloudfront,dynamodb,iam,s3]>=15.5.0",
     "python-magic-bin>=0.4.14",
 ]
 

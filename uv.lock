@@ -521,7 +521,7 @@ wheels = [
 [[package]]
 name = "domain-driven-design-boilerplate-core"
 version = "0.1.0"
-source = { git = "https://github.com/williamsayo/ddd-boilerplate-core#76a51300cf0dfe4cdcfa60600ad8af8eaac196e8" }
+source = { git = "https://github.com/williamsayo/ddd-boilerplate-core#f7524915bfeb247e40fcc55c9846518fab090748" }
 dependencies = [
     { name = "pydantic" },
     { name = "result-boilerplate" },
@@ -560,7 +560,7 @@ dependencies = [
     { name = "result-boilerplate" },
     { name = "rsa" },
     { name = "sqlalchemy", extra = ["asyncio"] },
-    { name = "types-aioboto3", extra = ["cloudfront", "iam", "s3"] },
+    { name = "types-aioboto3", extra = ["cloudfront", "dynamodb", "iam", "s3"] },
 ]
 
 [package.dev-dependencies]
@@ -585,7 +585,7 @@ requires-dist = [
     { name = "result-boilerplate" },
     { name = "rsa", specifier = ">=4.9.1" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.48" },
-    { name = "types-aioboto3", extras = ["cloudfront", "iam", "s3"], specifier = ">=15.5.0" },
+    { name = "types-aioboto3", extras = ["cloudfront", "dynamodb", "iam", "s3"], specifier = ">=15.5.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1922,6 +1922,9 @@ wheels = [
 cloudfront = [
     { name = "types-aiobotocore-cloudfront" },
 ]
+dynamodb = [
+    { name = "types-aiobotocore-dynamodb" },
+]
 iam = [
     { name = "types-aiobotocore-iam" },
 ]
@@ -1948,6 +1951,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ac/2b/6a609c0e3c7f31ecbf05c45d63350eee35dc4ec77040da29da7a116c0b02/types_aiobotocore_cloudfront-2.25.2.tar.gz", hash = "sha256:f8437159aa107eb685527f070d48889293b0e34fcb07b41e164ea148217fdf2d", size = 62855, upload-time = "2025-11-12T01:42:53.396Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6c/a8/fadc05968b7a4291944c7bb83624ee8c357c77e0e4392dc009a0131e2219/types_aiobotocore_cloudfront-2.25.2-py3-none-any.whl", hash = "sha256:3de1b78ce337ac5a222bdf006fa52ca959e36c88d9c623e9e25530a41e258cf4", size = 70471, upload-time = "2025-11-12T01:42:52.211Z" },
+]
+
+[[package]]
+name = "types-aiobotocore-dynamodb"
+version = "2.25.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/8c/1a97e249fa621807cffdd840a9db2158af5b786aeb54179b9582e46f181d/types_aiobotocore_dynamodb-2.25.2.tar.gz", hash = "sha256:75cfd3e3ee216a59df1814195e06cd6723c4f88315da9f76f9e3720be5ffd2cd", size = 47681, upload-time = "2025-11-12T01:45:15.664Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/aa/79e167f85732f0ccbb7343a1e8cbb6bf8e7d3c4bb2aaf9a47cc93d8b1f31/types_aiobotocore_dynamodb-2.25.2-py3-none-any.whl", hash = "sha256:680c60867320d7011be351ed724a50b9488bc62d545c9bc009b2f44f7a715f7f", size = 57658, upload-time = "2025-11-12T01:45:14.427Z" },
 ]
 
 [[package]]

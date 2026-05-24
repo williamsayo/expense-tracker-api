@@ -8,15 +8,13 @@ from boilerplate import (
     UniqueEntityId,
     DomainRuleError,
 )
+from src.shared.domain.value_objects.media_value_object import MediaValueObject
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
 from src.shared.domain.types.user_id import UserId
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.spending.expenses.domain.events.expense_created import ExpenseCreated
-from src.spending.expenses.domain.value_objects.receipt_value_object import (
-    ReceiptValueObject,
-)
 
 
 class ExpenseEntityProps(TypedDict):
@@ -134,8 +132,12 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         self._increment_version()
         return result_ok()
 
-    def update_receipt(self, receipt_key: str) -> Either[None, DomainRuleError]:
-        receipt_value_object = ReceiptValueObject.create({"receipt_key": receipt_key})
+    def update_receipt(
+        self, receipt_key: str, url: str
+    ) -> Either[None, DomainRuleError]:
+        receipt_value_object = MediaValueObject.create(
+            {"file_key": receipt_key, "file_url": url}
+        )
 
         if is_fail(receipt_value_object):
             return receipt_value_object

@@ -14,9 +14,6 @@ from boilerplate import (
 from src.shared.application.dtos.upload import FileUploadDTO
 from src.shared.application.services.base import BaseService
 from src.shared.domain.types.category_types import Category
-from src.spending.expenses.domain.value_objects.receipt_value_object import (
-    ReceiptValueObject,
-)
 from src.spending.expenses.utils.setup_dependencies import ExpenseDeps
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from src.spending.expenses.infrastructure.mappers.expense_mapper import (
@@ -83,7 +80,9 @@ class ExpenseService(BaseService[ExpenseDeps]):
 
             receipt_key = receipt_key_result.value
 
-            receipt_update_result = entity.update_receipt(receipt_key)
+            url = self.deps.cdn.generate_url(receipt_key)
+
+            receipt_update_result = entity.update_receipt(receipt_key, url)
 
             if is_fail(receipt_update_result):
                 return receipt_update_result

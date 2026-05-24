@@ -9,6 +9,9 @@ from boilerplate import (
     DataIntegrityError,
     RepositoryNotFoundError,
 )
+from src.dashboard.infrastructure.adapters.dto.dashboard import (
+    DashboardReadModel,
+)
 
 
 class GetOverviewInput(TypedDict):
@@ -16,13 +19,13 @@ class GetOverviewInput(TypedDict):
     period: date
 
 
-class GetOverviewUsecase(AsyncQueryUseCase[GetOverviewInput, dict]):
+class GetOverviewUsecase(AsyncQueryUseCase[GetOverviewInput, DashboardReadModel]):
 
     def __init__(self, deps: OverviewDeps):
         self.deps = deps
 
     async def execute(self, input: GetOverviewInput) -> Either[
-        dict,
+        DashboardReadModel,
         CoreError
         | RepositoryNotFoundError
         | RepositoryUnexpectedError
@@ -32,18 +35,9 @@ class GetOverviewUsecase(AsyncQueryUseCase[GetOverviewInput, dict]):
         user_id = str(input["user_id"])
         period = input["period"]
 
-        spending_summary_result = await self.deps.repository.get_spending_summary(
-            user_id, period
-        )
-        recent_expenses_result = await self.deps.repository.get_recent_expenses(user_id)
+        overview_result = await self.deps.repository.get_by_id(user_id,sort_key=f"overview#{period.isoformat()}")
 
-        combined_result = result_combine(
-            (spending_summary_result, recent_expenses_result)
-        )
+        if is_fail(overview_result):
+            return overview_result
 
-        if is_fail(combined_result):
-            return combined_result
-
-        spending_summary, recent_expenses = combined_result.value
-
-        return result_ok({**spending_summary, "recent_expenses": recent_expenses})
+        return result_ok(overview_result.value)

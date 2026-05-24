@@ -71,8 +71,12 @@ class ImageValidationService:
                 HttpError(
                     status=HttpStatus.UNSUPPORTED_MEDIA_TYPE,
                     body={
-                        "id": ERROR_IDS.INVALID_CONTENT_TYPE, 
+                        "id": ERROR_IDS.INVALID_CONTENT_TYPE,
                         "message": "Mime type not allowed ",
+                        "errors": {
+                            "allowed_types": ALLOWED_CONTENT_TYPES,
+                            "detected_type": mime,
+                        },
                     },
                 )
             )
@@ -84,6 +88,10 @@ class ImageValidationService:
                     body={
                         "id": ERROR_IDS.INVALID_CONTENT_TYPE,
                         "message": "File content does not match Content-Type declaration",
+                        "errors": {
+                            "declared_type": declared_content_type,
+                            "detected_type": mime,
+                        },
                     },
                 )
             )
@@ -110,6 +118,10 @@ class ImageValidationService:
                     body={
                         "id": ERROR_IDS.INVALID_CONTENT_TYPE,
                         "message": f"Content type not allowed: {content_type}",
+                        "errors": {
+                            "allowed_types": ALLOWED_CONTENT_TYPES,
+                            "declared_type": content_type,
+                        },
                     },
                 )
             )
@@ -186,6 +198,10 @@ class ImageValidationService:
                         body={
                             "id": ERROR_IDS.INVALID_FILE_SIZE,
                             "message": "File size exceeds limit",
+                            "errors": {
+                                "max_size": MAX_SIZE_BYTES,
+                                "detected_size": file_size,
+                            },
                         },
                     )
                 )

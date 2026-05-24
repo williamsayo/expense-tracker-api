@@ -2,10 +2,56 @@ from pydantic import Field, BaseModel
 from typing import Self
 from src.dashboard.infrastructure.repositories.schema import (
     ActiveBudgetItem,
-    TopExpenseItem,
-    TopCategoryItem,
+    BudgetProjectionItem,
+    ExpenseProjectionItem,
+    ExpenseItem,
+    CategoryItem,
 )
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
+
+
+class ExpenseProjectionReadModel(BaseModel):
+    id: str = Field(..., description="The ID of the expense.", exclude=True)
+    amount: int = Field(..., description="The amount of the expense in cents.")
+    currency: str = Field(
+        default="EUR", description="The currency of the expense amount."
+    )
+    category: str = Field(..., description="The category of the expense.")
+    date: str = Field(..., description="The date of the expense.")
+
+    @classmethod
+    def from_dict(cls, data: ExpenseProjectionItem) -> Self:
+        """Creates a ExpenseProjectionReadModel instance from a dictionary."""
+
+        return cls(
+            id=data["id"],
+            amount=data["amount"],
+            currency=data["currency"],
+            category=data["category"],
+            date=data["date"],
+        )
+
+
+class BudgetProjectionReadModel(BaseModel):
+    id: str = Field(..., description="The ID of the budget.", exclude=True)
+    total_amount: int = Field(..., description="The amount of the budget in cents.")
+    spent_amount: int = Field(
+        ..., description="The amount spent in the budget in cents."
+    )
+    start_date: str = Field(..., description="The start date of the budget.")
+    end_date: str = Field(..., description="The end date of the budget.")
+
+    @classmethod
+    def from_dict(cls, data: BudgetProjectionItem) -> Self:
+        """Creates a BudgetProjectionReadModel instance from a dictionary."""
+
+        return cls(
+            id=data["id"],
+            total_amount=data["total_amount"],
+            spent_amount=data["spent_amount"],
+            start_date=data["start_date"],
+            end_date=data["end_date"],
+        )
 
 
 class CategoryReadModel(BaseModel):
@@ -15,13 +61,14 @@ class CategoryReadModel(BaseModel):
     )
 
     @classmethod
-    def from_dict(cls, data: TopCategoryItem) -> Self:
-        """Creates a TopCategoryReadModel instance from a dictionary."""
+    def from_dict(cls, data: CategoryItem) -> Self:
+        """Creates a CategoryReadModel instance from a dictionary."""
 
         return cls(
             name=data["name"],
             amount=data["amount"],
         )
+
 
 class ExpenseReadModel(BaseModel):
     id: str = Field(..., description="The ID of the expense.", exclude=True)
@@ -35,8 +82,8 @@ class ExpenseReadModel(BaseModel):
     date: str = Field(..., description="The date of the expense.")
 
     @classmethod
-    def from_dict(cls, data: TopExpenseItem) -> Self:
-        """Creates an TopExpenseReadModel instance from a dictionary."""
+    def from_dict(cls, data: ExpenseItem) -> Self:
+        """Creates an ExpenseReadModel instance from a dictionary."""
         return cls(
             id=data["id"],
             name=data["name"],

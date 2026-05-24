@@ -7,7 +7,7 @@ class InsightOverviewItem(TypedDict):
     status: str
 
 
-class ExpenseItem(TypedDict):
+class ExpenseProjectionItem(TypedDict):
     id: str
     amount: int
     currency: str
@@ -15,7 +15,7 @@ class ExpenseItem(TypedDict):
     date: str
 
 
-class BudgetItem(TypedDict):
+class BudgetProjectionItem(TypedDict):
     id: str
     total_amount: int
     spent_amount: int
@@ -23,13 +23,14 @@ class BudgetItem(TypedDict):
     end_date: str
 
 
-class TopCategoryItem(TypedDict):
+class CategoryItem(TypedDict):
     name: str
     amount: int
 
 
 # Schema for the dashboard module
-class TopExpenseItem(TypedDict):
+class ExpenseItem(TypedDict):
+    id: str
     name: str | None
     merchant: str | None
     amount: int
@@ -39,6 +40,7 @@ class TopExpenseItem(TypedDict):
 
 
 class ActiveBudgetItem(TypedDict):
+    id: str
     name: str | None
     total_amount: int
     start_date: str
@@ -51,7 +53,7 @@ class OverviewItem(TypedDict):
     user_id: str
     total_spent: int
     total_budgeted: int
-    top_category: list[TopCategoryItem]
-    top_expense: TopExpenseItem | None
+    top_category: list[CategoryItem]
+    top_expense: ExpenseItem | None
     active_budget: ActiveBudgetItem | None
-    recent_expenses: list[TopExpenseItem]
+    recent_expenses: list[ExpenseItem]

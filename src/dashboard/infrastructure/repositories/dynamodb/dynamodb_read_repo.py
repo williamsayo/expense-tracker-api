@@ -64,7 +64,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             if dynamo_item is None:
                 return result_fail(
                     RepositoryNotFoundError(
-                        message=f"Item with ID {aggregate_id} not found."
+                        message=f"Overview item not found."
                     )
                 )
 
@@ -75,9 +75,8 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             return result_ok(read_model)
 
         except Exception as error:
-            print(f"Error retrieving item with ID {aggregate_id}: {error}")
             return result_fail(
-                RepositoryUnexpectedError(error, "Unexpected error retrieving item")
+                RepositoryUnexpectedError(error, "Unexpected error retrieving overview")
             )
 
     async def get_expenses_projection(

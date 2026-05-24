@@ -16,10 +16,10 @@ from src.spending.expenses.infrastructure.adapters.ports.repository import (
     ExpenseRepositoryProtocol,
     ExpenseReadRepositoryProtocol,
 )
-from src.shared.infrastructure.services.aws.dependencies import get_s3_client
-from src.shared.infrastructure.repository.s3.s3_repo import S3BucketRepository, S3Client
 from src.shared.infrastructure.adapters.ports.repository import ObjectStorageRepository
 from src.shared.application.events.dispatcher.dependencies import get_event_dispatcher
+from src.shared.infrastructure.adapters.ports.cdn import CDNService
+from src.shared.utils.setup_dependencies import get_cdn_service,get_object_storage
 
 def get_expense_read_repository(
     db: AsyncSession = Depends(get_session),
@@ -36,20 +36,13 @@ def get_expense_repository(
     #     return LocalExpenseRepository()
     return ExpenseRepository(db)
 
-
-def get_object_storage(
-    client: S3Client = Depends(get_s3_client),
-    settings: Settings = Depends(get_settings),
-) -> ObjectStorageRepository:
-    return S3BucketRepository(client, settings)
-
-
 @dataclass(slots=True)
 class ExpenseDependencies(BaseDependency):
     """Dependency container for expense use cases."""
 
     repo: ExpenseRepositoryProtocol = Depends(get_expense_repository)
     object_storage: ObjectStorageRepository = Depends(get_object_storage)
+    cdn: CDNService = Depends(get_cdn_service)
     dispatcher: IEventDispatcher = Depends(get_event_dispatcher)
 
 

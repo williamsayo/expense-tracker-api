@@ -4,6 +4,7 @@ from sqlalchemy import String, Uuid
 from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
 from src.shared.infrastructure.db.base import Base
 
+
 class User(Base, TimeStampMixin, VersionMixin):
     """Represents user."""
 
@@ -13,7 +14,9 @@ class User(Base, TimeStampMixin, VersionMixin):
     username: Mapped[str] = mapped_column(
         String(50), unique=True, index=True, nullable=False
     )
-    avatar: Mapped[str] = mapped_column(String(100), nullable=True)
+    avatar: Mapped[str] = mapped_column(
+        String(100), nullable=True, default="avatar/default.png"
+    )
     email: Mapped[str] = mapped_column(
         String(150), unique=True, index=True, nullable=False
     )

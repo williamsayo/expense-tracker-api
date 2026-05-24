@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     cloudfront_private_key: SecretStr
     cloudfront_key_pair_id: str
     dynamodb_dashboard_table_name: str = "dashboard_table"
+    default_avatar: str = "avatar/default.png"
 
     model_config = SettingsConfigDict(
         env_file=(".env.local", ".env", ".env.prod"), extra="ignore"

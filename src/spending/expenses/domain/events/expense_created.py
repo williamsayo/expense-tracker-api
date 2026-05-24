@@ -15,11 +15,12 @@ class ExpenseCreatedData(TypedDict):
 
     user_id: str
     name: str | None
+    merchant: str | None
     expense_id: str
-    category: Category
+    category: str
     amount: int
-    currency: Currency
-    date: datetime
+    currency: str
+    date: str
 
 
 class ExpenseCreated(DomainEvent[ExpenseCreatedData]):

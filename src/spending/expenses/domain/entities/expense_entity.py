@@ -140,10 +140,11 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
                     "expense_id": entity.id.to_string(),
                     "user_id": str(entity.user_id),
                     "name": entity.name,
-                    "category": entity.category.name,
+                    "merchant": "adereal",  # TODO: remove merchant field in future
+                    "category": entity.category.name.value,
                     "amount": entity.money.amount,
-                    "currency": entity.money.currency,
-                    "date": entity.date,
+                    "currency": entity.money.currency.value,
+                    "date": entity.date.isoformat(),
                 },
                 metadata={
                     "aggregate_type": cls.__name__,

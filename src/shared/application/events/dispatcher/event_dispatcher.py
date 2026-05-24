@@ -18,7 +18,7 @@ class EventDispatcher(IEventDispatcher):
     def subscribe(self, event_type: str, handler: EventHandler) -> None:
         self._handlers[event_type].append(handler)
 
-    def dispatch(self, domainEvent: DomainEvent) -> None:
+    async def dispatch(self, domainEvent: DomainEvent) -> None:
         event = domainEvent.event_dict
         self._register_event(event)
         event_type = event["metadata"]["type"]

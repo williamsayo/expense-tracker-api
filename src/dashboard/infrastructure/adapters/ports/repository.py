@@ -5,7 +5,6 @@ from boilerplate import (
     RepositoryUnexpectedError,
 )
 from result import Either
-from domain.entities.example import ExampleEntity
 from src.dashboard.infrastructure.adapters.dto.dashboard import (
     DashboardReadModel,
 )

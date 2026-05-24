@@ -39,7 +39,9 @@ def register_errors(app: FastAPI) -> None:
             http_status_code = getattr(exception, "status_code", status_code)
             headers = getattr(exception, "headers", None)
 
-            logging.error(f'{message}', extra={"error_code": error_code,"status_code": http_status_code})
+            logging.error(
+                f"{getattr(exception, "cause", message)} - [error_code: {error_code}], [status_code: {http_status_code}] ",
+            )
 
             return JSONResponse(
                 status_code=http_status_code,

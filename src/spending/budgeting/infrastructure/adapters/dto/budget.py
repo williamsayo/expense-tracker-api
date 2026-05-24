@@ -103,22 +103,6 @@ class BudgetReadModel(BudgetModel, BaseReadModel):
             expenses=[],
         )
 
-
-class BudgetOverviewReadModel(BaseReadModel):
-    """Read model for Budget data."""
-
-    total_allocated: float = Field(..., description="Total budget amount")
-    active_budget: BudgetSummaryReadModel | None = Field(
-        ..., description="Active budget for the user"
-    )
-    recent_budgets: List[BudgetSummaryReadModel] = Field(
-        ..., description="List of recent budgets for the user"
-    )
-    upcoming_budget: BudgetSummaryReadModel | None = Field(
-        ..., description="upcoming budgets for the user"
-    )
-
-
 class BudgetWriteModel(BudgetModel):
     """Write model for Budget data."""
 

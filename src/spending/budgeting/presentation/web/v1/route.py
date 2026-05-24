@@ -8,7 +8,6 @@ from src.spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetReadModel,
     BudgetUpdateModel,
     BudgetWriteModel,
-    BudgetOverviewReadModel,
 )
 from src.spending.budgeting.infrastructure.adapters.dto.budget_allocation import (
     BudgetAllocationWriteModel,
@@ -27,9 +26,6 @@ from src.spending.budgeting.application.use_cases.add_budget_allocation_usecase 
 )
 from src.spending.budgeting.application.use_cases.remove_budget_allocation_usecase import (
     RemoveBudgetAllocationUsecase,
-)
-from src.spending.budgeting.application.use_cases.retrieve_budget_overview_usecase import (
-    GetBudgetOverviewUsecase,
 )
 from src.spending.budgeting.application.use_cases.delete_budget_usecase import (
     DeleteBudgetUsecase,
@@ -113,24 +109,6 @@ async def retrieve_all_budgets(
     use_case: Annotated[GetBudgetsUsecase, Depends()],
 ):
     result = await use_case.execute(auth.user_id)
-
-    if is_fail(result):
-        raise result.value
-
-    return result.value
-
-
-@router.get(
-    "/overview",
-    response_model=BudgetOverviewReadModel,
-    status_code=status.HTTP_200_OK,
-)
-async def retrieve_budget_overview(
-    params: BudgetUrlParams,
-    auth: AuthDeps,
-    use_case: Annotated[GetBudgetOverviewUsecase, Depends()],
-):
-    result = await use_case.execute(auth.user_id, params.page_size)
 
     if is_fail(result):
         raise result.value

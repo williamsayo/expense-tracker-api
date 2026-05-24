@@ -16,8 +16,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from result import Either, result_ok, result_fail
 from src.spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetReadModel,
-    BudgetOverviewReadModel,
-    BudgetSummaryReadModel,
 )
 from src.spending.budgeting.infrastructure.mappers.budget_read_mapper import (
     BudgetReadMapper,
@@ -124,80 +122,80 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
 
         return result_ok(entity_result)
 
-    async def get_budget_overview(self, options: GetAllOptions[AppFilter]) -> Either[
-        BudgetOverviewReadModel,
-        RepositoryUnexpectedError,
-    ]:
-        user_id = options.get("filter", {}).get("user_id")
+    # async def get_budget_overview(self, options: GetAllOptions[AppFilter]) -> Either[
+    #     BudgetOverviewReadModel,
+    #     RepositoryUnexpectedError,
+    # ]:
+    #     user_id = options.get("filter", {}).get("user_id")
 
-        if user_id is None:
-            return result_fail(
-                RepositoryUnexpectedError(
-                    Exception("User ID filter is required for overview"),
-                    "User ID filter is required for overview",
-                )
-            )
+    #     if user_id is None:
+    #         return result_fail(
+    #             RepositoryUnexpectedError(
+    #                 Exception("User ID filter is required for overview"),
+    #                 "User ID filter is required for overview",
+    #             )
+    #         )
 
-        statement = build_query(Budget.__table__, options)
+    #     statement = build_query(Budget.__table__, options)
 
-        recent_budgets = statement.order_by(
-            Budget.__table__.columns.start_date.desc()
-        ).limit(options.get("limit", 5))
+    #     recent_budgets = statement.order_by(
+    #         Budget.__table__.columns.start_date.desc()
+    #     ).limit(options.get("limit", 5))
 
-        active_budget = statement.where(
-            and_(
-                Budget.__table__.columns.user_id == user_id,
-                Budget.__table__.columns.start_date <= func.current_date(),
-                Budget.__table__.columns.end_date >= func.current_date(),
-            )
-        ).order_by(Budget.__table__.columns.start_date.desc())
+    #     active_budget = statement.where(
+    #         and_(
+    #             Budget.__table__.columns.user_id == user_id,
+    #             Budget.__table__.columns.start_date <= func.current_date(),
+    #             Budget.__table__.columns.end_date >= func.current_date(),
+    #         )
+    #     ).order_by(Budget.__table__.columns.start_date.desc())
 
-        total_budgeted = (
-            select(func.sum(BudgetAllocation.amount).label("total_budgeted"))
-            .join(
-                Budget,
-                Budget.id == BudgetAllocation.budget_id,
-            )
-            .where(Budget.user_id == user_id)
-        )
+    #     total_budgeted = (
+    #         select(func.sum(BudgetAllocation.amount).label("total_budgeted"))
+    #         .join(
+    #             Budget,
+    #             Budget.id == BudgetAllocation.budget_id,
+    #         )
+    #         .where(Budget.user_id == user_id)
+    #     )
 
-        upcoming_budget = statement.where(
-            and_(
-                Budget.__table__.columns.user_id == user_id,
-                Budget.__table__.columns.start_date > func.current_date(),
-            )
-        ).order_by(Budget.__table__.columns.start_date.asc())
+    #     upcoming_budget = statement.where(
+    #         and_(
+    #             Budget.__table__.columns.user_id == user_id,
+    #             Budget.__table__.columns.start_date > func.current_date(),
+    #         )
+    #     ).order_by(Budget.__table__.columns.start_date.asc())
 
-        result = await self.db.execute(recent_budgets)
-        persistence_output = result.mappings().all()
+    #     result = await self.db.execute(recent_budgets)
+    #     persistence_output = result.mappings().all()
 
-        upcoming_budget_result = await self.db.execute(upcoming_budget)
-        upcoming_budget_output = upcoming_budget_result.mappings().first()
+    #     upcoming_budget_result = await self.db.execute(upcoming_budget)
+    #     upcoming_budget_output = upcoming_budget_result.mappings().first()
 
-        active_budget_result = await self.db.execute(active_budget)
-        active_budget_output = active_budget_result.mappings().first()
+    #     active_budget_result = await self.db.execute(active_budget)
+    #     active_budget_output = active_budget_result.mappings().first()
 
-        total_budgeted_result = await self.db.scalars(total_budgeted)
-        total_budgeted_output = total_budgeted_result.first()
+    #     total_budgeted_result = await self.db.scalars(total_budgeted)
+    #     total_budgeted_output = total_budgeted_result.first()
 
-        read_model = [
-            BudgetSummaryReadModel(**persistence) for persistence in persistence_output
-        ]
+    #     read_model = [
+    #         BudgetSummaryReadModel(**persistence) for persistence in persistence_output
+    #     ]
 
-        if upcoming_budget_output is not None:
-            upcoming_budget_output = BudgetSummaryReadModel(**upcoming_budget_output)
+    #     if upcoming_budget_output is not None:
+    #         upcoming_budget_output = BudgetSummaryReadModel(**upcoming_budget_output)
 
-        if active_budget_output is not None:
-            active_budget_output = BudgetSummaryReadModel(**active_budget_output)
+    #     if active_budget_output is not None:
+    #         active_budget_output = BudgetSummaryReadModel(**active_budget_output)
 
-        overview_read_model = BudgetOverviewReadModel(
-            recent_budgets=read_model,
-            total_allocated=(total_budgeted_output if total_budgeted_output else 0.0),
-            upcoming_budget=upcoming_budget_output,
-            active_budget=active_budget_output,
-        )
+    #     overview_read_model = BudgetOverviewReadModel(
+    #         recent_budgets=read_model,
+    #         total_allocated=(total_budgeted_output if total_budgeted_output else 0.0),
+    #         upcoming_budget=upcoming_budget_output,
+    #         active_budget=active_budget_output,
+    #     )
 
-        return result_ok(overview_read_model)
+    #     return result_ok(overview_read_model)
 
     async def remove(
         self, aggregate: BudgetReadModel

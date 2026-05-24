@@ -1,25 +1,28 @@
 from typing import Protocol
+from uuid import UUID
 from boilerplate import (
-    UniqueEntityId,
     CoreError,
-    RepositoryNotFoundError,
     RepositoryUnexpectedError,
-    DataIntegrityError,
 )
 from result import Either
 from domain.entities.example import ExampleEntity
-from src.dashboard.domain.read_models.overview_read_model import (
-    DashboardOverviewReadModel,
+from src.dashboard.infrastructure.adapters.dto.dashboard import (
+    DashboardReadModel,
 )
 
 
 class DashboardRepositoryProtocol(Protocol):
+
     async def get_by_id(
-        self, id: UniqueEntityId
-    ) -> Either[DashboardOverviewReadModel, None]: ...
+        self, aggregate_id: str | UUID, *, sort_key: str | None = None
+    ) -> Either[DashboardReadModel, CoreError]: ...
 
-    async def add(self, entity: ExampleEntity) -> Either[None, Exception]: ...
+    async def add(self, aggregate: DashboardReadModel) -> Either[None, CoreError]: ...
 
-    async def remove(self, entity: ExampleEntity) -> Either[None, Exception]: ...
+    async def remove(
+        self, aggregate: DashboardReadModel
+    ) -> Either[None, CoreError]: ...
 
-    async def exists(self, id: UniqueEntityId) -> Either[bool, Exception]: ...
+    async def exists(
+        self, aggregate_id: str | UUID, *, sort_key: str | None = None
+    ) -> Either[bool, RepositoryUnexpectedError]: ...

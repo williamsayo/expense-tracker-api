@@ -21,8 +21,8 @@ from src.dashboard.infrastructure.adapters.dto.dashboard import (
     ExpenseReadModel,
 )
 from src.dashboard.infrastructure.repositories.schema import (
-    BudgetItem,
-    ExpenseItem,
+    BudgetProjectionItem,
+    ExpenseProjectionItem,
     OverviewItem,
 )
 
@@ -82,7 +82,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
 
     async def get_expenses_projection(
         self, user_id: str, aggregate_id: str | UUID, *, sort_key: str | None = None
-    ) -> Either[list[ExpenseItem], RepositoryUnexpectedError]:
+    ) -> Either[list[ExpenseProjectionItem], RepositoryUnexpectedError]:
         try:
             response = await self.table.query(
                 KeyConditionExpression=Key("user_id").eq(user_id)
@@ -90,7 +90,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             )
 
             items = response["Items"]
-            expenses = cast(list[ExpenseItem], items)
+            expenses = cast(list[ExpenseProjectionItem], items)
 
             return result_ok(expenses)
 
@@ -99,7 +99,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
 
     async def get_budgets_projection(
         self, user_id: str, aggregate_id: str | UUID, *, sort_key: str | None = None
-    ) -> Either[list[BudgetItem], RepositoryUnexpectedError]:
+    ) -> Either[list[BudgetProjectionItem], RepositoryUnexpectedError]:
         try:
             response = await self.table.query(
                 KeyConditionExpression=Key("user_id").eq(user_id)
@@ -107,7 +107,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             )
             items = response["Items"]
 
-            return result_ok(cast(list[BudgetItem], items))
+            return result_ok(cast(list[BudgetProjectionItem], items))
 
         except Exception as error:
             return result_fail(RepositoryUnexpectedError(error))
@@ -204,12 +204,14 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             return result_fail(RepositoryUnexpectedError(error))
 
     async def exists(
-        self, aggregate_id: str, *, sort_key: str | None = None
+        self, aggregate_id: str | UUID, *, sort_key: str | None = None
     ) -> Either[bool, RepositoryUnexpectedError]:
         sk = {"sk": sort_key} if sort_key else {}
 
         try:
-            response = await self.table.get_item(Key={"user_id": aggregate_id, **sk})
+            response = await self.table.get_item(
+                Key={"user_id": str(aggregate_id), **sk}
+            )
             return result_ok("Item" in response)
         except Exception as error:
             return result_fail(RepositoryUnexpectedError(error))

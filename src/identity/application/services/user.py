@@ -44,6 +44,7 @@ class UserService(BaseService[UserDeps]):
     ]:
         default_avatar_url = "avatar/default.png"
         default_url = self.deps.cdn_service.generate_url("avatar/default.png")
+        
         email_result = EmailValueObject.create({"value": user.email})
 
         avatar_result = MediaValueObject.create(

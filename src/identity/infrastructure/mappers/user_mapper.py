@@ -7,6 +7,7 @@ from result import result_ok, result_fail, is_fail, Either, result_combine
 from src.identity.domain.entities.user_entity import UserEntity
 from src.identity.domain.value_objects.email_value_object import EmailValueObject
 from src.identity.infrastructure.repositories.schema import User
+from src.shared.domain.value_objects.media_value_object import MediaValueObject
 
 
 def create_unique_entity_id(
@@ -27,7 +28,7 @@ class UserMapper(BaseMapper):
             id=entity.id.value,
             username=entity.username,
             email=entity.email.value,
-            avatar=entity.avatar,
+            avatar=entity.avatar.key,
             password_hash=entity.hashed_password,
             first_name=entity.first_name,
             last_name=entity.last_name,
@@ -40,12 +41,13 @@ class UserMapper(BaseMapper):
     ) -> Either[UserEntity, CoreError]:
         id_result = create_unique_entity_id(persistence.id)
         email_result = EmailValueObject.create({"value": persistence.email})
-        combined_result = result_combine((id_result, email_result))
+        avatar_result = MediaValueObject.create({"media_key": persistence.avatar, "media_url": None})
+        combined_result = result_combine((id_result, email_result, avatar_result))
 
         if is_fail(combined_result):
             return result_fail(combined_result.value)
 
-        entity_id, email = combined_result.value
+        entity_id, email, avatar = combined_result.value
 
         return UserEntity.existing_user_entity(
             {
@@ -55,7 +57,7 @@ class UserMapper(BaseMapper):
                 "username": persistence.username,
                 "hashed_password": persistence.password_hash,
                 "created_at": persistence.created_at,
-                "avatar": persistence.avatar,
+                "avatar": avatar,
             },
             id=entity_id,
             version=persistence.version,

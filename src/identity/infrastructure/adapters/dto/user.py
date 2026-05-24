@@ -46,6 +46,13 @@ class UserReadModel(BaseReadModel, UserBaseModel):
             return email.value
         return email
 
+    @field_validator("avatar", mode="before")
+    @classmethod
+    def parse_avatar(cls, avatar) -> str | None:
+        if hasattr(avatar, "url"):
+            return avatar.url
+        return None
+
 
 class UserWriteModel(UserBaseModel):
     """Write model for user data."""

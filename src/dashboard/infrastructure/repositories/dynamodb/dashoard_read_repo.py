@@ -15,7 +15,11 @@ from boilerplate.errors.repository import DataIntegrityError
 from result import Either, is_fail, result_combine, result_fail, result_ok
 from src.core.config import get_settings
 from types_aiobotocore_dynamodb.service_resource import Table, DynamoDBServiceResource
-from src.dashboard.infrastructure.adapters.dto.dashboard import DashboardReadModel, BudgetReadModel, ExpenseReadModel
+from src.dashboard.infrastructure.adapters.dto.dashboard import (
+    DashboardReadModel,
+    BudgetReadModel,
+    ExpenseReadModel,
+)
 from src.dashboard.infrastructure.repositories.schema import (
     BudgetItem,
     ExpenseItem,
@@ -71,7 +75,10 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             return result_ok(read_model)
 
         except Exception as error:
-            return result_fail(RepositoryUnexpectedError(error))
+            print(f"Error retrieving item with ID {aggregate_id}: {error}")
+            return result_fail(
+                RepositoryUnexpectedError(error, "Unexpected error retrieving item")
+            )
 
     async def get_expenses_projection(
         self, user_id: str, aggregate_id: str | UUID, *, sort_key: str | None = None
@@ -143,7 +150,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
                     },
                     UpdateExpression="SET expenses = list_append(if_not_exists(expenses, :empty_list), :expense)",
                     ExpressionAttributeValues={
-                        ":expense": aggregate,
+                        ":expense": aggregate.model_dump(exclude={"name", "merchant"}),
                         ":empty_list": [],
                     },
                     ReturnValues="UPDATED_NEW",
@@ -153,7 +160,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
                     Item={
                         "user_id": user_id,
                         "sk": f"{self.expense_prefix}#{aggregate.id}",
-                        **(cast(Dict[str, Any], aggregate)),
+                        **aggregate.model_dump(exclude={"name", "merchant"}),
                     }
                 )
             return result_ok(None)
@@ -161,11 +168,11 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             return result_fail(RepositoryUnexpectedError(error))
 
     async def add_Budget(
-        self, user_id: str, aggregate: BudgetItem
+        self, user_id: str, aggregate: BudgetReadModel
     ) -> Either[None, RepositoryUnexpectedError]:
         try:
             exists = await self.exists(
-                user_id, sort_key=f"{self.budget_prefix}#{aggregate['id']}"
+                user_id, sort_key=f"{self.budget_prefix}#{aggregate.id}"
             )
 
             if is_fail(exists):
@@ -175,11 +182,11 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
                 await self.table.update_item(
                     Key={
                         "user_id": user_id,
-                        "sk": f"{self.budget_prefix}#{aggregate['id']}",
+                        "sk": f"{self.budget_prefix}#{aggregate.id}",
                     },
                     UpdateExpression="SET expenses = list_append(if_not_exists(expenses, :empty_list), :expense)",
                     ExpressionAttributeValues={
-                        ":expense": aggregate,
+                        ":expense": aggregate.model_dump(exclude={"name"}),
                         ":empty_list": [],
                     },
                     ReturnValues="UPDATED_NEW",
@@ -188,8 +195,8 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
                 await self.table.put_item(
                     Item={
                         "user_id": user_id,
-                        "sk": f"{self.budget_prefix}#{aggregate['id']}",
-                        **(cast(Dict[str, Any], aggregate)),
+                        "sk": f"{self.budget_prefix}#{aggregate.id}",
+                        **aggregate.model_dump(exclude={"name"}),
                     }
                 )
             return result_ok(None)

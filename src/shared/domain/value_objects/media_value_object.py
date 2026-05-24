@@ -8,8 +8,8 @@ from src.shared.infrastructure.adapters.ports.cdn import CDNService
 class MediaValueObjectProps(TypedDict):
     """Typed dictionary for media value object fields."""
 
-    file_key: str | None
-    file_url: str | None
+    media_key: str | None
+    media_url: str | None
 
 
 class MediaValueObject(ValueObject[MediaValueObjectProps]):
@@ -22,15 +22,19 @@ class MediaValueObject(ValueObject[MediaValueObjectProps]):
 
     @property
     def key(self) -> str | None:
-        return self.props["file_key"]
+        return self.props["media_key"]
 
     @property
     def url(self) -> str | None:
-        return self.props["file_url"]
+        return self.props["media_url"]
 
     @property
-    def has_file(self) -> bool:
+    def has_media(self) -> bool:
         return self.key is not None
+
+    @property
+    def has_url(self) -> bool:
+        return self.url is not None
 
     @classmethod
     def create(cls, props: MediaValueObjectProps) -> Either[Self, DomainRuleError]:
@@ -48,7 +52,7 @@ class MediaValueObject(ValueObject[MediaValueObjectProps]):
     ) -> Either["MediaValueObject", DomainRuleError]:
         if self.key is not None:
             result = MediaValueObject.create(
-                {"file_key": self.key, "file_url": cdn.generate_url(self.key)}
+                {"media_key": self.key, "media_url": cdn.generate_url(self.key)}
             )
             if is_fail(result):
                 return result

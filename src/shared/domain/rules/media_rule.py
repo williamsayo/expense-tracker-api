@@ -4,5 +4,5 @@ from pydantic import BaseModel, HttpUrl
 class MediaSchema(BaseModel):
     """Validation schema for media."""
 
-    key: str | None
-    url: HttpUrl | None
+    media_key: str | None
+    media_url: HttpUrl | None

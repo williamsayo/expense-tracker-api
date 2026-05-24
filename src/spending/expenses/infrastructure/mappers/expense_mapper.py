@@ -28,6 +28,7 @@ class ExpenseMapper(BaseMapper):
         return Expense(
             id=entity.id.value,
             name=entity.name,
+            merchant=entity.merchant,
             user_id=entity.user_id,
             budget_id=entity.budget_id,
             amount=entity.money.amount,
@@ -35,6 +36,7 @@ class ExpenseMapper(BaseMapper):
             category=entity.category.name,
             date=entity.date,
             note=entity.note,
+            receipt_url=entity.receipt,
             version=entity.version,
         )
 
@@ -62,6 +64,8 @@ class ExpenseMapper(BaseMapper):
                 "note": persistence.note,
                 "category": category,
                 "money": money,
+                "merchant": persistence.merchant,
+                "receipt": persistence.receipt_url,
             },
             id=entity_id,
             version=persistence.version,

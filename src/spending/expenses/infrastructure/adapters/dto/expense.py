@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from uuid import UUID
 from typing import List, Self
 from datetime import datetime, UTC
@@ -13,11 +13,11 @@ class ExpenseModel(BaseModel):
     """Data model for expense."""
 
     name: str | None = Field(None, description="Name of the expense")
+    merchant: str | None = Field(None, description="Merchant or vendor of the expense")
     note: str | None = Field(
         None,
         description="Note about the expense",
         json_schema_extra={"example": "Dinner with friends"},
-        
     )
 
 
@@ -34,6 +34,8 @@ class ExpenseReadModel(BaseReadModel):
     currency: Currency = Field(..., description="Currency of the expense")
     date: datetime = Field(..., description="Date the expense was made")
     note: str | None = Field(None, description="Note about the expense")
+    merchant: str | None = Field(None, description="Merchant or vendor of the expense")
+    receipt: HttpUrl | None = Field(None, description="Receipt for the expense")
 
     @classmethod
     def from_entity(cls, entity: ExpenseEntity) -> Self:
@@ -46,18 +48,9 @@ class ExpenseReadModel(BaseReadModel):
             date=entity.date,
             currency=entity.money.currency,
             name=entity.name,
+            merchant=entity.merchant,
+            receipt=None,  # Assuming receipt URL is not stored in the entity, adjust if needed
         )
-
-
-class ExpenseOverviewReadModel(BaseReadModel):
-    """Read model for expense data."""
-
-    user_id: UUID = Field(
-        ..., description="ID of the user who made the expense", exclude=True
-    )
-    total_spent: float
-    highest_expense: ExpenseReadModel | None
-    recent_expenses: List[ExpenseReadModel]
 
 
 class ExpenseWriteModel(ExpenseModel):

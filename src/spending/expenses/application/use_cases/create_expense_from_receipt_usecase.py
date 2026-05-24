@@ -80,11 +80,13 @@ class CreateExpenseFromReceiptUsecase(
         entity_result = ExpenseEntity.create(
             {
                 "name": expense_data["name"],
+                "merchant": expense_data["merchant"],
                 "user_id": user_id,
                 "category": category,
                 "money": money,
                 "date": datetime.fromisoformat(expense_data["date"]),
                 "note": expense_data["note"],
+                "receipt": key,
             }
         )
 
@@ -108,10 +110,10 @@ class CreateExpenseFromReceiptUsecase(
 
             if not is_fail(budget_result):
                 await uow.budget_repository.add(budget_result.value, auto_commit=False)
-                
+
             # TODO: Refactor to use domain events instead of directly publishing from the use case
             events = entity_result.value.uncommited_events
-            
+
             await self.deps.eventPublisher.dispatch_all(events)
 
             return result_ok(entity_result.value)

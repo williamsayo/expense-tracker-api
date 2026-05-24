@@ -1,19 +1,21 @@
 from fastapi.routing import APIRouter
-from fastapi import status, Depends, UploadFile, File
+from fastapi import status, Depends
 from typing import List, Annotated
 from result import is_fail
+from src.shared.application.dtos.upload import FileUploadDTO
 from src.shared.domain.types.category_types import Category
 from src.shared.utils.auth.dependencies import AuthDeps
 from src.shared.application.dtos.url_params import UrlParams
+from src.shared.utils.setup_dependencies import (
+    validate_image_upload,
+    validate_optional_image_upload,
+)
 from src.spending.expenses.application.services.expense_service import ExpenseService
 from src.spending.expenses.application.use_cases.create_expense_usecase import (
     CreateExpenseUsecase,
 )
 from src.spending.expenses.application.use_cases.create_expense_from_receipt_usecase import (
     CreateExpenseFromReceiptUsecase,
-)
-from src.spending.expenses.application.use_cases.retrieve_expense_overview_usecase import (
-    GetExpenseOverviewUsecase,
 )
 from src.spending.expenses.application.use_cases.retrieve_expense_list_usecase import (
     GetExpenseListUsecase,
@@ -28,7 +30,6 @@ from src.spending.expenses.infrastructure.adapters.dto.expense import (
     ExpenseReadModel,
     ExpenseUpdateModel,
     ExpenseWriteModel,
-    ExpenseOverviewReadModel,
 )
 
 router = APIRouter(
@@ -44,9 +45,10 @@ async def create_expense(
     expense_data: ExpenseWriteModel,
     auth: AuthDeps,
     use_case: Annotated[CreateExpenseUsecase, Depends()],
+    receipt: Annotated[FileUploadDTO, Depends(validate_optional_image_upload)],
 ):
     result = await use_case.execute(
-        {"user_id": auth.user_id, "expense_data": expense_data}
+        {"user_id": auth.user_id, "expense_data": expense_data, "receipt": receipt}
     )
 
     if is_fail(result):
@@ -62,7 +64,7 @@ async def create_expense(
 )
 async def create_expense_from_receipt(
     auth: AuthDeps,
-    receipt: Annotated[UploadFile, File(description="receipt of expense")],
+    receipt: Annotated[FileUploadDTO, Depends(validate_image_upload)],
     use_case: Annotated[CreateExpenseFromReceiptUsecase, Depends()],
 ):
     result = await use_case.execute({"user_id": auth.user_id, "receipt": receipt})
@@ -81,9 +83,10 @@ async def update_expense(
     expense_data: ExpenseUpdateModel,
     auth: AuthDeps,
     expense_service: Annotated[ExpenseService, Depends()],
+    receipt: Annotated[FileUploadDTO, Depends(validate_optional_image_upload)],
 ):
     result = await expense_service.update_expense_usecase(
-        aggregate_id, auth.user_id, expense_data
+        aggregate_id, auth.user_id, expense_data, receipt
     )
 
     if is_fail(result):
@@ -99,24 +102,6 @@ async def retrieve_all_expenses(
     use_case: Annotated[GetExpenseListUsecase, Depends()],
 ):
     result = await use_case.execute({"user_id": auth.user_id, "queryParams": params})
-
-    if is_fail(result):
-        raise result.value
-
-    return result.value
-
-
-@router.get(
-    "/overview",
-    response_model=ExpenseOverviewReadModel,
-    status_code=status.HTTP_200_OK,
-)
-async def expense_overview(
-    params: ExpenseUrlParams,
-    auth: AuthDeps,
-    overview_use_case: Annotated[GetExpenseOverviewUsecase, Depends()],
-):
-    result = await overview_use_case.execute(auth.user_id, params.page_size)
 
     if is_fail(result):
         raise result.value

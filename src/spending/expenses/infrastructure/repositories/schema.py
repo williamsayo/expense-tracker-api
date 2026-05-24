@@ -8,6 +8,7 @@ from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 
+
 class Expense(Base, TimeStampMixin, VersionMixin):
     """Represents expense."""
 
@@ -18,7 +19,7 @@ class Expense(Base, TimeStampMixin, VersionMixin):
         ForeignKey("budgets.id"), nullable=True, index=True
     )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
-    # merchant: Mapped[str] = mapped_column(String(255), nullable=True)
+    merchant: Mapped[str] = mapped_column(String(255), nullable=True)
     name: Mapped[str] = mapped_column(String(255), nullable=True)
     category: Mapped[Category] = mapped_column(Enum(Category), nullable=False)
     amount: Mapped[int] = mapped_column(nullable=False)
@@ -27,6 +28,7 @@ class Expense(Base, TimeStampMixin, VersionMixin):
     date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
+    receipt_url: Mapped[str] = mapped_column(String(255), nullable=True)
 
     __table_args__ = (Index("idx_expenses_user_category", "user_id", "category"),)
 

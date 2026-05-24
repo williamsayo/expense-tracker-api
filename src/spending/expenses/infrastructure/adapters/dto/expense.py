@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, HttpUrl
 from uuid import UUID
-from typing import List, Self
+from typing import Self
 from datetime import datetime, UTC
 from decimal import Decimal
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
@@ -49,7 +49,7 @@ class ExpenseReadModel(BaseReadModel):
             currency=entity.money.currency,
             name=entity.name,
             merchant=entity.merchant,
-            receipt=None,  # Assuming receipt URL is not stored in the entity, adjust if needed
+            receipt=entity.receipt.url, # TODO: Assuming the MediaValueObject has a url property that generates the URL from the key
         )
 
 

@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import TypedDict
-from fastapi import UploadFile
 from result import Either, is_fail, result_combine, result_fail, result_ok
 from uuid import UUID
 from boilerplate import (
@@ -10,6 +9,7 @@ from boilerplate import (
 )
 from src.shared.application.dtos.upload import FileUploadDTO
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.media_value_object import MediaValueObject
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from src.spending.shared.domain.services.expense_allocation_service import (
@@ -69,13 +69,18 @@ class CreateExpenseFromReceiptUsecase(
             {"amount": amount, "currency": expense_data["currency"]}
         )
         category_result = CategoryValueObject.create({"name": expense_data["category"]})
+        receipt_result = MediaValueObject.create(
+            {"media_key": key, "media_url": public_url}
+        )
 
-        combined_result = result_combine((money_result, category_result))
+        combined_result = result_combine(
+            (money_result, category_result, receipt_result)
+        )
 
         if is_fail(combined_result):
             return result_fail(combined_result.value)
 
-        money, category = combined_result.value
+        money, category, receipt = combined_result.value
 
         entity_result = ExpenseEntity.create(
             {
@@ -86,7 +91,7 @@ class CreateExpenseFromReceiptUsecase(
                 "money": money,
                 "date": datetime.fromisoformat(expense_data["date"]),
                 "note": expense_data["note"],
-                "receipt": key,
+                "receipt": receipt,
             }
         )
 

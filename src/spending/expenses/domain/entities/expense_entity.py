@@ -28,7 +28,7 @@ class ExpenseEntityProps(TypedDict):
     money: MoneyValueObject
     note: str | None
     date: datetime
-    receipt: str | None
+    receipt: MediaValueObject
 
 
 class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
@@ -78,7 +78,7 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         return self.props["merchant"]
 
     @property
-    def receipt(self) -> str | None:
+    def receipt(self) -> MediaValueObject:
         self._check_is_discarded_entity()
         return self.props["receipt"]
 
@@ -135,14 +135,15 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
     def update_receipt(
         self, receipt_key: str, url: str
     ) -> Either[None, DomainRuleError]:
+        self._check_is_discarded_entity()
         receipt_value_object = MediaValueObject.create(
-            {"file_key": receipt_key, "file_url": url}
+            {"media_key": receipt_key, "media_url": url}
         )
 
         if is_fail(receipt_value_object):
             return receipt_value_object
 
-        self.props["receipt"] = receipt_value_object.value.key
+        self.props["receipt"] = receipt_value_object.value
 
         return result_ok()
 

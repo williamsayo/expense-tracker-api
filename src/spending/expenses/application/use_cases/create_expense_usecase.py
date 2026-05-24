@@ -9,6 +9,7 @@ from boilerplate import (
 )
 from src.shared.application.dtos.upload import FileUploadDTO
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.media_value_object import MediaValueObject
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseWriteModel
@@ -44,9 +45,10 @@ class CreateExpenseUsecase(AsyncCommandUseCase[CreateExpenseInput, UniqueEntityI
         category_result = CategoryValueObject.create({"name": expense_data.category})
 
         receipt_url = None
+        receipt_key = None
 
         if receipt is not None:
-            receipt_url_result = await self.deps.media_repo.upload_receipt(
+            receipt_key_result = await self.deps.media_repo.upload_receipt(
                 receipt.filename,
                 receipt.file.file,
                 content_type=receipt.content_type,
@@ -54,17 +56,22 @@ class CreateExpenseUsecase(AsyncCommandUseCase[CreateExpenseInput, UniqueEntityI
                 user_id=user_id.hex,
             )
 
-            if is_fail(receipt_url_result):
-                return result_fail(receipt_url_result.value)
+            if is_fail(receipt_key_result):
+                return result_fail(receipt_key_result.value)
 
-            receipt_url = receipt_url_result.value
+            receipt_url = self.deps.cdn.generate_url(receipt_key_result.value)
+            receipt_key = receipt_key_result.value
 
-        combined_result = result_combine((money_result, category_result))
+        receipt = MediaValueObject.create(
+            {"media_key": receipt_key, "media_url": receipt_url}
+        )
+
+        combined_result = result_combine((money_result, category_result, receipt))
 
         if is_fail(combined_result):
             return result_fail(combined_result.value)
 
-        money, category = combined_result.value
+        money, category, receipt = combined_result.value
 
         entity_result = ExpenseEntity.create(
             {
@@ -75,7 +82,7 @@ class CreateExpenseUsecase(AsyncCommandUseCase[CreateExpenseInput, UniqueEntityI
                 "money": money,
                 "date": expense_data.date,
                 "note": expense_data.note,
-                "receipt": receipt_url,
+                "receipt": receipt,
             }
         )
 

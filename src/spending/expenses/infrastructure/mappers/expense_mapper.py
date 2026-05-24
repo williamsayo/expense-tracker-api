@@ -8,6 +8,7 @@ from boilerplate import (
 )
 from result import result_ok, result_fail, Either, is_fail, result_combine
 from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.media_value_object import MediaValueObject
 from src.shared.domain.value_objects.money_value_object import MoneyValueObject
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from src.spending.expenses.infrastructure.repositories.schema import Expense
@@ -36,7 +37,7 @@ class ExpenseMapper(BaseMapper):
             category=entity.category.name,
             date=entity.date,
             note=entity.note,
-            receipt_url=entity.receipt,
+            receipt_url=entity.receipt.key,
             version=entity.version,
         )
 
@@ -48,13 +49,18 @@ class ExpenseMapper(BaseMapper):
             {"amount": persistence.amount, "currency": persistence.currency}
         )
         category_result = CategoryValueObject.create({"name": persistence.category})
+        receipt_result = MediaValueObject.create(
+            {"media_key": persistence.receipt_url, "media_url": None}
+        )
 
-        combined_result = result_combine((id_result, money_result, category_result))
+        combined_result = result_combine(
+            (id_result, money_result, category_result, receipt_result)
+        )
 
         if is_fail(combined_result):
             return result_fail(combined_result.value)
 
-        entity_id, money, category = combined_result.value
+        entity_id, money, category, receipt = combined_result.value
 
         return ExpenseEntity.existing_entity(
             {
@@ -65,7 +71,7 @@ class ExpenseMapper(BaseMapper):
                 "category": category,
                 "money": money,
                 "merchant": persistence.merchant,
-                "receipt": persistence.receipt_url,
+                "receipt": receipt,
             },
             id=entity_id,
             version=persistence.version,

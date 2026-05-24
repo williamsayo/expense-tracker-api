@@ -1,10 +1,12 @@
 from datetime import datetime
 from typing import TypedDict, Self, Never, NotRequired
+from boilerplate import DomainRuleError
 from boilerplate.domain.aggregate_root import AggregateRoot
 from boilerplate.domain.unique_entity_id import UniqueEntityId
-from result import result_ok, Either
+from result import is_fail, result_fail, result_ok, Either
 from src.identity.domain.events.user_created import UserCreated
 from src.identity.domain.value_objects.email_value_object import EmailValueObject
+from src.shared.domain.value_objects.media_value_object import MediaValueObject
 
 
 class UserEntityProps(TypedDict):
@@ -16,7 +18,7 @@ class UserEntityProps(TypedDict):
     hashed_password: str
     username: str
     created_at: NotRequired[datetime]
-    avatar: str
+    avatar: MediaValueObject
 
 
 class UserEntity(AggregateRoot[UserEntityProps]):
@@ -56,7 +58,7 @@ class UserEntity(AggregateRoot[UserEntityProps]):
         return self.props["hashed_password"]
 
     @property
-    def avatar(self) -> str:
+    def avatar(self) -> MediaValueObject:
         self._check_is_discarded_entity()
         return self.props["avatar"]
 
@@ -74,16 +76,11 @@ class UserEntity(AggregateRoot[UserEntityProps]):
         firstname: str | None,
         lastname: str | None,
         username: str | None,
-        *,
-        avatar: str | None = None,
     ) -> None:
         self._check_is_discarded_entity()
 
         self._change_name(firstname, lastname)
         self._change_username(username)
-
-        if avatar is not None:
-            self.update_avatar(avatar)
 
         self._increment_version()
 
@@ -97,9 +94,19 @@ class UserEntity(AggregateRoot[UserEntityProps]):
         if username is not None:
             self.props["username"] = username
 
-    def update_avatar(self, avatar_url: str) -> None:
+    def update_avatar(
+        self, avatar_key: str, avatar_url: str
+    ) -> Either[None, DomainRuleError]:
         self._check_is_discarded_entity()
-        self.props["avatar"] = avatar_url
+        avatar_result = MediaValueObject.create(
+            {"media_key": avatar_key, "media_url": avatar_url}
+        )
+        if is_fail(avatar_result):
+            return result_fail(DomainRuleError(avatar_result.value))
+
+        self.props["avatar"] = avatar_result.value
+
+        return result_ok(None)
 
     def change_password(self, new_hashed_password: str) -> None:
         self._check_is_discarded_entity()

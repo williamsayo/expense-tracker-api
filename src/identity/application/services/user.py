@@ -26,6 +26,7 @@ from src.identity.infrastructure.services.encryption.argon2_encrption import (
     ArgonEncryptionService,
 )
 from src.identity.infrastructure.mappers.user_mapper import create_unique_entity_id
+from src.shared.domain.value_objects.media_value_object import MediaValueObject
 
 
 class UserService(BaseService[UserDeps]):
@@ -41,21 +42,32 @@ class UserService(BaseService[UserDeps]):
         UserEntity,
         DomainRuleError | RepositoryUnexpectedError | ConflictError | ConcurrencyError,
     ]:
+        default_avatar_url = "avatar/default.png"
+        default_url = self.deps.cdn_service.generate_url("avatar/default.png")
         email_result = EmailValueObject.create({"value": user.email})
+
+        avatar_result = MediaValueObject.create(
+            {"media_key": default_avatar_url, "media_url": default_url}
+        )
+
+        combined_result = result_combine((email_result, avatar_result))
+
+        if is_fail(combined_result):
+            return result_fail(combined_result.value)
+
+        email, avatar = combined_result.value
+
         encryption = ArgonEncryptionService()
         hashed_password = encryption.hash(user.password)
 
-        if is_fail(email_result):
-            return result_fail(email_result.value)
-
         entity_result = UserEntity.create(
             {
-                "email": email_result.value,
+                "email": email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "username": user.username,
                 "hashed_password": hashed_password,
-                "avatar": 'avatar/default.png',
+                "avatar": avatar,
             }
         )
 
@@ -148,9 +160,11 @@ class UserService(BaseService[UserDeps]):
 
         entity = entity_result.value
 
-        cloudfront_result = self.deps.cdn_service.generate_url(entity.avatar)
+        public_url = self.deps.cdn_service.generate_url(
+            entity.avatar.key or "avatar/default.png"
+        )
 
-        entity.update_avatar(cloudfront_result)
+        entity.update_avatar(entity.avatar.key or "avatar/default.png", public_url)
 
         return result_ok(entity_result.value)
 
@@ -195,7 +209,7 @@ class UserService(BaseService[UserDeps]):
         if avatar is not None:
             filename, content_type = avatar.filename, avatar.content_type
 
-            avatar_url = await self.deps.object_storage.upload_avatar(
+            avatar_key_result = await self.deps.object_storage.upload_avatar(
                 filename,
                 avatar.file.file,
                 content_type=content_type,
@@ -204,21 +218,21 @@ class UserService(BaseService[UserDeps]):
                 original_filename=avatar.original_filename,
             )
 
-            if is_fail(avatar_url):
-                return result_fail(avatar_url.value)
+            if is_fail(avatar_key_result):
+                return result_fail(avatar_key_result.value)
 
-            key = avatar_url.value
+            key = avatar_key_result.value
+            url = self.deps.cdn_service.generate_url(key)
 
-            entity.update_avatar(key)
+            avatar_result = entity.update_avatar(key, url)
+
+            if is_fail(avatar_result):
+                return result_fail(avatar_result.value)
 
         entity_result = await self.deps.repo.add(entity)
 
         if is_fail(entity_result):
             return result_fail(entity_result.value)
-
-        if entity.avatar:
-            public_url = self.deps.cdn_service.generate_url(entity.avatar)
-            entity.update_avatar(public_url)
 
         return result_ok(entity)
 
@@ -306,7 +320,7 @@ class UserService(BaseService[UserDeps]):
 
         entity = entity_result.value
 
-        upload_result = await self.deps.object_storage.upload_avatar(
+        avatar_key_result = await self.deps.object_storage.upload_avatar(
             filename,
             avatar.file.file,
             content_type=content_type,
@@ -315,18 +329,20 @@ class UserService(BaseService[UserDeps]):
             original_filename=avatar.original_filename,
         )
 
-        if is_fail(upload_result):
-            return result_fail(upload_result.value)
+        if is_fail(avatar_key_result):
+            return result_fail(avatar_key_result.value)
 
-        key = upload_result.value
+        key = avatar_key_result.value
+        public_url = self.deps.cdn_service.generate_url(key)
 
-        entity.update_avatar(key)
+        result = entity.update_avatar(key, public_url)
+
+        if is_fail(result):
+            return result_fail(result.value)
 
         entity_result = await self.deps.repo.add(entity)
 
         if is_fail(entity_result):
             return result_fail(entity_result.value)
-
-        public_url = self.deps.cdn_service.generate_url(key)
 
         return result_ok(public_url)

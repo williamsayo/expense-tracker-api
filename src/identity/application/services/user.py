@@ -55,7 +55,7 @@ class UserService(BaseService[UserDeps]):
                 "last_name": user.last_name,
                 "username": user.username,
                 "hashed_password": hashed_password,
-                "avatar": None,
+                "avatar": 'avatar/default.png',
             }
         )
 
@@ -148,13 +148,9 @@ class UserService(BaseService[UserDeps]):
 
         entity = entity_result.value
 
-        if entity.avatar:
-            cloudfront_result = self.deps.cdn_service.signed_url(entity.avatar)
+        cloudfront_result = self.deps.cdn_service.generate_url(entity.avatar)
 
-            if is_fail(cloudfront_result):
-                return result_fail(cloudfront_result.value)
-
-            entity.update_avatar(cloudfront_result.value)
+        entity.update_avatar(cloudfront_result)
 
         return result_ok(entity_result.value)
 

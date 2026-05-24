@@ -16,7 +16,7 @@ class UserEntityProps(TypedDict):
     hashed_password: str
     username: str
     created_at: NotRequired[datetime]
-    avatar: str | None
+    avatar: str
 
 
 class UserEntity(AggregateRoot[UserEntityProps]):
@@ -56,7 +56,7 @@ class UserEntity(AggregateRoot[UserEntityProps]):
         return self.props["hashed_password"]
 
     @property
-    def avatar(self) -> str | None:
+    def avatar(self) -> str:
         self._check_is_discarded_entity()
         return self.props["avatar"]
 

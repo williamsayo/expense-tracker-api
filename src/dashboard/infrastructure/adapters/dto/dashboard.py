@@ -119,9 +119,6 @@ class BudgetReadModel(BaseReadModel):
 
 class DashboardReadModel(BaseModel):
     user_id: str = Field(..., description="The ID of the user.", exclude=True)
-    active_budget: BudgetReadModel | None = Field(
-        ..., description="The active budget for the user in the period."
-    )
     total_spent: int = Field(
         ..., description="The total amount spent by the user in the period."
     )
@@ -131,11 +128,21 @@ class DashboardReadModel(BaseModel):
     top_expense: ExpenseReadModel | None = Field(
         default=None, description="The most expensive expense in the period."
     )
-    recent_expenses: list[ExpenseReadModel] = Field(
-        ...,
-        description="A list of recent expenses by date for the user.",
+    active_budget: BudgetReadModel | None = Field(
+        ..., description="The active budget for the user in the period."
     )
     top_category: list[CategoryReadModel] = Field(
         ...,
         description="A list of top categories by amount spent for the user.",
     )
+    recent_expenses: list[ExpenseReadModel] = Field(
+        ...,
+        description="A list of recent expenses by date for the user.",
+    )
+
+    # recent_budgets: list[BudgetReadModel] = Field(
+    #     ..., description="List of recent budgets for the user"
+    # )
+    # upcoming_budget: BudgetReadModel | None = Field(
+    #     ..., description="upcoming budgets for the user"
+    # )

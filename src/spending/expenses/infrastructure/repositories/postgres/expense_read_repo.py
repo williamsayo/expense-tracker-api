@@ -16,7 +16,6 @@ from result import result_fail, result_ok, Either
 from src.shared.utils.build_query import AppFilter, build_query
 from src.spending.expenses.infrastructure.adapters.dto.expense import (
     ExpenseReadModel,
-    ExpenseOverviewReadModel,
 )
 from src.spending.expenses.infrastructure.repositories.schema import Expense
 
@@ -74,56 +73,56 @@ class ExpenseReadRepository(AsyncReadRepository[ExpenseReadModel]):
 
         return result_ok(read_model)
 
-    async def get_expense_overview(self, options: GetAllOptions[AppFilter]) -> Either[
-        ExpenseOverviewReadModel,
-        RepositoryUnexpectedError | DataIntegrityError,
-    ]:
-        user_id = options.get("filter", {}).get("user_id")
+    # async def get_expense_overview(self, options: GetAllOptions[AppFilter]) -> Either[
+    #     ExpenseOverviewReadModel,
+    #     RepositoryUnexpectedError | DataIntegrityError,
+    # ]:
+    #     user_id = options.get("filter", {}).get("user_id")
 
-        if user_id is None:
-            return result_fail(
-                RepositoryUnexpectedError(
-                    Exception("User ID filter is required for overview"),
-                    "User ID filter is required for overview",
-                )
-            )
+    #     if user_id is None:
+    #         return result_fail(
+    #             RepositoryUnexpectedError(
+    #                 Exception("User ID filter is required for overview"),
+    #                 "User ID filter is required for overview",
+    #             )
+    #         )
 
-        statement = build_query(Expense.__table__, options)
+    #     statement = build_query(Expense.__table__, options)
 
-        recent_expenses = statement.order_by(Expense.date.desc()).limit(
-            options.get("limit", 5)
-        )
+    #     recent_expenses = statement.order_by(Expense.date.desc()).limit(
+    #         options.get("limit", 5)
+    #     )
 
-        total_spent = select(func.sum(Expense.amount).label("total_spent")).where(
-            Expense.user_id == user_id
-        )
+    #     total_spent = select(func.sum(Expense.amount).label("total_spent")).where(
+    #         Expense.user_id == user_id
+    #     )
 
-        highest_spent = statement.order_by(Expense.amount.desc())
+    #     highest_spent = statement.order_by(Expense.amount.desc())
 
-        result = await self.db.execute(recent_expenses)
-        persistence_output = result.mappings().all()
+    #     result = await self.db.execute(recent_expenses)
+    #     persistence_output = result.mappings().all()
 
-        highest_spent_result = await self.db.execute(highest_spent)
-        highest_spent_output = highest_spent_result.mappings().first()
+    #     highest_spent_result = await self.db.execute(highest_spent)
+    #     highest_spent_output = highest_spent_result.mappings().first()
 
-        total_spent_result = await self.db.scalars(total_spent)
-        total_spent_output = total_spent_result.first()
+    #     total_spent_result = await self.db.scalars(total_spent)
+    #     total_spent_output = total_spent_result.first()
 
-        read_model = [
-            ExpenseReadModel(**persistence) for persistence in persistence_output
-        ]
+    #     read_model = [
+    #         ExpenseReadModel(**persistence) for persistence in persistence_output
+    #     ]
 
-        if highest_spent_output is not None:
-            highest_spent_output = ExpenseReadModel(**highest_spent_output)
+    #     if highest_spent_output is not None:
+    #         highest_spent_output = ExpenseReadModel(**highest_spent_output)
 
-        overview_read_model = ExpenseOverviewReadModel(
-            user_id=user_id,
-            recent_expenses=read_model,
-            total_spent=total_spent_output if total_spent_output else 0,
-            highest_expense=highest_spent_output,
-        )
+    #     overview_read_model = ExpenseOverviewReadModel(
+    #         user_id=user_id,
+    #         recent_expenses=read_model,
+    #         total_spent=total_spent_output if total_spent_output else 0,
+    #         highest_expense=highest_spent_output,
+    #     )
 
-        return result_ok(overview_read_model)
+    #     return result_ok(overview_read_model)
 
     async def first(self, options: GetOptions[AppFilter]) -> Either[
         ExpenseReadModel,

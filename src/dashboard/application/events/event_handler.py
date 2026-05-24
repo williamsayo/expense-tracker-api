@@ -3,10 +3,10 @@ from typing import Any, Self
 from boilerplate import EventHandler
 from result import is_fail
 from types_aiobotocore_dynamodb.service_resource import Table, DynamoDBServiceResource
-from ..use_cases.update_expense_projection import (
+from ..projections.update_expense_projection import (
     UpdateExpenseProjectionUsecase,
 )
-from ..use_cases.update_budget_projection_usecase import (
+from ..projections.update_budget_projection_usecase import (
     UpdateBudgetProjectionUsecase,
 )
 from src.dashboard.infrastructure.adapters.dto.event import (
@@ -15,7 +15,7 @@ from src.dashboard.infrastructure.adapters.dto.event import (
     UserCreatedEventPayload,
 )
 from src.dashboard.utils.setup_dependencies import OverviewDependency
-from ..use_cases.create_overview_usecase import (
+from ..projections.create_overview_usecase import (
     CreateOverviewUsecase,
 )
 from src.dashboard.utils.setup_dependencies import get_dashboard_repository
@@ -40,7 +40,7 @@ class OnUserCreated(EventHandler[UserCreatedEventPayload]):
             "total_spent": Decimal("0"),
             "total_budgeted": Decimal("0"),
             "top_expense": None,
-            "top_category": {},
+            "top_category": [],
             "recent_expenses": [],
             "active_budget": None,
         }

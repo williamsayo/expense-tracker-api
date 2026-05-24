@@ -14,18 +14,23 @@ from src.shared.domain.types.user_id import UserId
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.spending.expenses.domain.events.expense_created import ExpenseCreated
+from src.spending.expenses.domain.value_objects.receipt_value_object import (
+    ReceiptValueObject,
+)
 
 
 class ExpenseEntityProps(TypedDict):
     """Typed dictionary for expense entity fields."""
 
     name: str | None
+    merchant: str | None
     user_id: UserId
     budget_id: NotRequired[UUID | str]
     category: CategoryValueObject
     money: MoneyValueObject
     note: str | None
     date: datetime
+    receipt: str | None
 
 
 class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
@@ -70,6 +75,16 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         return self.props["date"]
 
     @property
+    def merchant(self) -> str | None:
+        self._check_is_discarded_entity()
+        return self.props["merchant"]
+
+    @property
+    def receipt(self) -> str | None:
+        self._check_is_discarded_entity()
+        return self.props["receipt"]
+
+    @property
     def budget_id(self) -> UUID | str | None:
         self._check_is_discarded_entity()
         return self.props.get("budget_id")
@@ -86,45 +101,72 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         note: str | None,
         date: datetime | None,
         name: str | None,
+        merchant: str | None,
     ) -> Either[None, DomainRuleError]:
         self._check_is_discarded_entity()
+
         if amount is not None or currency is not None:
-            amount_value_object = (
+            amount_cents = (
                 MoneyValueObject.cents(amount)
                 if amount is not None
-                else self.props["money"].amount
+                else self.money.amount
             )
-            money_result = MoneyValueObject.create(
-                {
-                    "amount": amount_value_object,
-                    "currency": currency or self.props["money"].currency,
-                }
+            self._update_money(
+                amount=amount_cents,
+                currency=currency or self.money.currency,
             )
-
-            if is_fail(money_result):
-                return money_result
-
-            self.props["money"] = money_result.value
 
         if category is not None:
-            category_result = CategoryValueObject.create({"name": category})
+            self._update_category(category)
 
-            if is_fail(category_result):
-                return category_result
-
-            self.props["category"] = category_result.value
+        if date is not None:
+            self._update_date(date)
 
         if note is not None:
             self.props["note"] = note
 
-        if date is not None:
-            self.props["date"] = date
-
         if name is not None:
             self.props["name"] = name
 
+        if merchant is not None:
+            self.props["merchant"] = merchant
+
         self._increment_version()
         return result_ok()
+
+    def update_receipt(self, receipt_key: str) -> Either[None, DomainRuleError]:
+        receipt_value_object = ReceiptValueObject.create({"receipt_key": receipt_key})
+
+        if is_fail(receipt_value_object):
+            return receipt_value_object
+
+        self.props["receipt"] = receipt_value_object.value.key
+
+        return result_ok()
+
+    def _update_date(self, date: datetime) -> None:
+        self.props["date"] = date
+
+    def _update_category(self, category: Category) -> None:
+        category_result = CategoryValueObject.create({"name": category})
+
+        if is_fail(category_result):
+            raise ValueError(f"Invalid category: {category}")
+
+        self.props["category"] = category_result.value
+
+    def _update_money(self, amount: int, currency: Currency) -> None:
+        money_result = MoneyValueObject.create(
+            {
+                "amount": amount,
+                "currency": currency,
+            }
+        )
+
+        if is_fail(money_result):
+            raise ValueError(f"Invalid amount or currency: {amount} {currency}")
+
+        self.props["money"] = money_result.value
 
     @classmethod
     def create(

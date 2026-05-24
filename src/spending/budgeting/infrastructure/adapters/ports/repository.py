@@ -16,7 +16,6 @@ from src.shared.utils.build_query import AppFilter
 from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
 from src.spending.budgeting.infrastructure.adapters.dto.budget import (
     BudgetReadModel,
-    BudgetOverviewReadModel,
 )
 
 
@@ -95,8 +94,3 @@ class BudgetReadRepositoryProtocol(Protocol):
     async def remove_all(
         self, options: GetAllOptions[AppFilter]
     ) -> Either[int, RepositoryUnexpectedError | ConcurrencyError | ConflictError]: ...
-
-    async def get_budget_overview(self, options: GetAllOptions[AppFilter]) -> Either[
-        BudgetOverviewReadModel,
-        RepositoryUnexpectedError,
-    ]: ...

@@ -15,7 +15,7 @@ from boilerplate import (
 from src.shared.domain.types.user_id import UserId
 from src.shared.utils.build_query import AppFilter
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
-from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseReadModel,ExpenseOverviewReadModel
+from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseReadModel
 
 
 class ExpenseRepositoryProtocol(Protocol):
@@ -69,9 +69,4 @@ class ExpenseReadRepositoryProtocol(Protocol):
     async def first(self, options: GetOptions[AppFilter]) -> Either[
         ExpenseReadModel,
         RepositoryNotFoundError | DataIntegrityError | RepositoryUnexpectedError,
-    ]: ...
-
-    async def get_expense_overview(self, options: GetAllOptions[AppFilter]) -> Either[
-        ExpenseOverviewReadModel,
-        RepositoryUnexpectedError | DataIntegrityError,
     ]: ...

@@ -134,7 +134,7 @@ async def retrieve_user_details(
     "/update_profile", response_model=UserReadModel, status_code=status.HTTP_200_OK
 )
 async def update_user_details(
-    user_data: UserUpdateModel,
+    user_data: Annotated[UserUpdateModel, Depends(UserUpdateModel.form)],
     auth: AuthDeps,
     user_service: Annotated[UserService, Depends()],
     avatar: Annotated[

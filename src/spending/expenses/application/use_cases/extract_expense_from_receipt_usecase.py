@@ -18,13 +18,13 @@ from src.spending.shared.domain.services.expense_allocation_service import (
 from src.spending.shared.utils.setup_dependencies import SpendingDeps
 
 
-class CreateExpenseFromReceiptInput(TypedDict):
+class ExtractExpenseFromReceiptInput(TypedDict):
     user_id: UUID
     receipt: FileUploadDTO
 
 
-class CreateExpenseFromReceiptUsecase(
-    AsyncCommandUseCase[CreateExpenseFromReceiptInput, ExpenseEntity]
+class ExtractExpenseFromReceiptUsecase(
+    AsyncCommandUseCase[ExtractExpenseFromReceiptInput, ExpenseEntity]
 ):
 
     def __init__(self, deps: SpendingDeps):
@@ -64,7 +64,7 @@ class CreateExpenseFromReceiptUsecase(
 
         expense_data = expense_result.value
 
-        amount = MoneyValueObject.cents(expense_data["total_amount"])
+        amount = MoneyValueObject.cents(expense_data["amount"])
         money_result = MoneyValueObject.create(
             {"amount": amount, "currency": expense_data["currency"]}
         )
@@ -95,30 +95,7 @@ class CreateExpenseFromReceiptUsecase(
             }
         )
 
-        async with self.deps.uow as uow:
-            expense_allocation_domain_service = ExpenseAllocationService(
-                uow.budget_repository
-            )
+        if is_fail(entity_result):
+            return entity_result
 
-            budget_result = (
-                await expense_allocation_domain_service.allocate_expense_to_budget(
-                    entity_result.value
-                )
-            )
-
-            result = await uow.expense_repository.add(
-                entity_result.value, auto_commit=False
-            )
-
-            if is_fail(result):
-                return result
-
-            if not is_fail(budget_result):
-                await uow.budget_repository.add(budget_result.value, auto_commit=False)
-
-            # TODO: Refactor to use domain events instead of directly publishing from the use case
-            events = entity_result.value.uncommited_events
-
-            await self.deps.eventPublisher.dispatch_all(events)
-
-            return result_ok(entity_result.value)
+        return result_ok(entity_result.value)

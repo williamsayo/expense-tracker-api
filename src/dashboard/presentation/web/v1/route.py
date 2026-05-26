@@ -6,7 +6,7 @@ from result import is_fail
 from src.dashboard.application.use_cases.retrieve_overview_usecase import (
     GetOverviewUsecase,
 )
-from src.dashboard.infrastructure.adapters.dto.dashboard import DashboardReadModel
+from src.dashboard.infrastructure.adapters.dto.dashboard import DashboardPublicModel
 from src.shared.utils.auth.dependencies import AuthDeps
 
 router = APIRouter(
@@ -18,7 +18,7 @@ router = APIRouter(
 @router.get(
     "/overview",
     status_code=status.HTTP_200_OK,
-    response_model=DashboardReadModel,
+    response_model=DashboardPublicModel,
     summary="Get an overview spending data",
     description="Returns an overview of spending data for the dashboard.",
     response_description="An overview of spending data.",

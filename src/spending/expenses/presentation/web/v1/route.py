@@ -42,7 +42,7 @@ ExpenseUrlParams = Annotated[UrlParams, Depends()]
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_expense(
-    expense_data: ExpenseWriteModel,
+    expense_data: Annotated[ExpenseWriteModel, Depends(ExpenseWriteModel.form)],
     auth: AuthDeps,
     use_case: Annotated[CreateExpenseUsecase, Depends()],
     receipt: Annotated[FileUploadDTO, Depends(validate_optional_image_upload)],
@@ -80,7 +80,7 @@ async def create_expense_from_receipt(
 )
 async def update_expense(
     aggregate_id: str,
-    expense_data: ExpenseUpdateModel,
+    expense_data: Annotated[ExpenseUpdateModel, Depends(ExpenseUpdateModel.form)],
     auth: AuthDeps,
     expense_service: Annotated[ExpenseService, Depends()],
     receipt: Annotated[FileUploadDTO, Depends(validate_optional_image_upload)],

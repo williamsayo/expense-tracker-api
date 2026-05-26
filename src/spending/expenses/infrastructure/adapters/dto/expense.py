@@ -7,6 +7,7 @@ from src.shared.infrastructure.adapters.dto.base import BaseReadModel
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from fastapi import Form
 
 
 class ExpenseModel(BaseModel):
@@ -49,7 +50,7 @@ class ExpenseReadModel(BaseReadModel):
             currency=entity.money.currency,
             name=entity.name,
             merchant=entity.merchant,
-            receipt=entity.receipt.url, # TODO: Assuming the MediaValueObject has a url property that generates the URL from the key
+            receipt=entity.receipt.url,  # TODO: Assuming the MediaValueObject has a url property that generates the URL from the key
         )
 
 
@@ -69,6 +70,41 @@ class ExpenseWriteModel(ExpenseModel):
         examples=[100.00],
     )
 
+    @classmethod
+    def form(
+        cls,
+        date: datetime = Form(
+            default=datetime.now(UTC), description="Date the expense was made"
+        ),
+        category: Category = Form(..., description="Category of the expense"),
+        amount: Decimal = Form(
+            ...,
+            decimal_places=2,
+            ge=0.1,
+            description="amount of the expense in the specified currency",
+            examples=[100.00],
+        ),
+        currency: Currency = Form(default=Currency.EUR),
+        name: str | None = Form(None, description="Name of the expense"),
+        merchant: str | None = Form(
+            None, description="Merchant or vendor of the expense"
+        ),
+        note: str | None = Form(
+            None,
+            description="Note about the expense",
+            json_schema_extra={"example": "Dinner with friends"},
+        ),
+    ):
+        return cls(
+            date=date,
+            category=category,
+            amount=amount,
+            currency=currency,
+            name=name,
+            note=note,
+            merchant=merchant,
+        )
+
 
 class ExpenseUpdateModel(ExpenseModel):
     """Update model for expense data."""
@@ -77,3 +113,30 @@ class ExpenseUpdateModel(ExpenseModel):
     category: Category | None = Field(None, description="Category of the expense")
     amount: Decimal | None = Field(None, decimal_places=2, ge=Decimal("0.1"))
     currency: Currency | None = Field(default=None)
+
+    @classmethod
+    def form(
+        cls,
+        date: datetime | None = Form(None, description="Date the expense was made"),
+        category: Category | None = Form(None, description="Category of the expense"),
+        amount: Decimal | None = Form(None, decimal_places=2, ge=0.1),
+        currency: Currency | None = Form(None),
+        name: str | None = Form(None, description="Name of the expense"),
+        merchant: str | None = Form(
+            None, description="Merchant or vendor of the expense"
+        ),
+        note: str | None = Form(
+            None,
+            description="Note about the expense",
+            json_schema_extra={"example": "Dinner with friends"},
+        ),
+    ):
+        return cls(
+            date=date,
+            category=category,
+            amount=amount,
+            currency=currency,
+            name=name,
+            note=note,
+            merchant=merchant,
+        )

@@ -11,7 +11,7 @@ from src.shared.infrastructure.adapters.dto.base import BaseReadModel
 
 
 class ExpenseProjectionReadModel(BaseModel):
-    id: str = Field(..., description="The ID of the expense.", exclude=True)
+    id: str = Field(..., description="The ID of the expense.")
     amount: int = Field(..., description="The amount of the expense in cents.")
     currency: str = Field(
         default="EUR", description="The currency of the expense amount."
@@ -33,7 +33,7 @@ class ExpenseProjectionReadModel(BaseModel):
 
 
 class BudgetProjectionReadModel(BaseModel):
-    id: str = Field(..., description="The ID of the budget.", exclude=True)
+    id: str = Field(..., description="The ID of the budget.")
     total_amount: int = Field(..., description="The amount of the budget in cents.")
     spent_amount: int = Field(
         ..., description="The amount spent in the budget in cents."
@@ -71,7 +71,7 @@ class CategoryReadModel(BaseModel):
 
 
 class ExpenseReadModel(BaseModel):
-    id: str = Field(..., description="The ID of the expense.", exclude=True)
+    id: str = Field(..., description="The ID of the expense.")
     name: str | None = Field(..., description="The name of the expense.")
     merchant: str | None = Field(..., description="The merchant of the expense.")
     amount: int = Field(..., description="The amount of the expense in cents.")
@@ -96,7 +96,7 @@ class ExpenseReadModel(BaseModel):
 
 
 class BudgetReadModel(BaseReadModel):
-    id: str = Field(..., description="The ID of the budget.", exclude=True)
+    id: str = Field(..., description="The ID of the budget.")
     name: str | None = Field(default=None, description="The name of the budget.")
     total_amount: int = Field(..., description="The amount of the budget in cents.")
     start_date: str = Field(..., description="The start date of the budget.")
@@ -131,7 +131,7 @@ class DashboardReadModel(BaseModel):
     active_budget: BudgetReadModel | None = Field(
         ..., description="The active budget for the user in the period."
     )
-    top_category: list[CategoryReadModel] = Field(
+    top_categories: list[CategoryReadModel] = Field(
         ...,
         description="A list of top categories by amount spent for the user.",
     )
@@ -139,10 +139,58 @@ class DashboardReadModel(BaseModel):
         ...,
         description="A list of recent expenses by date for the user.",
     )
+    recent_budgets: list[BudgetReadModel] = Field(
+        ..., description="List of recent budgets for the user"
+    )
+    upcoming_budget: BudgetReadModel | None = Field(
+        ..., description="upcoming budgets for the user"
+    )
 
-    # recent_budgets: list[BudgetReadModel] = Field(
-    #     ..., description="List of recent budgets for the user"
-    # )
-    # upcoming_budget: BudgetReadModel | None = Field(
-    #     ..., description="upcoming budgets for the user"
-    # )
+
+# Public model for API responses, excluding user_id and other internal fields
+
+class BudgetPublicModel(BaseReadModel):
+    name: str | None = Field(default=None, description="The name of the budget.")
+    total_amount: int = Field(..., description="The amount of the budget in cents.")
+    start_date: str = Field(..., description="The start date of the budget.")
+    end_date: str = Field(..., description="The end date of the budget.")
+
+
+class ExpensePublicModel(BaseModel):
+    name: str | None = Field(..., description="The name of the expense.")
+    merchant: str | None = Field(..., description="The merchant of the expense.")
+    amount: int = Field(..., description="The amount of the expense in cents.")
+    currency: str = Field(
+        default="EUR", description="The currency of the expense amount."
+    )
+    category: str = Field(..., description="The category of the expense.")
+    date: str = Field(..., description="The date of the expense.")
+
+
+class DashboardPublicModel(BaseModel):
+    total_spent: int = Field(
+        ..., description="The total amount spent by the user in the period."
+    )
+    total_budgeted: int = Field(
+        ..., description="The total amount budgeted for the period."
+    )
+    top_expense: ExpensePublicModel | None = Field(
+        default=None, description="The most expensive expense in the period."
+    )
+    active_budget: BudgetPublicModel | None = Field(
+        ..., description="The active budget for the user in the period."
+    )
+    top_categories: list[CategoryReadModel] = Field(
+        ...,
+        description="A list of top categories by amount spent for the user.",
+    )
+    recent_expenses: list[ExpensePublicModel] = Field(
+        ...,
+        description="A list of recent expenses by date for the user.",
+    )
+    recent_budgets: list[BudgetPublicModel] = Field(
+        ..., description="List of recent budgets for the user"
+    )
+    upcoming_budget: BudgetPublicModel | None = Field(
+        ..., description="upcoming budgets for the user"
+    )

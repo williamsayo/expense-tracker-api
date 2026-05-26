@@ -35,7 +35,7 @@ class GetOverviewUsecase(AsyncQueryUseCase[GetOverviewInput, DashboardReadModel]
         user_id = str(input["user_id"])
         period = input["period"]
 
-        overview_result = await self.deps.repository.get_by_id(user_id,sort_key=f"overview#{period.isoformat()}")
+        overview_result = await self.deps.repository.get_by_id(user_id,sort_key=f"overview#{period.strftime('%Y-%m')}")
 
         if is_fail(overview_result):
             return overview_result

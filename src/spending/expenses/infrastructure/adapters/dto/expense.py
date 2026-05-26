@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 from uuid import UUID
 from typing import Self
 from datetime import datetime, UTC
@@ -37,6 +37,13 @@ class ExpenseReadModel(BaseReadModel):
     note: str | None = Field(None, description="Note about the expense")
     merchant: str | None = Field(None, description="Merchant or vendor of the expense")
     receipt: HttpUrl | None = Field(None, description="Receipt for the expense")
+
+    @field_validator("receipt", mode="before")
+    @classmethod
+    def parse_receipt(cls, receipt) -> str | None:
+        if hasattr(receipt, "url"):
+            return receipt.url
+        return None
 
     @classmethod
     def from_entity(cls, entity: ExpenseEntity) -> Self:

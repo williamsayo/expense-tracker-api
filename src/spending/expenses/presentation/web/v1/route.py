@@ -14,8 +14,8 @@ from src.spending.expenses.application.services.expense_service import ExpenseSe
 from src.spending.expenses.application.use_cases.create_expense_usecase import (
     CreateExpenseUsecase,
 )
-from src.spending.expenses.application.use_cases.create_expense_from_receipt_usecase import (
-    CreateExpenseFromReceiptUsecase,
+from src.spending.expenses.application.use_cases.extract_expense_from_receipt_usecase import (
+    ExtractExpenseFromReceiptUsecase,
 )
 from src.spending.expenses.application.use_cases.retrieve_expense_list_usecase import (
     GetExpenseListUsecase,
@@ -62,10 +62,10 @@ async def create_expense(
     response_model=ExpenseReadModel,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_expense_from_receipt(
+async def extract_expense_from_receipt(
     auth: AuthDeps,
     receipt: Annotated[FileUploadDTO, Depends(validate_image_upload)],
-    use_case: Annotated[CreateExpenseFromReceiptUsecase, Depends()],
+    use_case: Annotated[ExtractExpenseFromReceiptUsecase, Depends()],
 ):
     result = await use_case.execute({"user_id": auth.user_id, "receipt": receipt})
 

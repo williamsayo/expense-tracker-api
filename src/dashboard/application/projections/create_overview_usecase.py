@@ -34,7 +34,7 @@ class CreateOverviewUsecase(AsyncCommandUseCase[CreateOverviewInput]):
         dashboard_overview = DashboardReadModel(user_id=user_id, **data)
 
         result = await self.deps.repository.add(
-            dashboard_overview, sort_key=f"overview#{date.today().isoformat()}"
+            dashboard_overview, sort_key=f"overview#{date.today().strftime('%Y-%m')}"
         )
 
         if is_fail(result):

@@ -68,7 +68,7 @@ class ExpenseProjectionService:
 
         category = CategoryReadModel(name=data.category, amount=data.amount)
 
-        expense_projection_result = await self.deps.repository.add_expense(
+        expense_projection_result = await self.apply_expense_projection(
             user_id, expense_read_model
         )
 
@@ -96,14 +96,14 @@ class ExpenseProjectionService:
         )
 
         top_category = expense_projection_service.update_top_categories(
-            overview.top_category.copy(), category
+            overview.top_categories.copy(), category
         )
 
         dashboard_overview = overview.model_copy(
             update={
                 "total_spent": total_spent,
                 "top_expense": top_expense,
-                "top_category": top_category,
+                "top_categories": top_category,
                 "recent_expenses": recent_expenses,
             },
         )

@@ -42,9 +42,9 @@ class UserService(BaseService[UserDeps]):
         UserEntity,
         DomainRuleError | RepositoryUnexpectedError | ConflictError | ConcurrencyError,
     ]:
-        default_avatar_url = "avatar/default.png"
-        default_url = self.deps.cdn_service.generate_url("avatar/default.png")
-        
+        default_avatar_url = "avatars/default.png"
+        default_url = self.deps.cdn_service.generate_url("avatars/default.png")
+
         email_result = EmailValueObject.create({"value": user.email})
 
         avatar_result = MediaValueObject.create(
@@ -162,10 +162,10 @@ class UserService(BaseService[UserDeps]):
         entity = entity_result.value
 
         public_url = self.deps.cdn_service.generate_url(
-            entity.avatar.key or "avatar/default.png"
+            entity.avatar.key or "avatars/default.png"
         )
 
-        entity.update_avatar(entity.avatar.key or "avatar/default.png", public_url)
+        entity.update_avatar(entity.avatar.key or "avatars/default.png", public_url)
 
         return result_ok(entity_result.value)
 

@@ -1,4 +1,5 @@
 from typing import Optional
+from fastapi import Form
 from datetime import datetime
 from pydantic import EmailStr, BaseModel, Field, HttpUrl, field_validator
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
@@ -72,6 +73,18 @@ class UserUpdateModel(BaseModel):
     username: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+
+    @classmethod
+    def form(
+        cls,
+        email: str | None = Form(None),
+        username: Optional[str] = Form(None),
+        first_name: Optional[str] = Form(None),
+        last_name: Optional[str] = Form(None),
+    ):
+        return cls(
+            email=email, username=username, first_name=first_name, last_name=last_name
+        )
 
 
 class UserLoginModel(BaseModel):

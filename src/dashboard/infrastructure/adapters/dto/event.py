@@ -24,7 +24,6 @@ class ExpenseCreatedEventData(BaseModel):
     expense_id: str
     name: str | None = None
     merchant: str | None = None
-    expense_id: str
     category: Category
     amount: int
     currency: Currency

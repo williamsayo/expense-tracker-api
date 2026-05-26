@@ -3,11 +3,11 @@ from typing import Any, Self
 from boilerplate import EventHandler
 from result import is_fail
 from types_aiobotocore_dynamodb.service_resource import Table, DynamoDBServiceResource
-from ..projections.update_expense_projection import (
-    UpdateExpenseProjectionUsecase,
+from ..projections.budget_projection_service import (
+    BudgetProjectionService,
 )
-from ..projections.update_budget_projection_usecase import (
-    UpdateBudgetProjectionUsecase,
+from ..projections.expense_projection_service import (
+    ExpenseProjectionService,
 )
 from src.dashboard.infrastructure.adapters.dto.event import (
     ExpenseCreatedEventPayload,
@@ -40,9 +40,11 @@ class OnUserCreated(EventHandler[UserCreatedEventPayload]):
             "total_spent": Decimal("0"),
             "total_budgeted": Decimal("0"),
             "top_expense": None,
-            "top_category": [],
+            "top_categories": [],
             "recent_expenses": [],
+            "recent_budgets": [],
             "active_budget": None,
+            "upcoming_budget": None,
         }
 
         result = await create_overview_usecase.execute(
@@ -74,10 +76,12 @@ class OnExpenseCreated(EventHandler[ExpenseCreatedEventPayload]):
 
         deps = OverviewDependency(repository=dashboard_repository)
 
-        update_expense_projection_usecase = UpdateExpenseProjectionUsecase(deps)
+        update_expense_projection_usecase = ExpenseProjectionService(deps)
 
-        result = await update_expense_projection_usecase.execute(
-            {"user_id": user_id, "expense": event}  # type: ignore #TODO: refactor to use a DTO instead of raw dict
+        result = (
+            await update_expense_projection_usecase.update_overview_on_expense_created(
+                {"user_id": user_id, "expense": event}
+            )
         )
 
         if is_fail(result):
@@ -104,10 +108,12 @@ class OnBudgetCreated(EventHandler[BudgetCreatedEventPayload]):
 
         deps = OverviewDependency(repository=dashboard_repository)
 
-        update_budget_projection_usecase = UpdateBudgetProjectionUsecase(deps)
+        update_budget_projection_usecase = BudgetProjectionService(deps)
 
-        result = await update_budget_projection_usecase.execute(
-            {"user_id": user_id, "budget": event}
+        result = (
+            await update_budget_projection_usecase.update_overview_on_budget_created(
+                {"user_id": user_id, "budget": event}
+            )
         )
 
         if is_fail(result):

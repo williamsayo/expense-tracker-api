@@ -30,7 +30,6 @@ class GetExpenseByCategoryUsecase(
         category = input["category"]
         user_id = input["user_id"]
 
-        print(category, user_id)
         result = await self.deps.repo.list(
             {"filter": {"category": category.value, "user_id": user_id}, "limit": 20}
         )

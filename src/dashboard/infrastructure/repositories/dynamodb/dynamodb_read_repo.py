@@ -49,7 +49,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
         DashboardReadModel, RepositoryNotFoundError | RepositoryUnexpectedError
     ]:
         if sort_key is None:
-            sort_key = f"{self.overview_prefix}#{date.today().isoformat()}"
+            sort_key = f"{self.overview_prefix}#{date.today().strftime('%Y-%m')}"
 
         try:
             response = await self.table.get_item(
@@ -64,7 +64,8 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             if dynamo_item is None:
                 return result_fail(
                     RepositoryNotFoundError(
-                        message=f"Overview item not found."
+                        Exception("Overview item not found."),
+                        "Overview item not found.",
                     )
                 )
 
@@ -134,34 +135,14 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
         self, user_id: str, aggregate: ExpenseReadModel
     ) -> Either[None, RepositoryUnexpectedError]:
         try:
-            exists = await self.exists(
-                user_id, sort_key=f"{self.expense_prefix}#{aggregate.id}"
+
+            await self.table.put_item(
+                Item={
+                    "user_id": user_id,
+                    "sk": f"{self.expense_prefix}#{aggregate.id}",
+                    **aggregate.model_dump(exclude={"name", "merchant"}),
+                }
             )
-
-            if is_fail(exists):
-                return result_fail(exists.value)
-
-            if exists.value:
-                await self.table.update_item(
-                    Key={
-                        "user_id": user_id,
-                        "sk": f"{self.expense_prefix}#{aggregate.id}",
-                    },
-                    UpdateExpression="SET expenses = list_append(if_not_exists(expenses, :empty_list), :expense)",
-                    ExpressionAttributeValues={
-                        ":expense": aggregate.model_dump(exclude={"name", "merchant"}),
-                        ":empty_list": [],
-                    },
-                    ReturnValues="UPDATED_NEW",
-                )
-            else:
-                await self.table.put_item(
-                    Item={
-                        "user_id": user_id,
-                        "sk": f"{self.expense_prefix}#{aggregate.id}",
-                        **aggregate.model_dump(exclude={"name", "merchant"}),
-                    }
-                )
             return result_ok(None)
         except Exception as error:
             return result_fail(RepositoryUnexpectedError(error))
@@ -170,34 +151,14 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
         self, user_id: str, aggregate: BudgetReadModel
     ) -> Either[None, RepositoryUnexpectedError]:
         try:
-            exists = await self.exists(
-                user_id, sort_key=f"{self.budget_prefix}#{aggregate.id}"
+
+            await self.table.put_item(
+                Item={
+                    "user_id": user_id,
+                    "sk": f"{self.budget_prefix}#{aggregate.id}",
+                    **aggregate.model_dump(exclude={"name"}),
+                }
             )
-
-            if is_fail(exists):
-                return result_fail(exists.value)
-
-            if exists.value:
-                await self.table.update_item(
-                    Key={
-                        "user_id": user_id,
-                        "sk": f"{self.budget_prefix}#{aggregate.id}",
-                    },
-                    UpdateExpression="SET expenses = list_append(if_not_exists(expenses, :empty_list), :expense)",
-                    ExpressionAttributeValues={
-                        ":expense": aggregate.model_dump(exclude={"name"}),
-                        ":empty_list": [],
-                    },
-                    ReturnValues="UPDATED_NEW",
-                )
-            else:
-                await self.table.put_item(
-                    Item={
-                        "user_id": user_id,
-                        "sk": f"{self.budget_prefix}#{aggregate.id}",
-                        **aggregate.model_dump(exclude={"name"}),
-                    }
-                )
             return result_ok(None)
         except Exception as error:
             return result_fail(RepositoryUnexpectedError(error))

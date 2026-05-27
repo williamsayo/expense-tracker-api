@@ -9,13 +9,15 @@ from result import result_fail, result_ok, Either, is_fail, result_combine
 from boilerplate.errors.http import AuthorizationError
 from boilerplate.errors.application import UnexpectedError
 from boilerplate.errors.error_ids import ApplicationErrorID
-from src.core.config import settings
+from src.core.config import get_settings, settings
 from src.identity.infrastructure.adapters.dto.token import (
     Token,
     TokenPayload,
 )
 from src.shared.utils.auth.token_verifier import TokenVerifier
 
+
+settings = get_settings()
 
 class JWTTokenService:
     """Handles JWT token generation and validation."""
@@ -47,7 +49,9 @@ class JWTTokenService:
             return result_fail(error)
 
     def create_access_token(
-        self, user_id: str, expiry: timedelta = timedelta(seconds=240)
+        self,
+        user_id: str,
+        expiry: timedelta = timedelta(seconds=settings.access_token_expiry),
     ) -> Either[str, UnexpectedError]:
         result = self.generate_token(
             user_id=user_id,
@@ -97,7 +101,7 @@ class JWTTokenService:
     def create_refresh_token(
         self,
         user_id: str,
-        expiry: timedelta = timedelta(days=7),
+        expiry: timedelta = timedelta(seconds=settings.refresh_token_expiry),
     ) -> Either[str, UnexpectedError]:
         jti: str = str(uuid4())
         refresh_token_result = self.generate_token(

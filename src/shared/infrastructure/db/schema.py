@@ -24,3 +24,9 @@ class TimeStampMixin:
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),
     )
+
+
+class SoftDeleteMixin:
+    """Mixin that adds soft delete functionality."""
+
+    discarded: Mapped[bool] = mapped_column(default=False)

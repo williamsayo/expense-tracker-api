@@ -36,24 +36,24 @@ class ExtractExpenseFromReceiptUsecase(
     ) -> Either[ExpenseEntity, CoreError | HttpError]:
 
         user_id = input["user_id"]
-        receipt_file = input["receipt"]
+        receipt = input["receipt"]
 
-        filename, content_type = receipt_file.filename, receipt_file.content_type
+        filename, content_type = receipt.filename, receipt.content_type
 
         media_result = await self.deps.media_repo.upload_receipt(
             filename,
-            receipt_file.file.file,
+            receipt.file.file,
             content_type=content_type,
             user_id=user_id.hex,
-            original_filename=receipt_file.original_filename,
+            original_filename=receipt.original_filename,
         )
 
         if is_fail(media_result):
             return media_result
 
-        key = media_result.value
+        receipt_key = media_result.value
 
-        public_url = self.deps.cdn.generate_url(key)
+        public_url = self.deps.cdn.generate_url(receipt_key)
 
         expense_result = await self.deps.llm.extract_receipt_info(
             public_url, content_type=content_type
@@ -70,7 +70,7 @@ class ExtractExpenseFromReceiptUsecase(
         )
         category_result = CategoryValueObject.create({"name": expense_data["category"]})
         receipt_result = MediaValueObject.create(
-            {"media_key": key, "media_url": public_url}
+            {"media_key": receipt_key, "media_url": public_url}
         )
 
         combined_result = result_combine(
@@ -97,5 +97,7 @@ class ExtractExpenseFromReceiptUsecase(
 
         if is_fail(entity_result):
             return entity_result
+        
+        print("Extracted expense entity:", entity_result.value.receipt.url)
 
         return result_ok(entity_result.value)

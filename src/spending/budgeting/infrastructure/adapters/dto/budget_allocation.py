@@ -33,6 +33,7 @@ class BudgetAllocationReadModel(BaseReadModel):
         ...,
         description="The unique identifier of the budget allocation",
         serialization_alias="id",
+        exclude=True,
     )
     spent_amount: int = Field(
         ...,

@@ -51,14 +51,14 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
         """Retrieves a budget entity by its unique identifier."""
 
         statement = (
-            select(Budget.__table__)
+            select(Budget)
             .where(Budget.id == aggregate_id)
             .options(
                 selectinload(Budget.allocations),
                 selectinload(Budget.expenses),
             )
         )
-        result = (await self.db.execute(statement)).mappings().one_or_none()
+        result = (await self.db.scalars(statement)).one_or_none()
 
         if result is None:
             return result_fail(
@@ -67,7 +67,7 @@ class BudgetReadRepository(AsyncReadRepository[BudgetReadModel]):
                 )
             )
 
-        entity_result = BudgetReadModel(**result)
+        entity_result = BudgetReadMapper.to_read_model(result)
 
         return result_ok(entity_result)
 

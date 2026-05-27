@@ -246,8 +246,8 @@ class BudgetEntity(AggregateRoot[BudgetEntityProps]):
                         }
                         for allocation in entity.allocations
                     ],
-                    "start_date": entity.budget_period.start_date,
-                    "end_date": entity.budget_period.end_date,
+                    "start_date": entity.budget_period.start_date.isoformat(),
+                    "end_date": entity.budget_period.end_date.isoformat(),
                     "currency": entity.currency,
                     "budget_id": entity.id.to_string(),
                 },

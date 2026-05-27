@@ -4,7 +4,6 @@ from boilerplate import (
     DomainEventInput,
     DomainEventMetadata,
 )
-from datetime import date
 from src.shared.domain.types.currency_types import Currency
 from src.shared.domain.types.event_types import EventTypes
 
@@ -24,8 +23,8 @@ class BudgetCreatedData(TypedDict):
     user_id: str
     budget_id: str
     currency: Currency
-    start_date: date
-    end_date: date
+    start_date: str
+    end_date: str
     allocations: list[AllocationData]
 
 

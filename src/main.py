@@ -3,9 +3,7 @@ from src.core.config import get_settings
 from src.shared.infrastructure.services.aws.config import get_aioboto3_session
 from src.shared.loggers.logging import setup_logging, LogLevel
 from src.shared.infrastructure.db.base import engine
-from src.shared.infrastructure.db.dependencies import init_db
 from src.shared.application.events.dispatcher.dependencies import (
-    register_handler,
     register_handlers,
 )
 from src.shared.domain.types.event_types import EventTypes
@@ -30,7 +28,6 @@ sessions = {}
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    await init_db()
     setup_logging(LogLevel.INFO)
     async with get_aioboto3_session().resource("dynamodb") as dynamodb_client:
         table = await dynamodb_client.Table(settings.dynamodb_dashboard_table_name)

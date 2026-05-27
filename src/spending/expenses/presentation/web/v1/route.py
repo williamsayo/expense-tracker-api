@@ -60,6 +60,7 @@ async def create_expense(
 @router.post(
     "/upload_receipt",
     response_model=ExpenseReadModel,
+    response_model_exclude={"id"},
     status_code=status.HTTP_201_CREATED,
 )
 async def extract_expense_from_receipt(

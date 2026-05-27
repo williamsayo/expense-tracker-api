@@ -43,7 +43,7 @@ class ExpenseReadModel(BaseReadModel):
     def parse_receipt(cls, receipt) -> str | None:
         if hasattr(receipt, "url"):
             return receipt.url
-        return None
+        return receipt
 
     @classmethod
     def from_entity(cls, entity: ExpenseEntity) -> Self:
@@ -57,7 +57,11 @@ class ExpenseReadModel(BaseReadModel):
             currency=entity.money.currency,
             name=entity.name,
             merchant=entity.merchant,
-            receipt=entity.receipt.url,  # TODO: Assuming the MediaValueObject has a url property that generates the URL from the key
+            receipt=(
+                HttpUrl(entity.receipt.url)
+                if entity.receipt and entity.receipt.url
+                else None
+            ),
         )
 
 

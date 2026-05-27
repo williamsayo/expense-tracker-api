@@ -149,6 +149,7 @@ class DashboardReadModel(BaseModel):
 
 # Public model for API responses, excluding user_id and other internal fields
 
+
 class BudgetPublicModel(BaseReadModel):
     name: str | None = Field(default=None, description="The name of the budget.")
     total_amount: int = Field(..., description="The amount of the budget in cents.")
@@ -156,7 +157,7 @@ class BudgetPublicModel(BaseReadModel):
     end_date: str = Field(..., description="The end date of the budget.")
 
 
-class ExpensePublicModel(BaseModel):
+class ExpensePublicModel(BaseReadModel):
     name: str | None = Field(..., description="The name of the expense.")
     merchant: str | None = Field(..., description="The merchant of the expense.")
     amount: int = Field(..., description="The amount of the expense in cents.")
@@ -167,7 +168,7 @@ class ExpensePublicModel(BaseModel):
     date: str = Field(..., description="The date of the expense.")
 
 
-class DashboardPublicModel(BaseModel):
+class DashboardPublicModel(BaseReadModel):
     total_spent: int = Field(
         ..., description="The total amount spent by the user in the period."
     )

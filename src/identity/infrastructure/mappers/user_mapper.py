@@ -32,7 +32,6 @@ class UserMapper(BaseMapper):
             password_hash=entity.hashed_password,
             first_name=entity.first_name,
             last_name=entity.last_name,
-            version=entity.version,
         )
 
     @staticmethod

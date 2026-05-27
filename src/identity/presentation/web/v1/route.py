@@ -131,7 +131,7 @@ async def retrieve_user_details(
 
 
 @router.patch(
-    "/update_profile", response_model=UserReadModel, status_code=status.HTTP_200_OK
+    "/profile", response_model=UserReadModel, status_code=status.HTTP_200_OK
 )
 async def update_user_details(
     user_data: Annotated[UserUpdateModel, Depends(UserUpdateModel.form)],
@@ -153,7 +153,7 @@ async def update_user_details(
 
 
 @router.patch(
-    "/upload_avatar",
+    "/avatar",
     response_model=UserAvatarReadModel,
     status_code=status.HTTP_200_OK,
     summary="Upload or update user avatar",

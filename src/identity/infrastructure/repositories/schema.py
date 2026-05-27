@@ -1,11 +1,15 @@
 from uuid import UUID
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy import String, Uuid
-from src.shared.infrastructure.db.schema import TimeStampMixin, VersionMixin
+from src.shared.infrastructure.db.schema import (
+    SoftDeleteMixin,
+    TimeStampMixin,
+    VersionMixin,
+)
 from src.shared.infrastructure.db.base import Base
 
 
-class User(Base, TimeStampMixin, VersionMixin):
+class User(Base, TimeStampMixin, VersionMixin, SoftDeleteMixin):
     """Represents user."""
 
     __tablename__ = "users"

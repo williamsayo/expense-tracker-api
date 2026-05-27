@@ -52,8 +52,7 @@ class UserReadModel(BaseReadModel, UserBaseModel):
     def parse_avatar(cls, avatar) -> str | None:
         if hasattr(avatar, "url"):
             return avatar.url
-        return None
-
+        return avatar
 
 class UserWriteModel(UserBaseModel):
     """Write model for user data."""

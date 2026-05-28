@@ -40,9 +40,11 @@ class DashboardRepositoryProtocol(Protocol):
         self, user_id: str
     ) -> Either[list[SpendingInsightReadModel], RepositoryUnexpectedError]: ...
 
-    async def get_recents(
+    async def get_recent_financials(
         self, user_id: str
-    ) -> Either[RecentFinancialsReadModel, RepositoryUnexpectedError]: ...
+    ) -> Either[
+        RecentFinancialsReadModel, RepositoryUnexpectedError | RepositoryNotFoundError
+    ]: ...
 
     async def add(
         self,

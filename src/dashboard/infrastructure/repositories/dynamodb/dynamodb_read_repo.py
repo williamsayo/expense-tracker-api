@@ -130,9 +130,11 @@ class DynamoDbReadRepository(AsyncReadRepository[SpendingOverviewReadModel]):
                 RepositoryUnexpectedError(error, "Unexpected error retrieving insights")
             )
 
-    async def get_recents(
+    async def get_recent_financials(
         self, user_id: str
-    ) -> Either[RecentFinancialsReadModel, RepositoryUnexpectedError | RepositoryNotFoundError]:
+    ) -> Either[
+        RecentFinancialsReadModel, RepositoryUnexpectedError | RepositoryNotFoundError
+    ]:
         try:
             response = await self.table.get_item(
                 Key={
@@ -168,16 +170,15 @@ class DynamoDbReadRepository(AsyncReadRepository[SpendingOverviewReadModel]):
         result = await asyncio.gather(
             self.get_by_id(user_id, sort_key=f"overview#{period.strftime('%Y-%m')}"),
             self.get_spending_insight(user_id),
-            self.get_recents(user_id),
+            self.get_recent_financials(user_id),
         )
 
         combined_result = result_combine(result)
 
         if is_fail(combined_result):
-            print(combined_result.value)
             return combined_result
 
-        overview, spending_insights, recents = combined_result.value
+        overview, spending_insights, recent_financials = combined_result.value
 
         overview_data = SpendingOverviewMapper.to_persistence(overview)
 
@@ -185,7 +186,8 @@ class DynamoDbReadRepository(AsyncReadRepository[SpendingOverviewReadModel]):
             DashboardPublicModel(
                 **overview_data,  # type: ignore
                 spending_insights=spending_insights,
-                recent_expenses=recents.recent_expenses,
+                recent_expenses=recent_financials.recent_expenses,
+                recent_budgets=recent_financials.recent_budgets,
             )
         )
 

@@ -1,5 +1,5 @@
 from datetime import date
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, field_serializer
 from typing import Self
 from src.dashboard.infrastructure.repositories.schema import CategoryItem
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
@@ -22,6 +22,10 @@ class CategoryReadModel(BaseModel):
             amount=data["amount"],
         )
 
+    @field_serializer("amount")
+    def serialize_amount(self, value: int) -> float:
+        return value / 100
+
 
 class SpendingInsightReadModel(BaseReadModel):
     period: str = Field(
@@ -34,10 +38,16 @@ class SpendingInsightReadModel(BaseReadModel):
         0, description="The total amount budgeted for the period."
     )
 
+    @field_serializer("total_spent")
+    def serialize_total_spent(self, value: int) -> float:
+        return value / 100
+
+    @field_serializer("total_budgeted")
+    def serialize_total_budgeted(self, value: int) -> float:
+        return value / 100
+
 
 # Public model for API responses, excluding user_id and other internal fields
-
-
 class BudgetPublicModel(BaseReadModel):
     id: str = Field(
         ...,
@@ -54,6 +64,10 @@ class BudgetPublicModel(BaseReadModel):
     end_date: str = Field(
         ..., description="The end date of the budget.", examples=["2024-06-30"]
     )
+
+    @field_serializer("total_amount")
+    def serialize_total_amount(self, value: int) -> float:
+        return value / 100
 
 
 class ExpensePublicModel(BaseReadModel):
@@ -82,6 +96,10 @@ class ExpensePublicModel(BaseReadModel):
     date: str = Field(
         ..., description="The date of the expense.", examples=["2024-06-15"]
     )
+
+    @field_serializer("amount")
+    def serialize_amount(self, value: int) -> float:
+        return value / 100
 
 
 class DashboardPublicModel(BaseReadModel):
@@ -115,3 +133,11 @@ class DashboardPublicModel(BaseReadModel):
         default_factory=list,
         description="A list of spending insights for the user in the period.",
     )
+
+    @field_serializer("total_spent")
+    def serialize_total_spent(self, value: int) -> float:
+        return value / 100
+
+    @field_serializer("total_budgeted")
+    def serialize_total_budgeted(self, value: int) -> float:
+        return value / 100

@@ -96,16 +96,18 @@ class BudgetProjectionService:
 
             overview_result = spending_overview_result
 
-        recents_result = await self.deps.repository.get_recents(user_id)
+        recent_financials_result = await self.deps.repository.get_recent_financials(
+            user_id
+        )
 
         combined_result = result_combine(
-            (budget_projection_result, overview_result, recents_result)
+            (budget_projection_result, overview_result, recent_financials_result)
         )
 
         if is_fail(combined_result):
             return result_fail(combined_result.value)
 
-        _, overview, recents = combined_result.value
+        _, overview, recent_financials = combined_result.value
 
         total_budgeted = budget_projection_service.increment_total_budgeted(
             overview.total_budgeted, total_amount
@@ -116,7 +118,7 @@ class BudgetProjectionService:
         )
 
         recent_budgets = budget_projection_service.update_recent_budgets(
-            recents.recent_budgets.copy(), budget_projection
+            recent_financials.recent_budgets.copy(), budget_projection
         )
 
         upcoming_budget = budget_projection_service.resolve_upcoming_budget(
@@ -131,13 +133,13 @@ class BudgetProjectionService:
             period=current_period,
         )
 
-        recents_overview = dataclasses.replace(recents, recent_budgets=recent_budgets)
+        recent_financials_overview = dataclasses.replace(recent_financials, recent_budgets=recent_budgets)
 
         result = await asyncio.gather(
             self.deps.repository.add(
                 dashboard_overview, sort_key=f"overview#{current_period}"
             ),
-            self.deps.repository.add(recents_overview, sort_key="recents"),
+            self.deps.repository.add(recent_financials_overview, sort_key="recents"),
         )
 
         combined_result = result_combine(result)

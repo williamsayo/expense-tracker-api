@@ -92,21 +92,21 @@ class ExpenseProjectionService:
 
             overview_result = spending_overview_result
 
-        recents_result = await self.deps.repository.get_recents(user_id)
+        recent_financials_result = await self.deps.repository.get_recent_financials(user_id)
 
         combined_result = result_combine(
-            (expense_projection_result, overview_result, recents_result)
+            (expense_projection_result, overview_result, recent_financials_result)
         )
 
         if is_fail(combined_result):
             return result_fail(combined_result.value)
 
-        _, overview, recents = combined_result.value
+        _, overview, recent_financials = combined_result.value
 
         expense_projection_service = ExpenseProjectionApplierService()
 
         recent_expenses = expense_projection_service.update_recent_expenses(
-            recents.recent_expenses.copy(), expense_read_model
+            recent_financials.recent_expenses.copy(), expense_read_model
         )
 
         top_expense = expense_projection_service.determine_top_expense(
@@ -129,13 +129,13 @@ class ExpenseProjectionService:
             period=current_period,
         )
 
-        recents_overview = dataclasses.replace(recents, recent_expenses=recent_expenses)
+        recent_financials_overview = dataclasses.replace(recent_financials, recent_expenses=recent_expenses)
 
         result = await asyncio.gather(
             self.deps.repository.add(
                 dashboard_overview, sort_key=f"overview#{current_period}"
             ),
-            self.deps.repository.add(recents_overview, sort_key=f"recents"),
+            self.deps.repository.add(recent_financials_overview, sort_key=f"recents"),
         )
 
         combined_result = result_combine(result)

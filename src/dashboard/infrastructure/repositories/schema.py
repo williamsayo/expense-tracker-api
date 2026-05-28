@@ -39,7 +39,7 @@ class ExpenseItem(TypedDict):
     date: str
 
 
-class ActiveBudgetItem(TypedDict):
+class BudgetItem(TypedDict):
     id: str
     name: str | None
     total_amount: int
@@ -47,13 +47,26 @@ class ActiveBudgetItem(TypedDict):
     end_date: str
 
 
-class OverviewItem(TypedDict):
+class SpendingInsightItem(TypedDict):
+    period: str
+    total_spent: int
+    total_budgeted: int
+
+
+class RecentsItem(TypedDict):
+    user_id: str
+    recent_expenses: list[ExpenseItem]
+    recent_budgets: list[BudgetItem]
+
+
+class SpendingOverviewItem(TypedDict):
     """Schema for the dashboard module."""
 
     user_id: str
     total_spent: int
     total_budgeted: int
-    top_category: list[CategoryItem]
+    top_categories: list[CategoryItem]
     top_expense: ExpenseItem | None
-    active_budget: ActiveBudgetItem | None
-    recent_expenses: list[ExpenseItem]
+    active_budget: BudgetItem | None
+    upcoming_budget: BudgetItem | None
+    period: str

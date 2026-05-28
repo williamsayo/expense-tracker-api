@@ -11,6 +11,7 @@ from src.spending.budgeting.infrastructure.adapters.dto.budget_allocation import
 )
 from src.shared.domain.types.currency_types import Currency
 from src.spending.expenses.infrastructure.adapters.dto.expense import ExpenseReadModel
+from functools import cached_property
 
 Percentage = Annotated[
     float,
@@ -60,32 +61,47 @@ class BudgetReadModel(BudgetModel, BaseReadModel):
         ..., description="List of expenses associated with the budget"
     )
 
+    @cached_property
+    def total_budgeted(self) -> int:
+        """Calculates the total budgeted amount for the budget."""
+        return sum(allocation.budget_amount for allocation in self.allocations)
+
+    @cached_property
+    def total_spent(self) -> int:
+        """Calculates the total spent amount for the budget."""
+        return sum(allocation.spent_amount for allocation in self.allocations)
+
+    @cached_property
+    def percentage_used(self) -> float:
+        """Calculates the percentage of the budget that has been used."""
+        if self.total_budgeted <= 0:
+            return 0.0
+        return min(self.total_spent / self.total_budgeted, 1.0)
+
     @computed_field(description="Total budget amount")
     @property
-    def total_amount(self) -> int:
-        return sum(allocation.budget_amount for allocation in self.allocations)
+    def total_amount(self) -> float:
+        return self.total_budgeted / 100
 
     @computed_field(description="Total amount spent")
     @property
-    def amount_spent(self) -> int:
-        return sum(allocation.spent_amount for allocation in self.allocations)
+    def amount_spent(self) -> float:
+        return self.total_spent / 100
 
     @computed_field(description="Remaining amount in the budget")
     @property
-    def remaining_amount(self) -> int:
-        return max(self.total_amount - self.amount_spent, 0)
+    def remaining_amount(self) -> float:
+        return max(self.total_budgeted - self.total_spent, 0) / 100
 
     @computed_field(description="Percentage of budget used")
     @property
     def used_percentage(self) -> float:
-        if self.total_amount <= 0:
-            return 0.0
-        return min(self.amount_spent / self.total_amount, 1.0)
+        return self.percentage_used
 
     @computed_field(description="Remaining percentage of the budget")
     @property
     def remaining_percentage(self) -> float:
-        return max(1.0 - self.used_percentage, 0.0)
+        return max(1.0 - self.percentage_used, 0.0)
 
     @classmethod
     def from_entity(cls, entity: BudgetEntity) -> Self:
@@ -102,6 +118,7 @@ class BudgetReadModel(BudgetModel, BaseReadModel):
             user_id=entity.user_id,
             expenses=[],
         )
+
 
 class BudgetWriteModel(BudgetModel):
     """Write model for Budget data."""

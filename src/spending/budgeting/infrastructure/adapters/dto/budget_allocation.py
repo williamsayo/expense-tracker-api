@@ -1,10 +1,9 @@
 from uuid import UUID
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, field_serializer
 from typing import Annotated, Self
 from decimal import Decimal
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
 from src.shared.domain.types.category_types import Category
-from src.shared.domain.types.currency_types import Currency
 from src.spending.budgeting.domain.entities.budget_allocation_entity import (
     BudgetAllocationEntity,
 )
@@ -45,10 +44,18 @@ class BudgetAllocationReadModel(BaseReadModel):
         ..., description="The amount allocated", serialization_alias="allocatedAmount"
     )
 
+    @field_serializer("budget_amount")
+    def serialize_budget_amount(self, value: int) -> float:
+        return value / 100
+
+    @field_serializer("spent_amount")
+    def serialize_spent_amount(self, value: int) -> float:
+        return value / 100
+
     @computed_field(description="Remaining amount in the budget allocation")
     @property
     def remaining_amount(self) -> float:
-        return max(self.budget_amount - self.spent_amount, 0)
+        return max(self.budget_amount - self.spent_amount, 0) / 100
 
     @computed_field(description="Percentage of budget used")
     @property

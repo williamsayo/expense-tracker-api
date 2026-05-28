@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 from uuid import UUID
 from typing import Self
 from datetime import datetime, UTC
@@ -31,12 +31,16 @@ class ExpenseReadModel(BaseReadModel):
     )
     name: str | None = Field(None, description="Name of the expense")
     category: Category = Field(..., description="Category of the expense")
-    amount: float = Field(..., description="Amount of the expense in cents")
+    amount: int = Field(..., description="Amount of the expense in cents")
     currency: Currency = Field(..., description="Currency of the expense")
     date: datetime = Field(..., description="Date the expense was made")
     note: str | None = Field(None, description="Note about the expense")
     merchant: str | None = Field(None, description="Merchant or vendor of the expense")
     receipt: HttpUrl | None = Field(None, description="Receipt for the expense")
+
+    @field_serializer("amount")
+    def serialize_amount(self, value: int) -> float:
+        return value / 100
 
     @field_validator("receipt", mode="before")
     @classmethod
@@ -51,7 +55,7 @@ class ExpenseReadModel(BaseReadModel):
             id=entity.id.value,
             user_id=entity.user_id,
             category=entity.category.name,
-            amount=entity.money.major_unit,
+            amount=entity.money.amount,
             note=entity.note,
             date=entity.date,
             currency=entity.money.currency,

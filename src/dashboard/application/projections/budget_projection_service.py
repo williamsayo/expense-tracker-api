@@ -1,3 +1,5 @@
+import asyncio
+import dataclasses
 from datetime import date
 from typing import TypedDict
 from boilerplate import (
@@ -7,12 +9,16 @@ from boilerplate import (
     CoreError,
 )
 from result import Either, is_fail, result_fail, result_ok, result_combine
+from src.dashboard.application.services.spending_overview_service import (
+    CreateSpendingOverviewService,
+)
 from src.dashboard.utils.setup_dependencies import OverviewDeps
-from src.dashboard.infrastructure.adapters.dto.dashboard import (
+from src.dashboard.domain.read_models.spending_overview_read_model import (
     BudgetReadModel,
 )
 from src.dashboard.infrastructure.adapters.dto.event import BudgetCreatedEventPayload
 from ..services.budget_overview_applier_service import BudgetProjectionApplierService
+
 
 class UpdateBudgetProjectionInput(TypedDict):
     user_id: str
@@ -56,6 +62,8 @@ class BudgetProjectionService:
 
         data = budget.data
 
+        current_period = date.today().strftime("%Y-%m")
+
         budget_projection_service = BudgetProjectionApplierService()
 
         total_amount = budget_projection_service.compute_allocations_total(
@@ -76,12 +84,28 @@ class BudgetProjectionService:
 
         overview_result = await self.deps.repository.get_by_id(user_id)
 
-        combined_result = result_combine((budget_projection_result, overview_result))
+        # create spending overview if there is no existing overview for the specified period. This happens because for a new month, the first event that comes in is often a budget creation, and we want to make sure to create the overview for that month so that the budget projection can be applied to it.
+        if is_fail(overview_result):
+            spending_overview_service = CreateSpendingOverviewService(
+                self.deps.repository
+            )
+            spending_overview_result = await spending_overview_service.execute(user_id)
+
+            if is_fail(spending_overview_result):
+                return result_fail(spending_overview_result.value)
+
+            overview_result = spending_overview_result
+
+        recents_result = await self.deps.repository.get_recents(user_id)
+
+        combined_result = result_combine(
+            (budget_projection_result, overview_result, recents_result)
+        )
 
         if is_fail(combined_result):
             return result_fail(combined_result.value)
 
-        _, overview = combined_result.value
+        _, overview, recents = combined_result.value
 
         total_budgeted = budget_projection_service.increment_total_budgeted(
             overview.total_budgeted, total_amount
@@ -92,28 +116,34 @@ class BudgetProjectionService:
         )
 
         recent_budgets = budget_projection_service.update_recent_budgets(
-            overview.recent_budgets, budget_projection
+            recents.recent_budgets.copy(), budget_projection
         )
 
         upcoming_budget = budget_projection_service.resolve_upcoming_budget(
             overview.upcoming_budget, budget_projection
         )
 
-        dashboard_overview = overview.model_copy(
-            update={
-                "total_budgeted": total_budgeted,
-                "active_budget": active_budget,
-                "recent_budgets": recent_budgets,
-                "upcoming_budget": upcoming_budget,
-            }
+        dashboard_overview = dataclasses.replace(
+            overview,
+            total_budgeted=total_budgeted,
+            active_budget=active_budget,
+            upcoming_budget=upcoming_budget,
+            period=current_period,
         )
 
-        result = await self.deps.repository.add(
-            dashboard_overview, sort_key=f"overview#{date.today().strftime('%Y-%m')}"
+        recents_overview = dataclasses.replace(recents, recent_budgets=recent_budgets)
+
+        result = await asyncio.gather(
+            self.deps.repository.add(
+                dashboard_overview, sort_key=f"overview#{current_period}"
+            ),
+            self.deps.repository.add(recents_overview, sort_key="recents"),
         )
 
-        if is_fail(result):
-            return result_fail(result.value)
+        combined_result = result_combine(result)
+
+        if is_fail(combined_result):
+            return result_fail(combined_result.value)
 
         return result_ok(None)
 

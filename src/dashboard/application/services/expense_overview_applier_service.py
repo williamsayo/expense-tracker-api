@@ -1,4 +1,4 @@
-from src.dashboard.infrastructure.adapters.dto.dashboard import (
+from src.dashboard.domain.read_models.spending_overview_read_model import (
     ExpenseReadModel,
     CategoryReadModel,
 )

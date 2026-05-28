@@ -1,4 +1,4 @@
-from src.dashboard.infrastructure.adapters.dto.dashboard import (
+from src.dashboard.domain.read_models.spending_overview_read_model import (
     BudgetReadModel,
 )
 from src.dashboard.infrastructure.adapters.dto.event import AllocationEventDataModel
@@ -19,15 +19,15 @@ class BudgetProjectionApplierService:
         recent_budgets: list[BudgetReadModel],
         budget: BudgetReadModel,
     ) -> list[BudgetReadModel]:
-        """Add or re-order a recent expense entry and return the updated list.
+        """Add or re-order a recent budget entry and return the updated list.
 
-        This keeps the most recent expenses first and caps the list at
-        `MAX_RECENT_EXPENSES`.
+        This keeps the most recent budgets first and caps the list at
+        `MAX_RECENT_BUDGETS`.
         Args:
-            recent_expenses  (list[ExpenseReadModel]): The current list of recent expenses to be updated.
-            expense (ExpenseReadModel): The new expense to potentially add or re-order in the recent expenses list.
+            recent_budgets  (list[BudgetReadModel]): The current list of recent budgets to be updated.
+            budget (BudgetReadModel): The new budget to potentially add or re-order in the recent budgets list.
         Returns:
-            list[ExpenseReadModel]: An updated list of recent expenses, ordered by date with the most recent first and capped at `MAX_RECENT_EXPENSES`.
+            list[BudgetReadModel]: An updated list of recent budgets, ordered by date with the most recent first and capped at `MAX_RECENT_BUDGETS`.
 
         """
 

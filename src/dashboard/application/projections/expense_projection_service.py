@@ -1,3 +1,5 @@
+import asyncio
+import dataclasses
 from datetime import date
 from typing import TypedDict
 from boilerplate import (
@@ -7,8 +9,11 @@ from boilerplate import (
     CoreError,
 )
 from result import Either, is_fail, result_fail, result_ok, result_combine
+from src.dashboard.application.services.spending_overview_service import (
+    CreateSpendingOverviewService,
+)
 from src.dashboard.utils.setup_dependencies import OverviewDeps
-from src.dashboard.infrastructure.adapters.dto.dashboard import (
+from src.dashboard.domain.read_models.spending_overview_read_model import (
     ExpenseReadModel,
     CategoryReadModel,
 )
@@ -55,6 +60,7 @@ class ExpenseProjectionService:
 
         user_id, expense = input["user_id"], input["expense"]
         data = expense.data
+        current_period = date.today().strftime("%Y-%m")
 
         expense_read_model = ExpenseReadModel(
             id=data.expense_id,
@@ -74,17 +80,33 @@ class ExpenseProjectionService:
 
         overview_result = await self.deps.repository.get_by_id(user_id)
 
-        combined_result = result_combine((expense_projection_result, overview_result))
+        # create spending overview if there is no existing overview for the specified period. This happens because for a new month, the first event that comes in is often an expense creation, and we want to make sure to create the overview for that month so that the expense projection can be applied to it.
+        if is_fail(overview_result):
+            spending_overview_service = CreateSpendingOverviewService(
+                self.deps.repository
+            )
+            spending_overview_result = await spending_overview_service.execute(user_id)
+
+            if is_fail(spending_overview_result):
+                return result_fail(spending_overview_result.value)
+
+            overview_result = spending_overview_result
+
+        recents_result = await self.deps.repository.get_recents(user_id)
+
+        combined_result = result_combine(
+            (expense_projection_result, overview_result, recents_result)
+        )
 
         if is_fail(combined_result):
             return result_fail(combined_result.value)
 
-        _, overview = combined_result.value
+        _, overview, recents = combined_result.value
 
         expense_projection_service = ExpenseProjectionApplierService()
 
         recent_expenses = expense_projection_service.update_recent_expenses(
-            overview.recent_expenses.copy(), expense_read_model
+            recents.recent_expenses.copy(), expense_read_model
         )
 
         top_expense = expense_projection_service.determine_top_expense(
@@ -99,21 +121,27 @@ class ExpenseProjectionService:
             overview.top_categories.copy(), category
         )
 
-        dashboard_overview = overview.model_copy(
-            update={
-                "total_spent": total_spent,
-                "top_expense": top_expense,
-                "top_categories": top_category,
-                "recent_expenses": recent_expenses,
-            },
+        dashboard_overview = dataclasses.replace(
+            overview,
+            total_spent=total_spent,
+            top_expense=top_expense,
+            top_categories=top_category,
+            period=current_period,
         )
 
-        result = await self.deps.repository.add(
-            dashboard_overview, sort_key=f"overview#{date.today().strftime('%Y-%m')}"
+        recents_overview = dataclasses.replace(recents, recent_expenses=recent_expenses)
+
+        result = await asyncio.gather(
+            self.deps.repository.add(
+                dashboard_overview, sort_key=f"overview#{current_period}"
+            ),
+            self.deps.repository.add(recents_overview, sort_key=f"recents"),
         )
 
-        if is_fail(result):
-            return result_fail(result.value)
+        combined_result = result_combine(result)
+
+        if is_fail(combined_result):
+            return result_fail(combined_result.value)
 
         return result_ok(None)
 

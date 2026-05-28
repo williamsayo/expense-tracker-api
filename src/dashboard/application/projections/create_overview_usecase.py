@@ -1,3 +1,4 @@
+import asyncio
 from datetime import date
 from typing import Any, TypedDict
 from boilerplate import (
@@ -7,13 +8,20 @@ from boilerplate import (
     AsyncCommandUseCase,
     CoreError,
 )
-from result import Either, is_fail, result_fail, result_ok
+from result import Either, is_fail, result_combine, result_fail, result_ok
 from src.dashboard.utils.setup_dependencies import OverviewDeps
-from src.dashboard.infrastructure.adapters.dto.dashboard import DashboardReadModel
+from src.dashboard.domain.read_models.recent_financials_read_model import (
+    RecentFinancialsReadModel,
+)
+from src.dashboard.domain.read_models.spending_overview_read_model import (
+    SpendingOverviewReadModel,
+)
+
 
 class CreateOverviewInput(TypedDict):
     user_id: str
-    overview_data: dict[str, Any]
+    spending_data: dict[str, Any]
+    recents_data: dict[str, Any]
 
 
 class CreateOverviewUsecase(AsyncCommandUseCase[CreateOverviewInput]):
@@ -29,15 +37,43 @@ class CreateOverviewUsecase(AsyncCommandUseCase[CreateOverviewInput]):
         | DataIntegrityError,
     ]:
 
-        user_id, data = input["user_id"], input["overview_data"]
-
-        dashboard_overview = DashboardReadModel(user_id=user_id, **data)
-
-        result = await self.deps.repository.add(
-            dashboard_overview, sort_key=f"overview#{date.today().strftime('%Y-%m')}"
+        user_id, spending_data, recents_data = (
+            input["user_id"],
+            input["spending_data"],
+            input["recents_data"],
         )
 
-        if is_fail(result):
-            return result_fail(result.value)
+        dashboard_overview = SpendingOverviewReadModel(
+            user_id=user_id,
+            active_budget=spending_data["active_budget"],
+            upcoming_budget=spending_data["upcoming_budget"],
+            total_spent=spending_data["total_spent"],
+            total_budgeted=spending_data["total_budgeted"],
+            top_categories=spending_data["top_categories"],
+            top_expense=spending_data["top_expense"],
+            period=spending_data["period"],
+        )
+        
+        recents_read_model = RecentFinancialsReadModel(
+            user_id=user_id,
+            recent_expenses=recents_data["recent_expenses"],
+            recent_budgets=recents_data["recent_budgets"],
+        )
 
-        return result_ok(result.value)
+        result = await asyncio.gather(
+            self.deps.repository.add(
+                dashboard_overview,
+                sort_key=f"overview#{date.today().strftime('%Y-%m')}",
+            ),
+            self.deps.repository.add(
+                recents_read_model,
+                sort_key="recents",
+            ),
+        )
+
+        combined_result = result_combine(result)
+
+        if is_fail(combined_result):
+            return result_fail(combined_result.value)
+
+        return result_ok(None)

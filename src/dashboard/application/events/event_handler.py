@@ -19,6 +19,7 @@ from ..projections.create_overview_usecase import (
     CreateOverviewUsecase,
 )
 from src.dashboard.utils.setup_dependencies import get_dashboard_repository
+from datetime import date
 
 
 class OnUserCreated(EventHandler[UserCreatedEventPayload]):
@@ -36,19 +37,27 @@ class OnUserCreated(EventHandler[UserCreatedEventPayload]):
 
         create_overview_usecase = CreateOverviewUsecase(deps)
 
-        overview_data: dict[str, Any] = {
+        spending_data: dict[str, Any] = {
             "total_spent": Decimal("0"),
             "total_budgeted": Decimal("0"),
             "top_expense": None,
             "top_categories": [],
-            "recent_expenses": [],
-            "recent_budgets": [],
             "active_budget": None,
             "upcoming_budget": None,
+            "period": date.today().strftime("%Y-%m"),
+        }
+
+        recents_data: dict[str, Any] = {
+            "recent_expenses": [],
+            "recent_budgets": [],
         }
 
         result = await create_overview_usecase.execute(
-            {"user_id": user_id, "overview_data": overview_data}
+            {
+                "user_id": user_id,
+                "spending_data": spending_data,
+                "recents_data": recents_data,
+            }
         )
 
         if is_fail(result):

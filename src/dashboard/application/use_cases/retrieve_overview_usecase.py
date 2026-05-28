@@ -1,7 +1,7 @@
 from datetime import date
 from typing import TypedDict
 from boilerplate import AsyncQueryUseCase, CoreError
-from result import Either, is_fail, result_combine, result_fail, result_ok
+from result import Either, is_fail, result_ok
 from src.dashboard.utils.setup_dependencies import OverviewDeps
 from src.shared.domain.types.user_id import UserId
 from boilerplate import (
@@ -10,22 +10,21 @@ from boilerplate import (
     RepositoryNotFoundError,
 )
 from src.dashboard.infrastructure.adapters.dto.dashboard import (
-    DashboardReadModel,
+    DashboardPublicModel,
 )
-
 
 class GetOverviewInput(TypedDict):
     user_id: UserId
     period: date
 
 
-class GetOverviewUsecase(AsyncQueryUseCase[GetOverviewInput, DashboardReadModel]):
+class GetOverviewUsecase(AsyncQueryUseCase[GetOverviewInput, DashboardPublicModel]):
 
     def __init__(self, deps: OverviewDeps):
         self.deps = deps
 
     async def execute(self, input: GetOverviewInput) -> Either[
-        DashboardReadModel,
+        DashboardPublicModel,
         CoreError
         | RepositoryNotFoundError
         | RepositoryUnexpectedError
@@ -35,9 +34,9 @@ class GetOverviewUsecase(AsyncQueryUseCase[GetOverviewInput, DashboardReadModel]
         user_id = str(input["user_id"])
         period = input["period"]
 
-        overview_result = await self.deps.repository.get_by_id(user_id,sort_key=f"overview#{period.strftime('%Y-%m')}")
+        result = await self.deps.repository.get_overview_by_id(user_id, period)
 
-        if is_fail(overview_result):
-            return overview_result
+        if is_fail(result):
+            return result
 
-        return result_ok(overview_result.value)
+        return result_ok(result.value)

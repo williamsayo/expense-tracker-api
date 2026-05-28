@@ -27,13 +27,12 @@ class CategoryReadModel:
     name: str
     amount: int
 
-
 @dataclass(slots=True, frozen=True)
 class SpendingOverviewReadModel:
     user_id: str
     total_spent: int
     total_budgeted: int
-    period: str = field(default_factory=lambda: date.today().strftime("%Y-%m"))
+    period: str
     top_expense: ExpenseReadModel | None = field(default_factory=lambda: None)
     active_budget: BudgetReadModel | None = field(default_factory=lambda: None)
     top_categories: list[CategoryReadModel] = field(default_factory=list)

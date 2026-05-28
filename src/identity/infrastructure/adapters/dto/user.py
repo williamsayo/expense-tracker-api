@@ -68,18 +68,18 @@ class UserWriteModel(UserBaseModel):
 class UserUpdateModel(BaseModel):
     """Update model for user data."""
 
-    email: Optional[EmailStr] = None
-    username: Optional[str] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    email: Optional[EmailStr] = Field(None, examples=["username@example.com"])
+    username: Optional[str] = Field(None, examples=["username"])
+    first_name: Optional[str] = Field(None, examples=["John"])
+    last_name: Optional[str] = Field(None, examples=["Doe"])
 
     @classmethod
     def form(
         cls,
-        email: str | None = Form(None),
-        username: Optional[str] = Form(None),
-        first_name: Optional[str] = Form(None),
-        last_name: Optional[str] = Form(None),
+        email: str | None = Form(None, examples=["username@example.com"]),
+        username: Optional[str] = Form(None, examples=["username"]),
+        first_name: Optional[str] = Form(None, examples=["John"]),
+        last_name: Optional[str] = Form(None, examples=["Doe"]),
     ):
         return cls(
             email=email, username=username, first_name=first_name, last_name=last_name

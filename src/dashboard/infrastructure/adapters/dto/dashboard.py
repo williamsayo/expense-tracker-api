@@ -1,61 +1,14 @@
+from datetime import date
 from pydantic import Field, BaseModel
 from typing import Self
-from src.dashboard.infrastructure.repositories.schema import (
-    ActiveBudgetItem,
-    BudgetProjectionItem,
-    ExpenseProjectionItem,
-    ExpenseItem,
-    CategoryItem,
-)
+from src.dashboard.infrastructure.repositories.schema import CategoryItem
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
 
 
-class ExpenseProjectionReadModel(BaseModel):
-    id: str = Field(..., description="The ID of the expense.")
-    amount: int = Field(..., description="The amount of the expense in cents.")
-    currency: str = Field(
-        default="EUR", description="The currency of the expense amount."
-    )
-    category: str = Field(..., description="The category of the expense.")
-    date: str = Field(..., description="The date of the expense.")
-
-    @classmethod
-    def from_dict(cls, data: ExpenseProjectionItem) -> Self:
-        """Creates a ExpenseProjectionReadModel instance from a dictionary."""
-
-        return cls(
-            id=data["id"],
-            amount=data["amount"],
-            currency=data["currency"],
-            category=data["category"],
-            date=data["date"],
-        )
-
-
-class BudgetProjectionReadModel(BaseModel):
-    id: str = Field(..., description="The ID of the budget.")
-    total_amount: int = Field(..., description="The amount of the budget in cents.")
-    spent_amount: int = Field(
-        ..., description="The amount spent in the budget in cents."
-    )
-    start_date: str = Field(..., description="The start date of the budget.")
-    end_date: str = Field(..., description="The end date of the budget.")
-
-    @classmethod
-    def from_dict(cls, data: BudgetProjectionItem) -> Self:
-        """Creates a BudgetProjectionReadModel instance from a dictionary."""
-
-        return cls(
-            id=data["id"],
-            total_amount=data["total_amount"],
-            spent_amount=data["spent_amount"],
-            start_date=data["start_date"],
-            end_date=data["end_date"],
-        )
-
-
 class CategoryReadModel(BaseModel):
-    name: str = Field(..., description="The name of the category.")
+    name: str = Field(
+        ..., description="The name of the category.", examples=["Food", "Transport"]
+    )
     amount: int = Field(
         ..., description="The total amount spent in the category in cents."
     )
@@ -70,80 +23,15 @@ class CategoryReadModel(BaseModel):
         )
 
 
-class ExpenseReadModel(BaseModel):
-    id: str = Field(..., description="The ID of the expense.")
-    name: str | None = Field(..., description="The name of the expense.")
-    merchant: str | None = Field(..., description="The merchant of the expense.")
-    amount: int = Field(..., description="The amount of the expense in cents.")
-    currency: str = Field(
-        default="EUR", description="The currency of the expense amount."
+class SpendingInsightReadModel(BaseReadModel):
+    period: str = Field(
+        default_factory=lambda: date.today().strftime("%Y-%m"),
+        description="The month of the spending insight in the format 'Year-Month'.",
+        examples=["2024-06"],
     )
-    category: str = Field(..., description="The category of the expense.")
-    date: str = Field(..., description="The date of the expense.")
-
-    @classmethod
-    def from_dict(cls, data: ExpenseItem) -> Self:
-        """Creates an ExpenseReadModel instance from a dictionary."""
-        return cls(
-            id=data["id"],
-            name=data["name"],
-            amount=data["amount"],
-            currency=data.get("currency", "EUR"),
-            category=data["category"],
-            merchant=data.get("merchant"),
-            date=data["date"],
-        )
-
-
-class BudgetReadModel(BaseReadModel):
-    id: str = Field(..., description="The ID of the budget.")
-    name: str | None = Field(default=None, description="The name of the budget.")
-    total_amount: int = Field(..., description="The amount of the budget in cents.")
-    start_date: str = Field(..., description="The start date of the budget.")
-    end_date: str = Field(..., description="The end date of the budget.")
-
-    @classmethod
-    def from_dict(cls, data: ActiveBudgetItem | None) -> Self | None:
-        """Creates a BudgetReadModel instance from a dictionary."""
-        if data is None:
-            return None
-
-        return cls(
-            id=data["id"],
-            name=data["name"],
-            total_amount=data["total_amount"],
-            start_date=data["start_date"],
-            end_date=data["end_date"],
-        )
-
-
-class DashboardReadModel(BaseModel):
-    user_id: str = Field(..., description="The ID of the user.", exclude=True)
-    total_spent: int = Field(
-        ..., description="The total amount spent by the user in the period."
-    )
+    total_spent: int = Field(0, description="The total amount spent in the period.")
     total_budgeted: int = Field(
-        ..., description="The total amount budgeted for the period."
-    )
-    top_expense: ExpenseReadModel | None = Field(
-        default=None, description="The most expensive expense in the period."
-    )
-    active_budget: BudgetReadModel | None = Field(
-        ..., description="The active budget for the user in the period."
-    )
-    top_categories: list[CategoryReadModel] = Field(
-        ...,
-        description="A list of top categories by amount spent for the user.",
-    )
-    recent_expenses: list[ExpenseReadModel] = Field(
-        ...,
-        description="A list of recent expenses by date for the user.",
-    )
-    recent_budgets: list[BudgetReadModel] = Field(
-        ..., description="List of recent budgets for the user"
-    )
-    upcoming_budget: BudgetReadModel | None = Field(
-        ..., description="upcoming budgets for the user"
+        0, description="The total amount budgeted for the period."
     )
 
 
@@ -151,47 +39,79 @@ class DashboardReadModel(BaseModel):
 
 
 class BudgetPublicModel(BaseReadModel):
-    name: str | None = Field(default=None, description="The name of the budget.")
+    id: str = Field(
+        ...,
+        description="The ID of the budget.",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+    )
+    name: str | None = Field(
+        default=None, description="The name of the budget.", examples=["June Budget"]
+    )
     total_amount: int = Field(..., description="The amount of the budget in cents.")
-    start_date: str = Field(..., description="The start date of the budget.")
-    end_date: str = Field(..., description="The end date of the budget.")
+    start_date: str = Field(
+        ..., description="The start date of the budget.", examples=["2024-06-01"]
+    )
+    end_date: str = Field(
+        ..., description="The end date of the budget.", examples=["2024-06-30"]
+    )
 
 
 class ExpensePublicModel(BaseReadModel):
-    name: str | None = Field(..., description="The name of the expense.")
-    merchant: str | None = Field(..., description="The merchant of the expense.")
+    id: str = Field(
+        ...,
+        description="The ID of the expense.",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+    )
+    name: str | None = Field(
+        ..., description="The name of the expense.", examples=["Dinner at restaurant"]
+    )
+    merchant: str | None = Field(
+        ...,
+        description="The merchant of the expense.",
+        examples=["Amazon", "Starbucks"],
+    )
     amount: int = Field(..., description="The amount of the expense in cents.")
     currency: str = Field(
-        default="EUR", description="The currency of the expense amount."
+        default="EUR",
+        description="The currency of the expense amount.",
+        examples=["EUR"],
     )
-    category: str = Field(..., description="The category of the expense.")
-    date: str = Field(..., description="The date of the expense.")
+    category: str = Field(
+        ..., description="The category of the expense.", examples=["Food", "Transport"]
+    )
+    date: str = Field(
+        ..., description="The date of the expense.", examples=["2024-06-15"]
+    )
 
 
 class DashboardPublicModel(BaseReadModel):
     total_spent: int = Field(
-        ..., description="The total amount spent by the user in the period."
+        0, description="The total amount spent by the user in the period."
     )
     total_budgeted: int = Field(
-        ..., description="The total amount budgeted for the period."
+        0, description="The total amount budgeted for the period."
     )
     top_expense: ExpensePublicModel | None = Field(
         default=None, description="The most expensive expense in the period."
     )
     active_budget: BudgetPublicModel | None = Field(
-        ..., description="The active budget for the user in the period."
+        default=None, description="The active budget for the user in the period."
     )
     top_categories: list[CategoryReadModel] = Field(
-        ...,
+        default_factory=list,
         description="A list of top categories by amount spent for the user.",
     )
     recent_expenses: list[ExpensePublicModel] = Field(
-        ...,
+        default_factory=list,
         description="A list of recent expenses by date for the user.",
     )
     recent_budgets: list[BudgetPublicModel] = Field(
-        ..., description="List of recent budgets for the user"
+        default_factory=list, description="List of recent budgets for the user"
     )
     upcoming_budget: BudgetPublicModel | None = Field(
-        ..., description="upcoming budgets for the user"
+        default=None, description="upcoming budgets for the user"
+    )
+    spending_insights: list[SpendingInsightReadModel] = Field(
+        default_factory=list,
+        description="A list of spending insights for the user in the period.",
     )

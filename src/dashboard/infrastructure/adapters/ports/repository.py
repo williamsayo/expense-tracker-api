@@ -1,14 +1,26 @@
+from datetime import date
 from typing import Protocol
 from uuid import UUID
 from boilerplate import (
     CoreError,
+    RepositoryNotFoundError,
+    RepositoryNotFoundError,
     RepositoryUnexpectedError,
 )
 from result import Either
-from src.dashboard.infrastructure.adapters.dto.dashboard import (
+from src.dashboard.domain.read_models.spending_overview_read_model import (
     BudgetReadModel,
-    DashboardReadModel,
+    SpendingOverviewReadModel,
     ExpenseReadModel,
+)
+from src.dashboard.domain.read_models.recent_financials_read_model import (
+    RecentFinancialsReadModel,
+)
+from src.dashboard.domain.read_models.dashboard_overview_read_model import (
+    SpendingInsightReadModel,
+)
+from src.dashboard.infrastructure.adapters.dto.dashboard import (
+    DashboardPublicModel,
 )
 
 
@@ -16,14 +28,31 @@ class DashboardRepositoryProtocol(Protocol):
 
     async def get_by_id(
         self, aggregate_id: str | UUID, *, sort_key: str | None = None
-    ) -> Either[DashboardReadModel, CoreError]: ...
+    ) -> Either[SpendingOverviewReadModel, CoreError]: ...
+
+    async def get_overview_by_id(
+        self, user_id: str, period: date
+    ) -> Either[
+        DashboardPublicModel, RepositoryNotFoundError | RepositoryUnexpectedError
+    ]: ...
+
+    async def get_spending_insight(
+        self, user_id: str
+    ) -> Either[list[SpendingInsightReadModel], RepositoryUnexpectedError]: ...
+
+    async def get_recents(
+        self, user_id: str
+    ) -> Either[RecentFinancialsReadModel, RepositoryUnexpectedError]: ...
 
     async def add(
-        self, aggregate: DashboardReadModel, *, sort_key: str | None = None
+        self,
+        aggregate: SpendingOverviewReadModel | RecentFinancialsReadModel,
+        *,
+        sort_key: str | None = None,
     ) -> Either[None, CoreError]: ...
 
     async def remove(
-        self, aggregate: DashboardReadModel, *, sort_key: str | None = None
+        self, aggregate: SpendingOverviewReadModel, *, sort_key: str | None = None
     ) -> Either[None, CoreError]: ...
 
     async def exists(
@@ -33,7 +62,7 @@ class DashboardRepositoryProtocol(Protocol):
     async def add_Budget(
         self, user_id: str, aggregate: BudgetReadModel
     ) -> Either[None, RepositoryUnexpectedError]: ...
-    
+
     async def add_expense(
         self, user_id: str, aggregate: ExpenseReadModel
     ) -> Either[None, RepositoryUnexpectedError]: ...

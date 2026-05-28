@@ -1,5 +1,5 @@
 from boilerplate import BaseMapper
-from src.dashboard.domain.read_models.recents_read_model import RecentsReadModel
+from src.dashboard.domain.read_models.recent_financials_read_model import RecentFinancialsReadModel
 from src.dashboard.domain.read_models.spending_overview_read_model import (
     ExpenseReadModel,
     BudgetReadModel,
@@ -7,7 +7,7 @@ from src.dashboard.domain.read_models.spending_overview_read_model import (
 from src.dashboard.infrastructure.repositories.schema import (
     ExpenseItem,
     BudgetItem,
-    RecentsItem,
+    RecentFinancialsItem,
 )
 
 
@@ -43,9 +43,9 @@ def create_recent_budgets(
     ]
 
 
-class RecentsMapper(BaseMapper):
+class RecentFinancialsMapper(BaseMapper):
     @staticmethod
-    def to_persistence(entity: RecentsReadModel) -> RecentsItem:
+    def to_persistence(entity: RecentFinancialsReadModel) -> RecentFinancialsItem:
         return {
             "user_id": entity.user_id,
             "recent_expenses": [
@@ -73,8 +73,8 @@ class RecentsMapper(BaseMapper):
         }
 
     @staticmethod
-    def to_read_model(persistence: RecentsItem) -> RecentsReadModel:
-        return RecentsReadModel(
+    def to_read_model(persistence: RecentFinancialsItem) -> RecentFinancialsReadModel:
+        return RecentFinancialsReadModel(
             user_id=persistence.get("user_id"),
             recent_expenses=create_recent_expenses(persistence.get("recent_expenses", [])),
             recent_budgets=create_recent_budgets(persistence.get("recent_budgets", [])),

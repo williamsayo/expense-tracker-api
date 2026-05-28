@@ -53,7 +53,7 @@ class SpendingInsightItem(TypedDict):
     total_budgeted: int
 
 
-class RecentsItem(TypedDict):
+class RecentFinancialsItem(TypedDict):
     user_id: str
     recent_expenses: list[ExpenseItem]
     recent_budgets: list[BudgetItem]

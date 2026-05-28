@@ -1,6 +1,4 @@
-from datetime import date
-
-from boilerplate import UniqueEntityId, IllegalArgumentError, BaseMapper
+from boilerplate import BaseMapper
 from src.dashboard.domain.read_models.spending_overview_read_model import (
     CategoryReadModel,
     SpendingOverviewReadModel,
@@ -105,13 +103,14 @@ class SpendingOverviewMapper(BaseMapper):
     def to_read_model(persistence: SpendingOverviewItem) -> SpendingOverviewReadModel:
         return SpendingOverviewReadModel(
             user_id=persistence.get("user_id"),
-            period=persistence.get("period", date.today().strftime("%Y-%m")),
+            period=persistence.get("period"),
             total_spent=persistence.get("total_spent", 0),
             total_budgeted=persistence.get("total_budgeted", 0),
             top_expense=create_expense(persistence.get("top_expense")),
             active_budget=create_budget(persistence.get("active_budget")),
             top_categories=[
-                create_category(category) for category in persistence.get("top_categories", [])
+                create_category(category)
+                for category in persistence.get("top_categories", [])
             ],
             upcoming_budget=create_budget(persistence.get("upcoming_budget")),
         )

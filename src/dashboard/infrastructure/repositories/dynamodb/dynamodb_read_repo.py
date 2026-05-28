@@ -1,6 +1,8 @@
+import asyncio
 from datetime import date
 import logging
-from typing import Any, Dict, cast
+from typing import Any, cast
+from dataclasses import asdict
 from uuid import UUID
 from boto3.dynamodb.conditions import Key
 from boilerplate import (
@@ -16,20 +18,39 @@ from result import Either, is_fail, result_combine, result_fail, result_ok
 from src.core.config import get_settings
 from types_aiobotocore_dynamodb.service_resource import Table, DynamoDBServiceResource
 from src.dashboard.infrastructure.adapters.dto.dashboard import (
-    DashboardReadModel,
+    DashboardPublicModel,
+)
+from src.dashboard.domain.read_models.spending_overview_read_model import (
+    SpendingOverviewReadModel,
     BudgetReadModel,
     ExpenseReadModel,
+)
+from src.dashboard.domain.read_models.dashboard_overview_read_model import (
+    SpendingInsightReadModel,
+)
+from src.dashboard.domain.read_models.recent_financials_read_model import RecentFinancialsReadModel
+from src.dashboard.infrastructure.mappers.dashboard_mapper import (
+    BudgetProjectionMapper,
+    ExpenseProjectionMapper,
+)
+from src.dashboard.infrastructure.mappers.recent_fiancials_mapper import (
+    RecentFinancialsMapper,
+)
+from src.dashboard.infrastructure.mappers.spending_overview_mapper import (
+    SpendingOverviewMapper,
 )
 from src.dashboard.infrastructure.repositories.schema import (
     BudgetProjectionItem,
     ExpenseProjectionItem,
-    OverviewItem,
+    RecentFinancialsItem,
+    SpendingInsightItem,
+    SpendingOverviewItem,
 )
 
 settings = get_settings()
 
 
-class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
+class DynamoDbReadRepository(AsyncReadRepository[SpendingOverviewReadModel]):
 
     client: DynamoDBServiceResource
     table: Table
@@ -38,6 +59,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
     expense_prefix = "expenses"
     budget_prefix = "budget"
     insights_prefix = "insights"
+    recents_prefix = "recents"
 
     def __init__(self, client: DynamoDBServiceResource, table: Table):
         self.client = client
@@ -46,7 +68,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
     async def get_by_id(
         self, aggregate_id: str | UUID, *, sort_key: str | None = None
     ) -> Either[
-        DashboardReadModel, RepositoryNotFoundError | RepositoryUnexpectedError
+        SpendingOverviewReadModel, RepositoryNotFoundError | RepositoryUnexpectedError
     ]:
         if sort_key is None:
             sort_key = f"{self.overview_prefix}#{date.today().strftime('%Y-%m')}"
@@ -69,9 +91,9 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
                     )
                 )
 
-            overview_item = cast(OverviewItem, dynamo_item)
+            overview_item = cast(SpendingOverviewItem, dynamo_item)
 
-            read_model = DashboardReadModel(**overview_item)  # type: ignore
+            read_model = SpendingOverviewMapper.to_read_model(overview_item)
 
             return result_ok(read_model)
 
@@ -79,6 +101,93 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             return result_fail(
                 RepositoryUnexpectedError(error, "Unexpected error retrieving overview")
             )
+
+    async def get_spending_insight(
+        self, user_id: str
+    ) -> Either[list[SpendingInsightReadModel], RepositoryUnexpectedError]:
+        try:
+            response = await self.table.query(
+                KeyConditionExpression=Key("user_id").eq(user_id)
+                & Key("sk").begins_with(self.overview_prefix),
+                ProjectionExpression="period, total_spent, total_budgeted",
+            )
+
+            insight_item = cast(list[SpendingInsightItem], response.get("Items", []))
+
+            return result_ok(
+                [
+                    SpendingInsightReadModel(
+                        period=insight["period"],
+                        total_spent=insight["total_spent"],
+                        total_budget=insight["total_budgeted"],
+                    )
+                    for insight in insight_item
+                ]
+            )
+
+        except Exception as error:
+            return result_fail(
+                RepositoryUnexpectedError(error, "Unexpected error retrieving insights")
+            )
+
+    async def get_recents(
+        self, user_id: str
+    ) -> Either[RecentFinancialsReadModel, RepositoryUnexpectedError | RepositoryNotFoundError]:
+        try:
+            response = await self.table.get_item(
+                Key={
+                    "user_id": user_id,
+                    "sk": self.recents_prefix,
+                }
+            )
+
+            recents_item = cast(RecentFinancialsItem, response.get("Item", None))
+
+            if recents_item is None:
+                return result_fail(
+                    RepositoryNotFoundError(
+                        Exception("Recents item not found."),
+                        "Recents item not found.",
+                    )
+                )
+
+            recents_read_model = RecentFinancialsMapper.to_read_model(recents_item)
+
+            return result_ok(recents_read_model)
+
+        except Exception as error:
+            return result_fail(
+                RepositoryUnexpectedError(error, "Unexpected error retrieving recents")
+            )
+
+    async def get_overview_by_id(
+        self, user_id: str, period: date
+    ) -> Either[
+        DashboardPublicModel, RepositoryNotFoundError | RepositoryUnexpectedError
+    ]:
+        result = await asyncio.gather(
+            self.get_by_id(user_id, sort_key=f"overview#{period.strftime('%Y-%m')}"),
+            self.get_spending_insight(user_id),
+            self.get_recents(user_id),
+        )
+
+        combined_result = result_combine(result)
+
+        if is_fail(combined_result):
+            print(combined_result.value)
+            return combined_result
+
+        overview, spending_insights, recents = combined_result.value
+
+        overview_data = SpendingOverviewMapper.to_persistence(overview)
+
+        return result_ok(
+            DashboardPublicModel(
+                **overview_data,  # type: ignore
+                spending_insights=spending_insights,
+                recent_expenses=recents.recent_expenses,
+            )
+        )
 
     async def get_expenses_projection(
         self, user_id: str, aggregate_id: str | UUID, *, sort_key: str | None = None
@@ -113,7 +222,10 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
             return result_fail(RepositoryUnexpectedError(error))
 
     async def add(
-        self, aggregate: DashboardReadModel, *, sort_key: str | None = None
+        self,
+        aggregate: SpendingOverviewReadModel | RecentFinancialsReadModel,
+        *,
+        sort_key: str | None = None,
     ) -> Either[None, ConflictError | ConcurrencyError | RepositoryUnexpectedError]:
 
         if sort_key is None:
@@ -124,7 +236,7 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
                 Item={
                     "user_id": aggregate.user_id,
                     "sk": sort_key,
-                    **aggregate.model_dump(),
+                    **asdict(aggregate),
                 }
             )
             return result_ok(None)
@@ -135,13 +247,16 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
         self, user_id: str, aggregate: ExpenseReadModel
     ) -> Either[None, RepositoryUnexpectedError]:
         try:
-
+            persistence = ExpenseProjectionMapper.to_persistence(aggregate)
             await self.table.put_item(
-                Item={
-                    "user_id": user_id,
-                    "sk": f"{self.expense_prefix}#{aggregate.id}",
-                    **aggregate.model_dump(exclude={"name", "merchant"}),
-                }
+                Item=cast(
+                    dict[str, Any],
+                    {
+                        "user_id": user_id,
+                        "sk": f"{self.expense_prefix}#{aggregate.id}",
+                        **persistence,
+                    },
+                )
             )
             return result_ok(None)
         except Exception as error:
@@ -151,13 +266,16 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
         self, user_id: str, aggregate: BudgetReadModel
     ) -> Either[None, RepositoryUnexpectedError]:
         try:
-
+            persistence = BudgetProjectionMapper.to_persistence(aggregate)
             await self.table.put_item(
-                Item={
-                    "user_id": user_id,
-                    "sk": f"{self.budget_prefix}#{aggregate.id}",
-                    **aggregate.model_dump(exclude={"name"}),
-                }
+                Item=cast(
+                    dict[str, Any],
+                    {
+                        "user_id": user_id,
+                        "sk": f"{self.budget_prefix}#{aggregate.id}",
+                        **persistence,
+                    },
+                )
             )
             return result_ok(None)
         except Exception as error:
@@ -212,18 +330,18 @@ class DynamoDbReadRepository(AsyncReadRepository[DashboardReadModel]):
         return result_ok()
 
     async def first(self, options: GetOptions[Any]) -> Either[
-        DashboardReadModel,
+        SpendingOverviewReadModel,
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]: ...  # Implement if needed, otherwise can be left unimplemented or raise NotImplementedError
 
     async def list(
         self, options: GetOptions[Any]
     ) -> Either[
-        list[DashboardReadModel], RepositoryUnexpectedError | DataIntegrityError
+        list[SpendingOverviewReadModel], RepositoryUnexpectedError | DataIntegrityError
     ]: ...  # Implement if needed, otherwise can be left unimplemented or raise NotImplementedError
 
     async def remove(
-        self, aggregate: DashboardReadModel, *, sort_key: str | None = None
+        self, aggregate: SpendingOverviewReadModel, *, sort_key: str | None = None
     ) -> Either[
         None, RepositoryUnexpectedError | ConcurrencyError | ConflictError
     ]: ...  # Implement if needed, otherwise can be left unimplemented or raise NotImplementedError

@@ -47,17 +47,25 @@ async def _run_image_validation(file) -> FileUploadDTO:
     return validation_result.unwrap_or_raise()
 
 
-async def validate_image_upload(
-    file: UploadFile = File(..., description="Image file to be uploaded"),
-) -> FileUploadDTO:
-    return await _run_image_validation(file)
+def validate_image_upload(field_name: str = "file"):
+    async def wrapper(
+        file: UploadFile = File(
+            ..., description="Image file to be uploaded", alias=field_name
+        ),
+    ) -> FileUploadDTO:
+        return await _run_image_validation(file)
+
+    return wrapper
 
 
-async def validate_optional_image_upload(
-    file: UploadFile | None = File(
-        None, description="Optional image file to be uploaded"
-    ),
-) -> FileUploadDTO | None:
-    if file is None:
-        return None
-    return await _run_image_validation(file)
+def validate_optional_image_upload(field_name: str = "file"):
+    async def wrapper(
+        file: UploadFile | None = File(
+            None, description="Optional image file to be uploaded", alias=field_name
+        ),
+    ) -> FileUploadDTO | None:
+        if file is None:
+            return None
+        return await _run_image_validation(file)
+
+    return wrapper

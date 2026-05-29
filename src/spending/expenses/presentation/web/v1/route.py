@@ -45,7 +45,9 @@ async def create_expense(
     expense_data: Annotated[ExpenseWriteModel, Depends(ExpenseWriteModel.form)],
     auth: AuthDeps,
     use_case: Annotated[CreateExpenseUsecase, Depends()],
-    receipt: Annotated[FileUploadDTO, Depends(validate_optional_image_upload)],
+    receipt: Annotated[
+        FileUploadDTO, Depends(validate_optional_image_upload("receipt"))
+    ],
 ):
     result = await use_case.execute(
         {"user_id": auth.user_id, "expense_data": expense_data, "receipt": receipt}
@@ -58,14 +60,14 @@ async def create_expense(
 
 
 @router.post(
-    "/upload_receipt",
+    "/scan-receipt",
     response_model=ExpenseReadModel,
     response_model_exclude={"id"},
     status_code=status.HTTP_201_CREATED,
 )
 async def extract_expense_from_receipt(
     auth: AuthDeps,
-    receipt: Annotated[FileUploadDTO, Depends(validate_image_upload)],
+    receipt: Annotated[FileUploadDTO, Depends(validate_image_upload('receipt'))],
     use_case: Annotated[ExtractExpenseFromReceiptUsecase, Depends()],
 ):
     result = await use_case.execute({"user_id": auth.user_id, "receipt": receipt})
@@ -84,7 +86,7 @@ async def update_expense(
     expense_data: Annotated[ExpenseUpdateModel, Depends(ExpenseUpdateModel.form)],
     auth: AuthDeps,
     expense_service: Annotated[ExpenseService, Depends()],
-    receipt: Annotated[FileUploadDTO, Depends(validate_optional_image_upload)],
+    receipt: Annotated[FileUploadDTO, Depends(validate_optional_image_upload('receipt'))],
 ):
     result = await expense_service.update_expense_usecase(
         aggregate_id, auth.user_id, expense_data, receipt

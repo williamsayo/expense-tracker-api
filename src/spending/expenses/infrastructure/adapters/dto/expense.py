@@ -84,6 +84,9 @@ class ExpenseWriteModel(ExpenseModel):
         description="amount of the expense in the specified currency",
         examples=[100.00],
     )
+    receipt: HttpUrl | None = Field(
+        None, description="Receipt for the expense"
+    )
 
     @classmethod
     def form(
@@ -118,6 +121,7 @@ class ExpenseWriteModel(ExpenseModel):
             name=name,
             note=note,
             merchant=merchant,
+            receipt=None,
         )
 
 

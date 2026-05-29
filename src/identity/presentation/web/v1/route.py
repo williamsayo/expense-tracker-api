@@ -139,7 +139,7 @@ async def update_user_details(
     user_service: Annotated[UserService, Depends()],
     avatar: Annotated[
         FileUploadDTO | None,
-        Depends(validate_optional_image_upload),
+        Depends(validate_optional_image_upload('avatar')),
     ],
 ):
     user_result = await user_service.update_user_usecase(

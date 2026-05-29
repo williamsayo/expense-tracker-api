@@ -1,3 +1,4 @@
+import dataclasses
 from src.dashboard.domain.read_models.spending_overview_read_model import (
     ExpenseReadModel,
     CategoryReadModel,
@@ -28,7 +29,7 @@ class ExpenseProjectionApplierService:
             expense (ExpenseReadModel): The new expense to potentially add or re-order in the recent expenses list.
         Returns:
             list[ExpenseReadModel]: An updated list of recent expenses, ordered by date with the most recent first and capped at `MAX_RECENT_EXPENSES`.
-            
+
         """
 
         if len(recent_expenses) < self.MAX_RECENT_EXPENSES:
@@ -81,17 +82,23 @@ class ExpenseProjectionApplierService:
         Returns:
             list[CategoryReadModel]: An updated list of top categories, ordered by amount and capped at `MAX_TOP_CATEGORIES`.
         """
-        if len(top_categories) < self.MAX_TOP_CATEGORIES:
-            top_categories.append(category)
-            return top_categories
 
-        for index, top_category in enumerate(top_categories):
-            if (
-                category.name != top_category.name
-                and category.amount > top_category.amount
-            ):
-                top_categories.insert(index, category)
-                top_categories.pop(-1)
-                break
+        identified_category = next(
+            (
+                current_category
+                for current_category in top_categories
+                if category.name == current_category.name
+            ),
+            None,
+        )
+
+        if identified_category is not None:
+            total_amount = identified_category.amount + category.amount
+            category = dataclasses.replace(
+                identified_category, amount=total_amount
+            )
+            top_categories.remove(identified_category)
+
+        top_categories.append(category)
 
         return top_categories

@@ -119,7 +119,7 @@ class DynamoDbReadRepository(AsyncReadRepository[SpendingOverviewReadModel]):
                     SpendingInsightReadModel(
                         period=insight["period"],
                         total_spent=insight["total_spent"],
-                        total_budget=insight["total_budgeted"],
+                        total_budgeted=insight["total_budgeted"],
                     )
                     for insight in insight_item
                 ]

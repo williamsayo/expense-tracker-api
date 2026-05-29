@@ -29,13 +29,13 @@ class CategoryReadModel(BaseModel):
 
 class SpendingInsightReadModel(BaseReadModel):
     period: str = Field(
-        default_factory=lambda: date.today().strftime("%Y-%m"),
+        ...,
         description="The month of the spending insight in the format 'Year-Month'.",
         examples=["2024-06"],
     )
-    total_spent: int = Field(0, description="The total amount spent in the period.")
+    total_spent: int = Field(..., description="The total amount spent in the period.")
     total_budgeted: int = Field(
-        0, description="The total amount budgeted for the period."
+        ..., description="The total amount budgeted for the period."
     )
 
     @field_serializer("total_spent")
@@ -104,10 +104,10 @@ class ExpensePublicModel(BaseReadModel):
 
 class DashboardPublicModel(BaseReadModel):
     total_spent: int = Field(
-        0, description="The total amount spent by the user in the period."
+        ..., description="The total amount spent by the user in the period."
     )
     total_budgeted: int = Field(
-        0, description="The total amount budgeted for the period."
+        ..., description="The total amount budgeted for the period."
     )
     top_expense: ExpensePublicModel | None = Field(
         default=None, description="The most expensive expense in the period."

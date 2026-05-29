@@ -26,7 +26,7 @@ def openai_parse_receipt_prompt() -> str:
     - Ignore tax unless tax is final total
     - Merchant should be business/store name
     - Date cannot be null or empty. Default to today's date. Normalize date to YYYY-MM-DD, Default to today's date if you cannot detect it must be in YYYY-MM-DD format
-    - Category should be one of: food, rent, transportation, entertainment, utilities, healthcare, other and should be based on merchant and items purchased and not just the merchant alone, e.g. if the receipt is from Amazon but it's for groceries, category should be Food not Other, it should be lowercase and should be one of the specified categories, if you cannot detect category, default to Other
+    - Category should be one of: food, rent, transportation, entertainment, utilities, health, other and should be based on merchant and items purchased and not just the merchant alone, e.g. if the receipt is from Amazon but it's for groceries, category should be Food not Other, it should be lowercase and should be one of the specified categories, if you cannot detect category, default to Other
     - Detect currency symbol/code and return as 3-letter code, e.g. USD, EUR, GBP,Default to EUR if you cannot detect
     - Name the expense based on merchant and category, e.g. "Starbucks Coffee" for a food purchase at Starbucks
     - Note should be any additional info you can extract, e.g. "2x Latte, 1x Croissant" for a Starbucks receipt, the note should be a concise summary of the items purchased and any other relevant info, it should not include info that is already captured in other fields like amount, date, merchant, category etc.

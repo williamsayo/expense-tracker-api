@@ -13,7 +13,6 @@ class ExpenseProjectionApplierService:
     """
 
     MAX_RECENT_EXPENSES = 10
-    MAX_TOP_CATEGORIES = 5
 
     def update_recent_expenses(
         self,
@@ -74,31 +73,23 @@ class ExpenseProjectionApplierService:
     def update_top_categories(
         self, top_categories: list[CategoryReadModel], category: CategoryReadModel
     ) -> list[CategoryReadModel]:
-        """Maintain the top categories list ordered by amount.
-        Keeps at most `MAX_TOP_CATEGORIES` entries.
+        """Add or update a category in the top categories list and return the updated list.
         Args:
             top_categories (list[CategoryReadModel]): The current list of top categories to be updated.
-            category (CategoryReadModel): The category to potentially add or update in the top categories list.
+            category (CategoryReadModel): The new category to add or update in the top categories list.
         Returns:
-            list[CategoryReadModel]: An updated list of top categories, ordered by amount and capped at `MAX_TOP_CATEGORIES`.
+            list[CategoryReadModel]: An updated list of top categories with the new category added or
+            updated.
         """
 
-        identified_category = next(
-            (
-                current_category
-                for current_category in top_categories
-                if category.name == current_category.name
-            ),
-            None,
-        )
-
-        if identified_category is not None:
-            total_amount = identified_category.amount + category.amount
-            category = dataclasses.replace(
-                identified_category, amount=total_amount
-            )
-            top_categories.remove(identified_category)
-
-        top_categories.append(category)
+        for index, current_category in enumerate(top_categories):
+            if category.name == current_category.name:
+                updated_category = dataclasses.replace(
+                    current_category, amount=current_category.amount + category.amount
+                )
+                top_categories[index] = updated_category
+                break
+        else:
+            top_categories.append(category)
 
         return top_categories

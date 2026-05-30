@@ -51,6 +51,7 @@ class ExpenseReadDependencies(BaseDependency):
     """Dependency container for expense use cases."""
 
     repo: ExpenseReadRepositoryProtocol = Depends(get_expense_read_repository)
+    cdn: CDNService = Depends(get_cdn_service)
     dispatcher: IEventDispatcher = Depends(get_event_dispatcher)
 
 

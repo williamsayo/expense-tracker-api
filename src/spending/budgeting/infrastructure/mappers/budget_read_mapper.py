@@ -44,13 +44,14 @@ def create_budget_expense_summary(
         result.append(
             ExpenseReadModel(
                 id=expense.id,
-                name=expense.name,
+                merchant=expense.merchant,
                 user_id=expense.user_id,
                 category=expense.category,
                 amount=expense.amount,
                 currency=expense.currency,
                 date=expense.date,
                 note=expense.note,
+                receipt=expense.receipt,
             )
         )
 

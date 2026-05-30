@@ -3,17 +3,16 @@ from uuid import UUID
 from typing import Self
 from datetime import datetime, UTC
 from decimal import Decimal
+from src.shared.domain.value_objects.media_value_object import MediaValueObject
 from src.shared.infrastructure.adapters.dto.base import BaseReadModel
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from fastapi import Form
 
-
 class ExpenseModel(BaseModel):
     """Data model for expense."""
 
-    merchant: str | None = Field(None, description="Merchant or vendor of the expense")
     note: str | None = Field(
         None,
         description="Note about the expense",
@@ -33,8 +32,8 @@ class ExpenseReadModel(BaseReadModel):
     currency: Currency = Field(..., description="Currency of the expense")
     date: datetime = Field(..., description="Date the expense was made")
     note: str | None = Field(None, description="Note about the expense")
-    merchant: str | None = Field(None, description="Merchant or vendor of the expense")
-    receipt: HttpUrl | None = Field(None, description="Receipt for the expense")
+    merchant: str = Field(..., description="Merchant or vendor of the expense")
+    receipt: str | None = Field(None, description="Receipt for the expense")
 
     @field_serializer("amount")
     def serialize_amount(self, value: int) -> float:
@@ -43,7 +42,7 @@ class ExpenseReadModel(BaseReadModel):
     @field_validator("receipt", mode="before")
     @classmethod
     def parse_receipt(cls, receipt) -> str | None:
-        if hasattr(receipt, "url"):
+        if isinstance(receipt, MediaValueObject):
             return receipt.url
         return receipt
 
@@ -59,9 +58,7 @@ class ExpenseReadModel(BaseReadModel):
             currency=entity.money.currency,
             merchant=entity.merchant,
             receipt=(
-                HttpUrl(entity.receipt.url)
-                if entity.receipt and entity.receipt.url
-                else None
+                entity.receipt.url if entity.receipt and entity.receipt.url else None
             ),
         )
 
@@ -69,6 +66,7 @@ class ExpenseReadModel(BaseReadModel):
 class ExpenseWriteModel(ExpenseModel):
     """Write model for expense data."""
 
+    merchant: str = Field(..., description="Merchant or vendor of the expense")
     category: Category = Field(..., description="Category of the expense")
     date: datetime = Field(
         default=datetime.now(UTC), description="Date the expense was made"
@@ -98,9 +96,7 @@ class ExpenseWriteModel(ExpenseModel):
             examples=[100.00],
         ),
         currency: Currency = Form(default=Currency.EUR),
-        merchant: str | None = Form(
-            None, description="Merchant or vendor of the expense"
-        ),
+        merchant: str = Form(..., description="Merchant or vendor of the expense"),
         note: str | None = Form(
             None,
             description="Note about the expense",
@@ -121,6 +117,7 @@ class ExpenseWriteModel(ExpenseModel):
 class ExpenseUpdateModel(ExpenseModel):
     """Update model for expense data."""
 
+    merchant: str | None = Field(None, description="Merchant or vendor of the expense")
     date: datetime | None = Field(None, description="Date the expense was made")
     category: Category | None = Field(None, description="Category of the expense")
     amount: Decimal | None = Field(None, decimal_places=2, ge=Decimal("0.1"))

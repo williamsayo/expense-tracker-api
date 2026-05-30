@@ -20,7 +20,7 @@ from src.spending.expenses.domain.events.expense_created import ExpenseCreated
 class ExpenseEntityProps(TypedDict):
     """Typed dictionary for expense entity fields."""
 
-    merchant: str | None
+    merchant: str
     user_id: UserId
     budget_id: NotRequired[UUID | str]
     category: CategoryValueObject
@@ -67,7 +67,7 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         return self.props["date"]
 
     @property
-    def merchant(self) -> str | None:
+    def merchant(self) -> str:
         self._check_is_discarded_entity()
         return self.props["merchant"]
 
@@ -174,7 +174,7 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
                 {
                     "expense_id": entity.id.to_string(),
                     "user_id": str(entity.user_id),
-                    "merchant": "adereal",  # TODO: remove merchant field in future
+                    "merchant": entity.merchant,
                     "category": entity.category.name.value,
                     "amount": entity.money.amount,
                     "currency": entity.money.currency.value,

@@ -20,7 +20,6 @@ from src.spending.expenses.domain.events.expense_created import ExpenseCreated
 class ExpenseEntityProps(TypedDict):
     """Typed dictionary for expense entity fields."""
 
-    name: str | None
     merchant: str | None
     user_id: UserId
     budget_id: NotRequired[UUID | str]
@@ -41,11 +40,6 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         version: int = 0,
     ):
         super().__init__(props, id, version)
-
-    @property
-    def name(self) -> str | None:
-        self._check_is_discarded_entity()
-        return self.props["name"]
 
     @property
     def user_id(self) -> UserId:
@@ -98,7 +92,6 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
         currency: Currency | None,
         note: str | None,
         date: datetime | None,
-        name: str | None,
         merchant: str | None,
     ) -> Either[None, DomainRuleError]:
         self._check_is_discarded_entity()
@@ -122,9 +115,6 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
 
         if note is not None:
             self.props["note"] = note
-
-        if name is not None:
-            self.props["name"] = name
 
         if merchant is not None:
             self.props["merchant"] = merchant
@@ -184,7 +174,6 @@ class ExpenseEntity(AggregateRoot[ExpenseEntityProps]):
                 {
                     "expense_id": entity.id.to_string(),
                     "user_id": str(entity.user_id),
-                    "name": entity.name,
                     "merchant": "adereal",  # TODO: remove merchant field in future
                     "category": entity.category.name.value,
                     "amount": entity.money.amount,

@@ -13,7 +13,6 @@ from fastapi import Form
 class ExpenseModel(BaseModel):
     """Data model for expense."""
 
-    name: str | None = Field(None, description="Name of the expense")
     merchant: str | None = Field(None, description="Merchant or vendor of the expense")
     note: str | None = Field(
         None,
@@ -29,7 +28,6 @@ class ExpenseReadModel(BaseReadModel):
     user_id: UUID = Field(
         ..., description="ID of the user who made the expense", exclude=True
     )
-    name: str | None = Field(None, description="Name of the expense")
     category: Category = Field(..., description="Category of the expense")
     amount: int = Field(..., description="Amount of the expense in cents")
     currency: Currency = Field(..., description="Currency of the expense")
@@ -59,7 +57,6 @@ class ExpenseReadModel(BaseReadModel):
             note=entity.note,
             date=entity.date,
             currency=entity.money.currency,
-            name=entity.name,
             merchant=entity.merchant,
             receipt=(
                 HttpUrl(entity.receipt.url)
@@ -84,9 +81,7 @@ class ExpenseWriteModel(ExpenseModel):
         description="amount of the expense in the specified currency",
         examples=[100.00],
     )
-    receipt: HttpUrl | None = Field(
-        None, description="Receipt for the expense"
-    )
+    receipt: HttpUrl | None = Field(None, description="Receipt for the expense")
 
     @classmethod
     def form(
@@ -103,7 +98,6 @@ class ExpenseWriteModel(ExpenseModel):
             examples=[100.00],
         ),
         currency: Currency = Form(default=Currency.EUR),
-        name: str | None = Form(None, description="Name of the expense"),
         merchant: str | None = Form(
             None, description="Merchant or vendor of the expense"
         ),
@@ -118,7 +112,6 @@ class ExpenseWriteModel(ExpenseModel):
             category=category,
             amount=amount,
             currency=currency,
-            name=name,
             note=note,
             merchant=merchant,
             receipt=None,
@@ -140,7 +133,6 @@ class ExpenseUpdateModel(ExpenseModel):
         category: Category | None = Form(None, description="Category of the expense"),
         amount: Decimal | None = Form(None, decimal_places=2, ge=0.1),
         currency: Currency | None = Form(None),
-        name: str | None = Form(None, description="Name of the expense"),
         merchant: str | None = Form(
             None, description="Merchant or vendor of the expense"
         ),
@@ -155,7 +147,6 @@ class ExpenseUpdateModel(ExpenseModel):
             category=category,
             amount=amount,
             currency=currency,
-            name=name,
             note=note,
             merchant=merchant,
         )

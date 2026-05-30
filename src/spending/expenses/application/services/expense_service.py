@@ -93,7 +93,6 @@ class ExpenseService(BaseService[ExpenseDeps]):
             currency=expense_data.currency,
             note=expense_data.note,
             date=expense_data.date,
-            name=expense_data.name,
             merchant=expense_data.merchant,
         )
 

@@ -14,7 +14,6 @@ class ExpenseCreatedData(TypedDict):
     """Typed dictionary for the data payload of the ExpenseCreated event."""
 
     user_id: str
-    name: str | None
     merchant: str | None
     expense_id: str
     category: str

@@ -84,7 +84,7 @@ class ExtractExpenseFromReceiptUsecase(
 
         entity_result = ExpenseEntity.create(
             {
-                "name": expense_data["name"],
+                
                 "merchant": expense_data["merchant"],
                 "user_id": user_id,
                 "category": category,

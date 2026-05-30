@@ -28,7 +28,6 @@ class ExpenseMapper(BaseMapper):
     def to_persistence(entity: ExpenseEntity) -> Expense:
         return Expense(
             id=entity.id.value,
-            name=entity.name,
             merchant=entity.merchant,
             user_id=entity.user_id,
             budget_id=entity.budget_id,
@@ -37,7 +36,7 @@ class ExpenseMapper(BaseMapper):
             category=entity.category.name,
             date=entity.date,
             note=entity.note,
-            receipt_url=entity.receipt.key,
+            receipt=entity.receipt.key,
             version=entity.version,
         )
 
@@ -50,7 +49,7 @@ class ExpenseMapper(BaseMapper):
         )
         category_result = CategoryValueObject.create({"name": persistence.category})
         receipt_result = MediaValueObject.create(
-            {"media_key": persistence.receipt_url, "media_url": None}
+            {"media_key": persistence.receipt, "media_url": None}
         )
 
         combined_result = result_combine(
@@ -64,7 +63,6 @@ class ExpenseMapper(BaseMapper):
 
         return ExpenseEntity.existing_entity(
             {
-                "name": persistence.name,
                 "user_id": persistence.user_id,
                 "date": persistence.date,
                 "note": persistence.note,

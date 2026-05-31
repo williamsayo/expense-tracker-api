@@ -1,8 +1,14 @@
-from fastapi import FastAPI, APIRouter
+from datetime import UTC, datetime
+from fastapi import Depends, FastAPI, APIRouter
+from boilerplate import ServiceUnavailableError
+from sqlalchemy import text
+from types_aiobotocore_dynamodb import DynamoDBClient
 from src.core.config import get_settings
 from src.shared.infrastructure.services.aws.config import get_aioboto3_session
+from src.shared.infrastructure.services.aws.dependencies import get_dynamodb_client
 from src.shared.loggers.logging import setup_logging, LogLevel
 from src.shared.infrastructure.db.base import engine
+from src.shared.infrastructure.db.dependencies import get_session, AsyncSession
 from src.shared.application.events.dispatcher.dependencies import (
     register_handlers,
 )
@@ -58,8 +64,34 @@ register_middlewares(app=app)
 
 # health check endpoint
 @router.get("/healthz", tags=["Health Check"])
-async def health_check():
-    return {"status": "ok"}
+async def health_check(
+    db: AsyncSession = Depends(get_session),
+    dynamodb: DynamoDBClient = Depends(get_dynamodb_client),
+):
+    try:
+        await db.execute(text("SELECT 1"))
+
+    except Exception as error:
+        raise ServiceUnavailableError(
+            id="database_unavailable",
+            message=f"Database unavailable: {error}",
+        )
+
+    try:
+        await dynamodb.describe_table(TableName=settings.dynamodb_dashboard_table_name)
+    except Exception as error:
+        raise ServiceUnavailableError(
+            id="dynamodb_unavailable",
+            message=f"DynamoDB unavailable: {error}",
+        )
+
+    return {
+        "status": "healthy",
+        "database": "connected",
+        "dynamodb": "connected",
+        "version": settings.version,
+        "timestamp": datetime.now(UTC),
+    }
 
 
 app.include_router(router)

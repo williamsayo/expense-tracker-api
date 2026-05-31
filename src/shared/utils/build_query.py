@@ -2,6 +2,9 @@ from typing import Required, Type, TypedDict
 from uuid import UUID
 from sqlalchemy import FromClause, select, asc, desc
 from boilerplate import GetAllOptions, GetOptions
+from src.core.config import get_settings
+
+settings = get_settings()
 
 
 class AppFilter(TypedDict, total=False):
@@ -22,6 +25,9 @@ def build_query[Model](
         statement = select(model)
 
     if filter := options.get("filter"):
+        q = filter.pop(
+            "q", None
+        )  # Remove 'q' from filter as it's used for search, not direct filtering
         statement = statement.filter_by(**filter)
 
     if sort := options.get("sort"):
@@ -36,10 +42,9 @@ def build_query[Model](
 
         statement = statement.order_by(*sort_options)
 
-    if offset := options.get("offset"):
-        statement = statement.offset(offset)
-
-    if limit := options.get("limit"):
-        statement = statement.limit(limit)
+    if page := options.get("offset"):
+        page_size = options.get("limit", 10)
+        offset = (page - 1) * page_size
+        statement = statement.offset(offset).limit(page_size)
 
     return statement

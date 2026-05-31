@@ -5,6 +5,10 @@ from fastapi import Depends
 from boilerplate import IEventDispatcher
 from src.shared.utils.setup_dependencies import BaseDependency
 from src.shared.infrastructure.db.dependencies import get_session
+from src.spending.budgeting.application.ports.dependencies import (
+    BudgetCommandDeps,
+    BudgetQueryDeps,
+)
 from src.spending.budgeting.infrastructure.repositories.postgres.budget_repo import (
     BudgetRepository,
 )
@@ -49,8 +53,6 @@ class BudgetReadDependencies(BaseDependency):
     """Dependency container for example use cases."""
 
     repo: BudgetReadRepositoryProtocol = Depends(get_budget_read_repository)
-    event_dispatcher: IEventDispatcher = Depends(get_event_dispatcher)
 
-
-BudgetDeps = Annotated[BudgetDependencies, Depends()]
-BudgetReadDeps = Annotated[BudgetReadDependencies, Depends()]
+BudgetDeps = Annotated[BudgetCommandDeps, Depends(BudgetDependencies)]
+BudgetReadDeps = Annotated[BudgetQueryDeps, Depends(BudgetReadDependencies)]

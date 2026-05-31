@@ -3,6 +3,7 @@ from boilerplate import IEventDispatcher
 from fastapi import Depends
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.identity.application.ports.dependencies import IdentityDependencies
 from src.shared.utils.setup_dependencies import get_cdn_service, get_object_storage
 from src.shared.infrastructure.services.aws.cloudfront_service import (
     CloudFrontService,
@@ -47,4 +48,4 @@ class UserDependencies(BaseDependency):
     cdn_service: CloudFrontService = Depends(get_cdn_service)
     dispatcher:IEventDispatcher = Depends(get_event_dispatcher)
 
-UserDeps = Annotated[UserDependencies, Depends()]
+UserDeps = Annotated[IdentityDependencies, Depends(UserDependencies)]

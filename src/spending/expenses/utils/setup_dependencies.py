@@ -3,9 +3,9 @@ from fastapi import Depends
 from typing import Annotated
 from boilerplate import IEventDispatcher
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.config import get_settings, Settings
 from src.shared.utils.setup_dependencies import BaseDependency
 from src.shared.infrastructure.db.dependencies import get_session
+from src.spending.expenses.application.ports.dependencies import ExpenseCommandDeps, ExpenseQueryDeps
 from src.spending.expenses.infrastructure.repositories.postgres.expense_repo import (
     ExpenseRepository,
 )
@@ -55,5 +55,5 @@ class ExpenseReadDependencies(BaseDependency):
     dispatcher: IEventDispatcher = Depends(get_event_dispatcher)
 
 
-ExpenseDeps = Annotated[ExpenseDependencies, Depends()]
-ExpenseReadDeps = Annotated[ExpenseReadDependencies, Depends()]
+ExpenseDeps = Annotated[ExpenseCommandDeps, Depends(ExpenseDependencies)]
+ExpenseReadDeps = Annotated[ExpenseQueryDeps, Depends(ExpenseReadDependencies)]

@@ -27,12 +27,12 @@ class ExpenseReadModel(BaseReadModel):
     user_id: UUID = Field(
         ..., description="ID of the user who made the expense", exclude=True
     )
+    merchant: str | None = Field('Kfc', description="Merchant or vendor of the expense") #TODO: make it optional in the future
     category: Category = Field(..., description="Category of the expense")
     amount: int = Field(..., description="Amount of the expense in cents")
     currency: Currency = Field(..., description="Currency of the expense")
     date: datetime = Field(..., description="Date the expense was made")
     note: str | None = Field(None, description="Note about the expense")
-    merchant: str = Field(..., description="Merchant or vendor of the expense")
     receipt: str | None = Field(None, description="Receipt for the expense")
 
     @field_serializer("amount")

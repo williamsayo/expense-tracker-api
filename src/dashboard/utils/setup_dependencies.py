@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from types_aiobotocore_dynamodb import DynamoDBServiceResource
 from typing_extensions import Annotated
 from fastapi import Depends
+from src.dashboard.application.ports.dependencies import OverviewDependencies
 from src.shared.utils.setup_dependencies import BaseDependency
 from src.shared.infrastructure.services.aws.dependencies import get_dynamodb_client
 from src.dashboard.infrastructure.adapters.ports.repository import (
@@ -25,4 +26,4 @@ class OverviewDependency(BaseDependency):
     repository: DashboardRepositoryProtocol = Depends(get_dashboard_repository)
 
 
-OverviewDeps = Annotated[OverviewDependency, Depends(OverviewDependency)]
+OverviewDeps = Annotated[OverviewDependencies, Depends(OverviewDependency)]

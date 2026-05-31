@@ -27,10 +27,13 @@ class GetExpenseListUsecase(
         Sequence[ExpenseReadModel],
         RepositoryUnexpectedError | DataIntegrityError | RepositoryNotFoundError,
     ]:
+        query_params = input["queryParams"]
         result = await self.deps.repo.list(
             {
                 "filter": {"user_id": input["user_id"]},
-                "limit": input["queryParams"].page_size,
+                "limit": query_params.page_size,
+                "offset": query_params.page,
+                "q": query_params.q,
             }
         )
 

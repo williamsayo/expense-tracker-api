@@ -108,7 +108,7 @@ async def retrieve_all_budgets(
     auth: AuthDeps,
     use_case: Annotated[GetBudgetsUsecase, Depends()],
 ):
-    result = await use_case.execute(auth.user_id)
+    result = await use_case.execute({"user_id": auth.user_id, "query_params": params})
 
     if is_fail(result):
         raise result.value

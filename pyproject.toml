@@ -22,6 +22,7 @@ dependencies = [
     "types-aioboto3[cloudfront,dynamodb,iam,s3]>=15.5.0",
     "python-magic-bin>=0.4.14",
     "alembic>=1.18.4",
+    "slowapi>=0.1.9",
 ]
 
 [tool.uv]

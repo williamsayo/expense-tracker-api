@@ -1,7 +1,8 @@
 from fastapi.routing import APIRouter
-from fastapi import status, Depends
+from fastapi import Request, status, Depends
 from typing import List, Annotated
 from result import is_fail
+from src.core.limiter import rate_limit
 from src.shared.utils.auth.dependencies import AuthDeps
 from src.shared.application.dtos.url_params import UrlParams
 from src.spending.budgeting.infrastructure.adapters.dto.budget import (
@@ -103,7 +104,9 @@ async def add_budget_allocation(
 
 
 @router.get("", response_model=List[BudgetReadModel], status_code=status.HTTP_200_OK)
+@rate_limit("5/minute")
 async def retrieve_all_budgets(
+    request: Request,
     params: BudgetUrlParams,
     auth: AuthDeps,
     use_case: Annotated[GetBudgetsUsecase, Depends()],
@@ -121,7 +124,9 @@ async def retrieve_all_budgets(
     response_model=BudgetReadModel,
     status_code=status.HTTP_200_OK,
 )
+@rate_limit("5/minute")
 async def retrieve_budget(
+    request: Request,
     aggregate_id: str,
     auth: AuthDeps,
     use_case: Annotated[GetBudgetUsecase, Depends()],

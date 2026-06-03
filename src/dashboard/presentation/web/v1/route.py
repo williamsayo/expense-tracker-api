@@ -1,8 +1,9 @@
 from typing import Annotated
 from datetime import date
 from fastapi.routing import APIRouter
-from fastapi import Depends, Query, status
+from fastapi import Depends, Query, Request, status
 from result import is_fail
+from src.core.limiter import rate_limit
 from src.dashboard.application.use_cases.retrieve_overview_usecase import (
     GetOverviewUsecase,
 )
@@ -23,7 +24,9 @@ router = APIRouter(
     description="Returns an overview of spending data for the dashboard.",
     response_description="An overview of spending data.",
 )
+@rate_limit("5/minute")
 async def dashboard_overview(
+    request: Request,
     usecase: Annotated[GetOverviewUsecase, Depends()],
     authenticated_user: AuthDeps,
     period: date = Query(

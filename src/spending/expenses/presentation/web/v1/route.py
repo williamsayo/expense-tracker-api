@@ -1,7 +1,8 @@
 from fastapi.routing import APIRouter
-from fastapi import status, Depends
+from fastapi import Request, status, Depends
 from typing import List, Annotated
 from result import is_fail
+from src.core.limiter import rate_limit
 from src.shared.application.dtos.upload import FileUploadDTO
 from src.shared.domain.types.category_types import Category
 from src.shared.utils.auth.dependencies import AuthDeps
@@ -65,7 +66,9 @@ async def create_expense(
     response_model_exclude={"id"},
     status_code=status.HTTP_201_CREATED,
 )
+@rate_limit("3/minute")
 async def extract_expense_from_receipt(
+    request: Request,
     auth: AuthDeps,
     receipt: Annotated[FileUploadDTO, Depends(validate_image_upload('receipt'))],
     use_case: Annotated[ExtractExpenseFromReceiptUsecase, Depends()],
@@ -81,7 +84,9 @@ async def extract_expense_from_receipt(
 @router.put(
     "/{aggregate_id}", response_model=ExpenseReadModel, status_code=status.HTTP_200_OK
 )
+@rate_limit("2/minute")
 async def update_expense(
+    request: Request,
     aggregate_id: str,
     expense_data: Annotated[ExpenseUpdateModel, Depends(ExpenseUpdateModel.form)],
     auth: AuthDeps,
@@ -99,7 +104,9 @@ async def update_expense(
 
 
 @router.get("", response_model=List[ExpenseReadModel], status_code=status.HTTP_200_OK)
+@rate_limit("5/minute")
 async def retrieve_all_expenses(
+    request: Request,
     params: ExpenseUrlParams,
     auth: Annotated[AuthDeps, Depends()],
     use_case: Annotated[GetExpenseListUsecase, Depends()],
@@ -137,7 +144,9 @@ async def retrieve_expense(
     response_model=List[ExpenseReadModel],
     status_code=status.HTTP_200_OK,
 )
+@rate_limit("5/minute")
 async def retrieve_expense_by_category(
+    request: Request,
     params: ExpenseUrlParams,
     category_name: Category,
     auth: AuthDeps,

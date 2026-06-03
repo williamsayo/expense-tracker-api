@@ -1,8 +1,9 @@
 from fastapi.routing import APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Depends, status
+from fastapi import Depends, Request, status
 from typing import Annotated
 from result import is_fail
+from src.core.limiter import rate_limit
 from src.identity.infrastructure.adapters.dto.token import (
     RefreshTokenData,
     TokenData,
@@ -74,7 +75,9 @@ async def refresh_access_token(
         500: {"description": "Internal server error"},
     },
 )
+@rate_limit("1/hour")
 async def reset_user_password(
+    request: Request,
     auth: AuthDeps,
     reset_password_data: ResetPasswordModel,
     user_service: Annotated[UserService, Depends()],
@@ -130,16 +133,16 @@ async def retrieve_user_details(
     return user_result.value
 
 
-@router.patch(
-    "/profile", response_model=UserReadModel, status_code=status.HTTP_200_OK
-)
+@router.patch("/profile", response_model=UserReadModel, status_code=status.HTTP_200_OK)
+@rate_limit("1/minute")
 async def update_user_details(
+    request: Request,
     user_data: Annotated[UserUpdateModel, Depends(UserUpdateModel.form)],
     auth: AuthDeps,
     user_service: Annotated[UserService, Depends()],
     avatar: Annotated[
         FileUploadDTO | None,
-        Depends(validate_optional_image_upload('avatar')),
+        Depends(validate_optional_image_upload("avatar")),
     ],
 ):
     user_result = await user_service.update_user_usecase(
@@ -169,7 +172,9 @@ async def update_user_details(
     },
     name="upload_avatar",
 )
+@rate_limit("3/minute")
 async def upload_profile_avatar(
+    request: Request,
     auth: AuthDeps,
     user_service: Annotated[UserService, Depends()],
     avatar: Annotated[FileUploadDTO, Depends(validate_image_upload)],

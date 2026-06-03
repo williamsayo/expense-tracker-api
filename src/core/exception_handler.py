@@ -1,4 +1,6 @@
+from email.utils import formatdate
 import logging
+import time
 from typing import Callable, Coroutine, Any
 from fastapi.responses import Response
 from fastapi import FastAPI, Request
@@ -58,6 +60,28 @@ def register_errors(app: FastAPI) -> None:
             )
 
             if isinstance(exception, RateLimitExceeded):
+                # TODO: This is a bit hacky, we should probably refactor the limiter to provide this information in the exception itself
+                reset_in = (
+                    1
+                    + request.app.state.limiter.limiter.get_window_stats(
+                        request.state.view_rate_limit[0],
+                        *request.state.view_rate_limit[1],
+                    )[0]
+                )
+                response = JSONResponse(
+                    status_code=http_status_code,
+                    content={
+                        "error_code": error_code,
+                        "message": message,
+                        "rate_limit": exception.detail,
+                        "retry_after": (
+                            formatdate(reset_in)
+                            if request.app.state.limiter._retry_after == "http-date"
+                            else str(int(reset_in - time.time()))
+                        ),
+                    },
+                    headers=headers,
+                )
                 response = request.app.state.limiter._inject_headers(
                     response, request.state.view_rate_limit
                 )

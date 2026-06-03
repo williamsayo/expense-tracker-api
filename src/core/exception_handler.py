@@ -22,6 +22,8 @@ from boilerplate.errors.http import (
 )
 from boilerplate.errors.core import CoreError
 from boilerplate.types.http_status import HttpStatus
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
 
 def register_errors(app: FastAPI) -> None:
@@ -53,6 +55,11 @@ def register_errors(app: FastAPI) -> None:
             )
 
         return exception_handler
+
+    app.add_exception_handler(
+        exc_class_or_status_code=RateLimitExceeded,
+        handler=(lambda request, exc: _rate_limit_exceeded_handler(request, exc)),  # type: ignore
+    )
 
     app.add_exception_handler(
         exc_class_or_status_code=CoreError,

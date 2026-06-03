@@ -23,7 +23,6 @@ from boilerplate.errors.http import (
 from boilerplate.errors.core import CoreError
 from boilerplate.types.http_status import HttpStatus
 from slowapi.errors import RateLimitExceeded
-from slowapi import _rate_limit_exceeded_handler
 
 
 def register_errors(app: FastAPI) -> None:
@@ -31,13 +30,17 @@ def register_errors(app: FastAPI) -> None:
     def create_exception_handler(
         status_code: int,
         default_message: str = "An unexpected error occurred",
-    ) -> Callable[[Request, CoreError | Exception], Coroutine[Any, Any, Response]]:
+        default_error_code: str | None = None,
+    ) -> Callable[
+        [Request, CoreError | Exception | RateLimitExceeded],
+        Coroutine[Any, Any, Response],
+    ]:
 
         async def exception_handler(
-            _: Request, exception: CoreError | Exception
+            request: Request, exception: CoreError | Exception | RateLimitExceeded
         ) -> Response:
             message = getattr(exception, "message", default_message)
-            error_code = getattr(exception, "id", None)
+            error_code = getattr(exception, "id", default_error_code)
             http_status_code = getattr(exception, "status_code", status_code)
             headers = getattr(exception, "headers", None)
 
@@ -45,7 +48,7 @@ def register_errors(app: FastAPI) -> None:
                 f" {message} [cause: {getattr(exception, "cause", None)}] [error_code: {error_code}] [status_code: {http_status_code}] ",
             )
 
-            return JSONResponse(
+            response = JSONResponse(
                 status_code=http_status_code,
                 content={
                     "error_code": error_code,
@@ -54,11 +57,22 @@ def register_errors(app: FastAPI) -> None:
                 headers=headers,
             )
 
+            if isinstance(exception, RateLimitExceeded):
+                response = request.app.state.limiter._inject_headers(
+                    response, request.state.view_rate_limit
+                )
+
+            return response
+
         return exception_handler
 
     app.add_exception_handler(
         exc_class_or_status_code=RateLimitExceeded,
-        handler=(lambda request, exc: _rate_limit_exceeded_handler(request, exc)),  # type: ignore
+        handler=create_exception_handler(
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Rate limit exceeded: Too many requests",
+            "rate_limit_exceeded",
+        ),
     )
 
     app.add_exception_handler(

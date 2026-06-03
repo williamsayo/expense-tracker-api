@@ -26,6 +26,7 @@ from src.dashboard.application.events.event_handler import (
     OnExpenseCreated,
     OnBudgetCreated,
 )
+from src.core.limiter import limiter
 
 settings = get_settings()
 
@@ -57,6 +58,9 @@ app = FastAPI(
 )
 
 router = APIRouter()
+
+app.state.sessions = sessions
+app.state.limiter = limiter
 
 register_errors(app=app)
 register_middlewares(app=app)

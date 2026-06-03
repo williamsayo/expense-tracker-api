@@ -1,22 +1,30 @@
 import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
-from uuid import uuid4
-
-from boilerplate.errors.repository import ConflictError
+from boilerplate import ConflictError
 from result import is_fail, result_ok
-
-from identity.application.services import user as user_service_module
-from identity.application.services.user import UserService
-from identity.domain.entities.user_entity import UserEntity
-from identity.domain.value_objects.email_value_object import EmailValueObject
-from identity.infrastructure.adapters.dto.user import UserUpdateModel, UserWriteModel
-from shared.domain.types.user_id import UserId
+from src.identity.application.services import user as user_service_module
+from src.identity.application.services.user import UserService
+from src.identity.domain.entities.user_entity import UserEntity
+from src.identity.domain.value_objects.email_value_object import EmailValueObject
+from src.identity.infrastructure.adapters.dto.user import (
+    UserUpdateModel,
+    UserWriteModel,
+)
+from src.shared.domain.value_objects.media_value_object import MediaValueObject
 
 
 def _build_user_entity() -> UserEntity:
     email_result = EmailValueObject.create({"value": "jane.doe@example.com"})
+    media_result = MediaValueObject.create(
+        {
+            "media_key": "avatars/default.png",
+            "media_url": "https://cdn.example.com/avatars/default.png",
+        }
+    )
+
     assert not is_fail(email_result)
+    assert not is_fail(media_result)
 
     entity_result = UserEntity.create(
         {
@@ -25,6 +33,7 @@ def _build_user_entity() -> UserEntity:
             "last_name": "Doe",
             "username": "janedoe",
             "hashed_password": "hashed-password",
+            "avatar": media_result.value,
         }
     )
     assert not is_fail(entity_result)
@@ -36,6 +45,10 @@ def test_create_user_usecase_hashes_password_and_persists(monkeypatch) -> None:
         def hash(self, raw_password: str) -> str:
             return f"hashed::{raw_password}"
 
+    class _FakeCdnService:
+        def generate_url(self, path: str) -> str:
+            return f"https://cdn.example.com/{path}"
+
     monkeypatch.setattr(
         user_service_module, "ArgonEncryptionService", _FakeArgonEncryptionService
     )
@@ -43,7 +56,11 @@ def test_create_user_usecase_hashes_password_and_persists(monkeypatch) -> None:
     created_user = _build_user_entity()
     repo = SimpleNamespace(add=AsyncMock(return_value=result_ok(created_user)))
     deps = SimpleNamespace(
-        repo=repo, argon2_encryption_service=Mock(), token_service=Mock()
+        repo=repo,
+        argon2_encryption_service=Mock(),
+        token_service=Mock(),
+        cdn_service=_FakeCdnService(),
+        dispatcher=SimpleNamespace(dispatch_all=AsyncMock(return_value=None)),
     )
     service = UserService(deps)
 
@@ -58,8 +75,15 @@ def test_create_user_usecase_hashes_password_and_persists(monkeypatch) -> None:
     result = asyncio.run(service.create_user_usecase(write_model))
 
     assert not is_fail(result)
+    
     added_entity = repo.add.await_args.args[0]
+    
     assert added_entity.hashed_password == "hashed::secret"
+    assert added_entity.avatar.key == "avatars/default.png"
+    assert added_entity.avatar.url == "https://cdn.example.com/avatars/default.png"
+    deps.dispatcher.dispatch_all.assert_awaited_once_with(
+        added_entity.uncommited_events
+    )
 
 
 def test_authenticate_user_usecase_rehashes_password_when_needed() -> None:
@@ -111,7 +135,7 @@ def test_update_user_usecase_returns_conflict_when_username_exists() -> None:
     update_model = UserUpdateModel(username="already-used")
 
     result = asyncio.run(
-        service.update_user_usecase(UserId(user_entity.id.value), update_model)
+        service.update_user_usecase(user_entity.id.value, update_model)
     )
 
     assert is_fail(result)

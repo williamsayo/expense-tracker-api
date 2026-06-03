@@ -8,17 +8,17 @@ from uuid import uuid4
 from boilerplate.errors.http import AuthenticationError
 from result import is_fail, result_ok
 
-from expenses.application.services.expense_service import ExpenseService
-from expenses.domain.entities.expense_entity import ExpenseEntity
-from expenses.infrastructure.adapters.dto.expense import (
+from src.spending.expenses.application.services.expense_service import ExpenseService
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.spending.expenses.infrastructure.adapters.dto.expense import (
     ExpenseUpdateModel,
     ExpenseWriteModel,
 )
-from shared.domain.types.category_types import Category
-from shared.domain.types.currency_types import Currency
-from shared.domain.types.user_id import UserId
-from shared.domain.value_objects.category_value_object import CategoryValueObject
-from shared.domain.value_objects.money_value_object import MoneyValueObject
+from src.shared.domain.types.category_types import Category
+from src.shared.domain.types.currency_types import Currency
+from src.shared.domain.types.user_id import UserId
+from src.shared.domain.value_objects.category_value_object import CategoryValueObject
+from src.shared.domain.value_objects.money_value_object import MoneyValueObject
 
 
 def _build_expense(user_id: UserId | None = None) -> ExpenseEntity:

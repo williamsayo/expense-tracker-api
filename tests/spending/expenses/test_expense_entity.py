@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from result import is_fail
 
-from src.expenses.domain.entities.expense_entity import ExpenseEntity
+from src.spending.expenses.domain.entities.expense_entity import ExpenseEntity
 from src.shared.domain.types.category_types import Category
 from src.shared.domain.types.currency_types import Currency
 from src.shared.domain.types.user_id import UserId

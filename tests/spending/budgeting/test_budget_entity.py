@@ -4,11 +4,11 @@ from uuid import uuid4
 
 from result import is_fail
 
-from src.budgeting.domain.entities.budget_allocation_entity import (
+from src.spending.budgeting.domain.entities.budget_allocation_entity import (
     BudgetAllocationEntity,
 )
-from src.budgeting.domain.entities.budget_entity import BudgetEntity
-from src.budgeting.domain.value_objects.budget_period_value_object import (
+from src.spending.budgeting.domain.entities.budget_entity import BudgetEntity
+from src.spending.budgeting.domain.value_objects.budget_period_value_object import (
     BudgetPeriodValueObject,
 )
 from src.shared.domain.types.category_types import Category
